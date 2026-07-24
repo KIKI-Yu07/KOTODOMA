@@ -63,7 +63,7 @@ App.tsx 中 useState<Page> 条件渲染。wordlist/flashreview 无底部导航�
 | 次级表 | #1F1A2E |
 | Header渐变 | #0B1525→#1A1133→#0E0A1A |
 | 文字主 | #E0E0E0 |
-| 紫强 | #A78BFA / #DDD6FE |
+| 紫强 | #a191d0 / #DDD6FE |
 
 ## 4. 全局 CSS 类
 
@@ -119,9 +119,3 @@ API: localhost:3001, SSE流式, 打字机欢迎效果
 - book2.ts: 6课~500词
 - 第一册: WordList.tsx硬编码2课
 
-## 7. 升级注意事项
-1. Hex散落JSX: text-[#xxx]/bg-[#xxx]/stroke="#xxx"
-2. lucide stroke/fill用hex字符串, 不支持Tailwind class
-3. wordlist/flashreview无底部导航, 需单独测暗色
-4. CourseBrowser SSE逻辑复杂, 改样式谨慎
-5. 项目无git, 改前先commit备份

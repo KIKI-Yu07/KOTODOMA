@@ -6,48 +6,19 @@ export default {
   theme: {
     extend: {
       colors: {
-        border: "hsl(270 20% 88%)",
-        input: "hsl(270 20% 88%)",
-        ring: "hsl(265 85% 65%)",
-        background: "hsl(270 30% 98%)",
-        foreground: "hsl(270 15% 12%)",
-        primary: {
-          DEFAULT: "hsl(265 85% 65%)",
-          foreground: "hsl(0 0% 100%)",
-        },
-        secondary: {
-          DEFAULT: "hsl(270 20% 94%)",
-          foreground: "hsl(270 15% 15%)",
-        },
-        destructive: {
-          DEFAULT: "hsl(358 80% 44%)",
-          foreground: "hsl(0 0% 100%)",
-        },
-        muted: {
-          DEFAULT: "hsl(270 15% 94%)",
-          foreground: "hsl(270 10% 45%)",
-        },
-        accent: {
-          DEFAULT: "hsl(270 50% 92%)",
-          foreground: "hsl(265 85% 60%)",
-        },
-        popover: {
-          DEFAULT: "hsl(0 0% 100%)",
-          foreground: "hsl(270 15% 12%)",
-        },
-        card: {
-          DEFAULT: "hsl(0 0% 100%)",
-          foreground: "hsl(270 15% 12%)",
-        },
-      },
-      borderRadius: {
-        lg: "16px",
-        md: "12px",
-        sm: "8px",
+        primary: "var(--color-primary)", "primary-subtle": "var(--color-primary-subtle)",
+        bg: "var(--color-bg)", surface: "var(--color-surface)", "surface-subtle": "var(--color-surface-subtle)",
+        main: "var(--color-text)", sub: "var(--color-text-secondary)", hint: "var(--color-text-tertiary)",
+        border: "var(--color-border)",
+        success: "var(--color-success)", "success-subtle": "var(--color-success-subtle)",
+        warning: "var(--color-warning)", "warning-subtle": "var(--color-warning-subtle)",
+        danger: "var(--color-danger)", "danger-subtle": "var(--color-danger-subtle)",
       },
       fontFamily: {
-        sans: ["-apple-system", "BlinkMacSystemFont", "'Segoe UI'", "'PingFang SC'", "'Noto Sans JP'", "sans-serif"],
+        serif: ["'Noto Serif JP'", "'Noto Sans JP'", "serif"],
+        sans: ["'Noto Sans JP'", "'Noto Sans SC'", "system-ui", "sans-serif"],
       },
+      borderRadius: { lg: "20px", md: "14px", sm: "10px" },
     },
   },
   plugins: [],

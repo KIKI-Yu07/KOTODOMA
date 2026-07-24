@@ -1,199 +1,120 @@
-import { useState, useMemo } from "react";
-import { Sun, Moon, ChevronDown, ChevronLeft, ChevronRight, Zap, BookOpen, Clock } from "lucide-react";
+import { useState } from "react";
+import { Settings, Search } from "lucide-react";
 import type { Page } from "../components/BottomNav";
 import StatusBar from "../components/StatusBar";
+import { getReviewCount } from "../lib/spaced-repetition";
+import { getNickname, getAvatar } from "../lib/userStore";
 
-interface HomeProps {
-  onNavigate: (page: Page) => void;
-  darkMode: boolean;
-  onToggleDark: () => void;
-}
+interface HomeProps { onNavigate: (p: Page) => void; darkMode: boolean; onToggleDark: () => void; }
 
-const studiedDays = [
-  new Date(2026, 6, 1), new Date(2026, 6, 2), new Date(2026, 6, 3),
-  new Date(2026, 6, 5), new Date(2026, 6, 6), new Date(2026, 6, 7),
-  new Date(2026, 6, 8), new Date(2026, 6, 10),
-];
-
-const dailyQuotes = [
-  { quote: "猿も木から落ちる", reading: "さるもきからおちる", meaning: "智者千虑，必有一失", note: "「も」表示『连…都』", word: "猿 · 木 · 落ちる" },
-  { quote: "塵も積もれば山となる", reading: "ちりもつもればやまとなる", meaning: "积少成多", note: "「〜ば」条件形", word: "塵 · 積もる · 山" },
-  { quote: "急がば回れ", reading: "いそがばまわれ", meaning: "欲速则不达", note: "「〜ば」条件形", word: "急ぐ · 回る" },
-  { quote: "花より団子", reading: "はなよりだんご", meaning: "舍华求实", note: "「より」比较", word: "花 · 団子" },
-  { quote: "三日坊主", reading: "みっかぼうず", meaning: "三天打鱼两天晒网", note: "惯用语", word: "三日 · 坊主" },
-  { quote: "石の上にも三年", reading: "いしのうえにもさんねん", meaning: "功到自然成", note: "「にも」强调", word: "石 · 三年" },
-  { quote: "泣きっ面に蜂", reading: "なきっつらにはち", meaning: "雪上加霜", note: "「に」表对象", word: "泣き面 · 蜂" },
+const quotes = [
+  { jp:"継続は力なり",rn:"けいぞくはちからなり",zh:"坚持就是力量" },
+  { jp:"千里の道も一歩から",rn:"せんりのみちもいっぽから",zh:"千里之行始于足下" },
+  { jp:"習うより慣れろ",rn:"ならうよりなれろ",zh:"熟能生巧" },
+  { jp:"一念岩をも通す",rn:"いちねんいわをもとおす",zh:"精诚所至金石为开" },
 ];
 
 export default function Home({ onNavigate, darkMode, onToggleDark }: HomeProps) {
-  const [month, setMonth] = useState<Date>(new Date(2026, 6, 9));
-  const [calendarOpen, setCalendarOpen] = useState(false);
-  const quote = useMemo(() => dailyQuotes[new Date().getDate() % dailyQuotes.length], []);
+  const [dailyGoal] = useState(() => parseInt(localStorage.getItem("dailyGoal")||"15"));
+  const reviewCount = getReviewCount();
+  const nick = getNickname();
+  const av = getAvatar();
+  const studyDays = parseInt(localStorage.getItem("studyDays")||"0");
+  const todayWord = quotes[new Date().getDate() % quotes.length];
 
   return (
-    <>
-      <div className={`relative overflow-hidden transition-colors duration-500 ${
-        darkMode
-          ? "bg-gradient-to-b from-[#0B1525] via-[#1A1133] to-[#0E0A1A]"
-          : "bg-gradient-to-b from-[#6D28D9] via-[#A78BFA] to-[#F5F3FF]"
-      }`}>
-        <div className="absolute inset-0 pattern-dots pointer-events-none" />
-        <StatusBar darkMode={darkMode} />
-        <div className="relative z-10 flex justify-between items-center px-4 pt-2 pb-4">
-          <div>
-            <h2 className={`text-xl font-extrabold tracking-tight transition-colors duration-300 ${darkMode ? "text-[#E0E0E0]" : "text-white"}`}>こんにちは</h2>
-            <p className={`text-[32px] font-black leading-none mt-1 tracking-wide transition-colors duration-300 ${darkMode ? "text-[#E0E0E0]" : "text-white"}`}>小明</p>
-            <p className={`text-xs mt-2 transition-colors duration-300 ${darkMode ? "text-[#A78BFA]" : "text-[#DDD6FE]"}`}>今日も日本語の勉強を頑張りましょう ✨</p>
-          </div>
-          <div className="flex gap-3 items-start">
-            <button onClick={onToggleDark}
-              className={`relative w-[76px] h-[30px] rounded-full flex items-center justify-between px-[6px] transition-colors duration-300 ${darkMode ? "bg-[#1A1C22]" : "bg-white/20 backdrop-blur"}`}>
-              <Sun size={15} fill={darkMode ? "none" : "#C8161D"} stroke={darkMode ? "#6B7280" : "#C8161D"} className="relative z-10 transition-colors duration-300" />
-              <Moon size={14} fill={darkMode ? "#A78BFA" : "none"} stroke={darkMode ? "#A78BFA" : "#DDD6FE"} className="relative z-10 transition-colors duration-300" />
-              <span className="absolute top-[3px] w-[24px] h-[24px] rounded-full bg-white shadow-md transition-all duration-300 z-0" style={{ left: darkMode ? "calc(100% - 25px)" : "2px" }} />
-            </button>
-            <div className="w-10 h-10 bg-white/20 backdrop-blur rounded-full flex items-center justify-center text-sm font-bold text-white shadow-sm ring-2 ring-white/30">小</div>
-          </div>
-        </div>
+    <div className="flex-1 min-h-0 overflow-y-auto scroll-area bg-bg">
+      <StatusBar darkMode={darkMode} />
 
-        <div className="relative z-20 px-4 -mb-3">
-          <div className={`rounded-2xl p-4 shadow-lg ${darkMode ? "bg-[#1C1828] border border-white/8" : "bg-white"}`}>
-            <div className="flex items-center justify-between mb-2">
+      {/* Hero */}
+      <div className="pattern-hero overflow-hidden dark:bg-[#1A2A4A]">
+        <div className="relative z-10 px-5 pt-3 pb-5">
+          <div className="flex justify-between items-center mb-5">
+            <div className="flex items-center gap-3">
+              {av ? <img src={av} alt="" className="w-12 h-12 rounded-full object-cover ring-2 ring-white/15" /> :
+               <div className="w-12 h-12 rounded-full bg-white/20 flex items-center justify-center text-lg font-bold text-white ring-2 ring-white/15">{(nick||"小")[0]}</div>}
               <div>
-                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#F3EEFF] dark:bg-[#1F1A2E] text-[#A78BFA] dark:text-[#DDD6FE]">JLPT N3 · 第 8 課</span>
-                <h3 className="text-base font-extrabold text-[#1A1C22] dark:text-[#E0E0E0] mt-1.5">今日の学習</h3>
+                <p className="text-white/60 text-xs">{studyDays > 0 ? `已坚持 ${studyDays} 天` : "こんにちは"}</p>
+                <h1 className="text-white text-lg font-bold">{nick}</h1>
               </div>
-              <span className="text-2xl font-black text-[#A78BFA]">68%</span>
             </div>
-            <div className="w-full h-1.5 bg-[#F3EEFF] dark:bg-[#1F1A2E] rounded-full overflow-hidden">
-              <div className="h-full rounded-full progress-bar progress-gradient" style={{ width: "68%" }} />
+            <button onClick={()=>onNavigate("search")} className="w-9 h-9 rounded-full bg-white/15 flex items-center justify-center active:scale-90">
+              <Search size={16} stroke="white" />
+            </button>
+          </div>
+
+          {/* Challenge Card */}
+          <div className="bg-white/10 backdrop-blur rounded-2xl p-4 text-center border border-white/10">
+            <p className="text-white/40 text-[10px] font-bold uppercase tracking-wider mb-1">Daily Target</p>
+            <h2 className="text-white text-xl font-extrabold mb-3">今日の学習目標</h2>
+            <div className="flex justify-center gap-6 mb-3">
+              <div className="text-center"><p className="text-white text-3xl font-extrabold">{dailyGoal}</p><p className="text-white/40 text-[10px]">新学</p></div>
+              <div className="w-px bg-white/10"/>
+              <div className="text-center"><p className="text-white text-3xl font-extrabold">{reviewCount}</p><p className="text-white/40 text-[10px]">复习</p></div>
+              <div className="w-px bg-white/10"/>
+              <div className="text-center"><p className="text-[#FFD700] text-3xl font-extrabold">{studyDays}</p><p className="text-white/40 text-[10px]">坚持</p></div>
             </div>
-            <div className="flex gap-2 mt-3">
-              {[{ n: 40, label: "マスター" },{ n: 15, label: "学習中" },{ n: 5, label: "未学習" }].map((s, i) => (
-                <div key={i} className="flex-1 bg-[#F5F3FF] dark:bg-[#1F1A2E] rounded-lg py-1.5 text-center">
-                  <p className="text-sm font-extrabold text-[#A78BFA]">{s.n}</p>
-                  <p className="text-[9px] text-[#4A4A50] dark:text-[#999AA0]">{s.label}</p>
-                </div>
-              ))}
+            <button onClick={()=>{
+              const today = new Date().toISOString().slice(0,10);
+              const last = localStorage.getItem("lastStudyDate")||"";
+              onNavigate(last===today?"rest":"study");
+            }} className="w-full py-3 bg-white text-[#0F64B5] rounded-full font-extrabold text-base active:scale-[0.97]">
+              学習を始める
+            </button>
+            <div className="flex justify-center gap-3 mt-2">
+              <button onClick={()=>onNavigate("settings")} className="text-white/40 text-[10px] font-bold active:text-white/70">
+                <Settings size={10} className="inline mr-1" />目標設定
+              </button>
+              <button onClick={()=>{localStorage.clear();location.reload()}} className="text-white/30 text-[10px] active:text-white/60">
+                リセット
+              </button>
             </div>
           </div>
         </div>
-        <div className={`h-5 rounded-t-[24px] transition-colors duration-300 ${darkMode ? "bg-[#0E0A1A]" : "bg-[#F5F3FF]"}`} />
+        <div className="h-5 bg-bg rounded-t-[20px]"/>
       </div>
 
-      <div className="flex-1 overflow-y-auto scroll-area px-4 pb-4 space-y-4 -mt-1">
-        <div className="grid grid-cols-2 gap-3">
-          <div onClick={() => onNavigate("flashreview")} className="card-action cursor-pointer select-none" style={{ background: darkMode ? "#2D1A10" : "#FFF3EB" }}>
-            <div className="relative z-10">
-              <div className="w-10 h-10 rounded-xl flex items-center justify-center mb-3" style={{ background: darkMode ? "#3D2418" : "#FDEEE5" }}>
-                <Zap size={20} fill="#EB5C20" stroke="#EB5C20" />
-              </div>
-              <p className="text-sm font-extrabold text-[#1A1C22] dark:text-[#E0E0E0]">瞬間</p>
-              <p className="text-[20px] font-black text-[#EB5C20] leading-none mt-1">レビュー</p>
-              <p className="text-[10px] text-[#4A4A50] dark:text-[#999AA0] mt-1.5">8 語収録</p>
-            </div>
-          </div>
-          <div onClick={() => onNavigate("wordlist")} className="card-action cursor-pointer select-none" style={{ background: darkMode ? "#1A1133" : "#EDE9FE" }}>
-            <div className="relative z-10">
-              <div className="w-10 h-10 rounded-xl flex items-center justify-center mb-3" style={{ background: darkMode ? "#1F1A2E" : "#F3EEFF" }}>
-                <BookOpen size={20} stroke="#A78BFA" />
-              </div>
-              <p className="text-sm font-extrabold text-[#1A1C22] dark:text-[#E0E0E0]">単語帳</p>
-              <p className="text-[20px] font-black text-[#A78BFA] leading-none mt-1">リスト</p>
-              <p className="text-[10px] text-[#4A4A50] dark:text-[#999AA0] mt-1.5">2冊 · 全単語</p>
-            </div>
+      {/* Content */}
+      <div className="px-5 pb-4 space-y-3 -mt-2">
+
+        {/* Today's Quote */}
+        <div className="bg-white dark:bg-surface rounded-2xl p-4 shadow-sm border border-border relative overflow-hidden">
+          <img src={`/icons/d${new Date().getDay()}.svg`} alt="" className="absolute right-2 bottom-0 w-28 h-28 opacity-20 dark:opacity-10 pointer-events-none" />
+          <div className="relative z-10">
+            <p className="text-[10px] text-hint font-bold uppercase tracking-wider mb-1">今日の一言</p>
+            <p className="font-serif text-xl font-bold text-main">{todayWord.jp}</p>
+            <p className="text-xs text-primary mt-1">{todayWord.rn}</p>
+            <p className="text-xs text-sub mt-0.5">{todayWord.zh}</p>
           </div>
         </div>
 
-        <div className="grid grid-cols-2 gap-3">
+        {/* Quick Links */}
+        <div className="grid grid-cols-4 gap-2">
           {[
-            { icon: <Clock size={22} stroke="#7C3AED" />, label: "学習時間", value: "0", unit: "分", bg: darkMode ? "#1F1533" : "#EDE9FE" },
-            { icon: <BookOpen size={22} stroke="#A78BFA" />, label: "今日の単語", value: "0", unit: "語", bg: darkMode ? "#1A1133" : "#F3EEFF" },
-          ].map((s, i) => (
-            <div key={i} className="card rounded-2xl p-4 flex items-center gap-3">
-              <div className="w-11 h-11 rounded-xl flex items-center justify-center shrink-0" style={{ background: s.bg }}>{s.icon}</div>
-              <div>
-                <p className="text-2xl font-extrabold text-[#1A1C22] dark:text-[#E0E0E0]">{s.value}<span className="text-sm font-medium text-[#4A4A50] dark:text-[#999AA0] ml-1">{s.unit}</span></p>
-                <p className="text-[11px] text-[#4A4A50] dark:text-[#999AA0]">{s.label}</p>
-              </div>
-            </div>
+            {ill:<FlashReviewSvg/>,l:"瞬間レビュー",a:"flashreview"as Page},
+            {ill:<WordListSvg/>,l:"単語リスト",a:"wordlist"as Page},
+            {ill:<GrammarSvg/>,l:"文法練習",a:"word"as Page},
+            {ill:<VocabSvg/>,l:"单词巩固",a:"vocab"as Page},
+            {ill:<MatchZhSvg/>,l:"练习中心",a:"practice"as Page},
+          ].map((c,i)=>(
+            <button key={i} onClick={()=>onNavigate(c.a)}
+              className="flex flex-col items-center justify-center gap-1 aspect-square rounded-[8px] bg-white dark:bg-surface shadow-sm border border-border active:scale-95 transition-all">
+              {c.ill}
+              <span className="text-[10px] font-bold text-sub">{c.l}</span>
+            </button>
           ))}
         </div>
 
-        <div className="card rounded-[20px] p-4">
-          <button onClick={() => { if (calendarOpen) setMonth(new Date()); setCalendarOpen(!calendarOpen); }} className="w-full flex justify-between items-center">
-            <h3 className="font-extrabold text-[15px] text-[#1A1C22] dark:text-[#E0E0E0]">学習カレンダー</h3>
-            <div className="flex items-center gap-2">
-              <span className="text-xs text-[#018B8D] font-bold">今月 {studiedDays.filter(d => d.getMonth() === month.getMonth()).length} 日</span>
-              <ChevronDown size={16} stroke="#4A4A50" className={`transition-transform duration-300 ${calendarOpen ? "rotate-180" : ""}`} />
-            </div>
-          </button>
-          <div className="flex items-center justify-between mt-2 mb-1">
-            <button onClick={(e) => { e.stopPropagation(); if (calendarOpen) setMonth(new Date(month.getFullYear(), month.getMonth() - 1, 1)); }}
-              className={`w-7 h-7 rounded-full flex items-center justify-center ${calendarOpen ? "text-[#4A4A50]" : "text-[#DDD6FE] pointer-events-none"}`}>
-              <ChevronLeft size={16} /></button>
-            <span className="text-sm font-bold text-[#1A1C22] dark:text-[#E0E0E0]">{month.getFullYear()}年{month.getMonth() + 1}月</span>
-            <button onClick={(e) => { e.stopPropagation(); if (calendarOpen) setMonth(new Date(month.getFullYear(), month.getMonth() + 1, 1)); }}
-              className={`w-7 h-7 rounded-full flex items-center justify-center ${calendarOpen ? "text-[#4A4A50]" : "text-[#DDD6FE] pointer-events-none"}`}>
-              <ChevronRight size={16} /></button>
-          </div>
-          <div className={`transition-[max-height,opacity] duration-500 ease-in-out overflow-hidden ${calendarOpen ? "max-h-[400px] opacity-100" : "max-h-[64px] opacity-60"}`}>
-            <div className="grid grid-cols-7 text-center mb-0.5">
-              {["日","月","火","水","木","金","土"].map(w => (
-                <span key={w} className={`text-xs font-bold py-1 ${w==="日"?"text-[#C8161D]":w==="土"?"text-[#8B5CF6]":"text-[#4A4A50] dark:text-[#999AA0]"}`}>{w}</span>
-              ))}
-            </div>
-            {(() => {
-              const year = month.getFullYear(), m = month.getMonth();
-              const firstDay = new Date(year, m, 1).getDay();
-              const daysInMonth = new Date(year, m + 1, 0).getDate();
-              const today = new Date();
-              const todayStr = `${today.getFullYear()}-${today.getMonth()}-${today.getDate()}`;
-              const studiedStrs = new Set(studiedDays.map(d => `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`));
-              const cells = [];
-              for (let i = 0; i < firstDay; i++) cells.push({ day: 0, isToday: false, isStudied: false });
-              for (let d = 1; d <= daysInMonth; d++) cells.push({ day: d, isToday: `${year}-${m}-${d}` === todayStr, isStudied: studiedStrs.has(`${year}-${m}-${d}`) });
-              const rows = [];
-              for (let i = 0; i < cells.length; i += 7) rows.push(cells.slice(i, i + 7));
-              const todayRow = rows.findIndex(row => row.some(c => c.isToday));
-              const offset = calendarOpen ? 0 : (todayRow >= 0 ? todayRow * 36 : 0);
-              return (
-                <div className="transition-transform duration-500 ease-in-out" style={{ transform: `translateY(-${offset}px)` }}>
-                  {rows.map((row, ri) => (
-                    <div key={ri} className={`grid grid-cols-7 text-center transition-all duration-500 ${!calendarOpen && ri !== todayRow ? "opacity-0" : ""}`}>
-                      {row.map((c, ci) => (
-                        <div key={ci} className="flex items-center justify-center py-0.5">
-                          {c.day > 0 && (
-                            <span className={`inline-flex items-center justify-center w-8 h-8 rounded-full text-sm font-semibold transition-colors ${
-                              c.isToday ? "bg-[#A78BFA] text-white today-glow" :
-                              c.isStudied ? "bg-[#F3EEFF] dark:bg-[#1F1A2E] text-[#A78BFA]" :
-                              "text-[#1A1C22] dark:text-[#E0E0E0]"}`}>{c.day}</span>
-                          )}
-                        </div>
-                      ))}
-                    </div>
-                  ))}
-                </div>
-              );
-            })()}
-          </div>
-        </div>
-
-        <div className="relative px-1 py-2">
-          <span className="quote-mark absolute top-0 left-0 leading-none select-none">"</span>
-          <div className="pl-8">
-            <p className="text-[22px] font-black text-[#1A1C22] dark:text-[#E0E0E0] tracking-wide leading-snug">{quote.quote}</p>
-            <p className="text-sm font-bold text-[#A78BFA] dark:text-[#DDD6FE] mt-2">{quote.reading}</p>
-            <p className="text-xs text-[#4A4A50] dark:text-[#999AA0] mt-1">{quote.meaning}</p>
-            <div className="flex items-center gap-2 mt-3">
-              <span className="text-[10px] px-2 py-0.5 rounded-full bg-[#F3EEFF] dark:bg-[#1F1A2E] text-[#A78BFA] dark:text-[#DDD6FE] font-semibold">{quote.note}</span>
-              <span className="text-[10px] text-[#4A4A50] dark:text-[#999AA0]">{quote.word}</span>
-            </div>
-          </div>
-        </div>
-
-        <div className="h-4" />
+        <div className="h-2"/>
       </div>
-    </>
+    </div>
   );
 }
+
+// Thin line-art SVG icons — reference style
+const S = 20;
+function FlashReviewSvg(){return(<svg width={S} height={S} viewBox="0 0 24 24" fill="none" stroke="#333" strokeWidth="2" strokeLinecap="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10" fill="none" stroke="#0F64B5" strokeWidth="2"/></svg>)}
+function WordListSvg(){return(<svg width={S} height={S} viewBox="0 0 24 24" fill="none"><path d="M4 6h16M4 10h16M4 14h10" stroke="#333" strokeWidth="2" strokeLinecap="round"/><rect x="4" y="16" width="6" height="4" rx="1" fill="#0F64B5" opacity=".3"/><rect x="14" y="16" width="6" height="4" rx="1" fill="#0F64B5" opacity=".6"/></svg>)}
+function GrammarSvg(){return(<svg width={S} height={S} viewBox="0 0 24 24" fill="none"><path d="M8 4v16M16 4v16M6 2h12M6 22h12" stroke="#333" strokeWidth="2" strokeLinecap="round"/><path d="M10 8h4M10 12h4" stroke="#0F64B5" strokeWidth="1.5" strokeLinecap="round"/></svg>)}
+function VocabSvg(){return(<svg width={S} height={S} viewBox="0 0 24 24" fill="none"><path d="M4 4h16v16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z" stroke="#333" strokeWidth="2"/><path d="M8 8l4 4-4 4" stroke="#0F64B5" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>)}
+function MatchZhSvg(){return(<svg width={S} height={S} viewBox="0 0 24 24" fill="none"><circle cx="9" cy="9" r="2" stroke="#333" strokeWidth="2"/><circle cx="15" cy="15" r="2" stroke="#0F64B5" strokeWidth="2"/><path d="M10.5 10.5L13.5 13.5" stroke="#333" strokeWidth="2" strokeLinecap="round"/></svg>)}

@@ -2,7 +2,6 @@ import { useState, useRef } from "react";
 import { ArrowLeft, BookOpen, Bookmark, Pencil, CheckCircle } from "lucide-react";
 import type { Page } from "../components/BottomNav";
 import StatusBar from "../components/StatusBar";
-import Loader from "../components/Loader";
 import { book2Data } from "../data/book2";
 
 interface WordListProps {
@@ -78,7 +77,6 @@ export default function WordList({ onNavigate, darkMode }: WordListProps) {
   const [bookOpen, setBookOpen] = useState(false);
   const [chapterOpen, setChapterOpen] = useState(false);
   const [openSwipeId, setOpenSwipeId] = useState<string | null>(null);
-  const [loading, setLoading] = useState(false);
   const [animKey, setAnimKey] = useState(0);
   const swipeX = useRef<Record<string, number>>({});
   const [, tick] = useState(0);
@@ -88,7 +86,6 @@ export default function WordList({ onNavigate, darkMode }: WordListProps) {
   const selectedChapter = selectedBook.chapters.find((c) => c.id === selectedChapterId)!;
 
   const handleBookChange = (bookId: string) => {
-    setLoading(true);
     setSelectedBookId(bookId);
     const book = books.find((b) => b.id === bookId)!;
     setSelectedChapterId(book.chapters[0].id);
@@ -96,30 +93,26 @@ export default function WordList({ onNavigate, darkMode }: WordListProps) {
     setOpenSwipeId(null);
     swipeX.current = {};
     setAnimKey(k => k + 1);
-    setTimeout(() => setLoading(false), 400);
   };
 
   const handleChapterChange = (chapterId: string) => {
-    setLoading(true);
     setSelectedChapterId(chapterId);
     setChapterOpen(false);
     setOpenSwipeId(null);
     swipeX.current = {};
     setAnimKey(k => k + 1);
-    setTimeout(() => setLoading(false), 400);
   };
 
   return (
     <>
       <StatusBar darkMode={darkMode} />
-      <div className="flex items-center gap-3 px-4 py-2">
-        <button
-          onClick={() => onNavigate("home")}
-          className="w-8 h-8 bg-white dark:[#1C1828] rounded-full flex items-center justify-center shadow-sm card-hover"
-        >
-          <ArrowLeft size={16} stroke="var(--[#1A1C22])" strokeWidth={2.5} className="dark:stroke-[#E0E0E0]" />
+      <div className="flex items-center justify-between px-4 py-2">
+        <button onClick={() => onNavigate("home")}
+          className="flex items-center gap-1 text-hint text-sm font-bold active:opacity-60 transition-opacity">
+          <ArrowLeft size={16} stroke="var(--color-text-tertiary)" strokeWidth={2} />
+          <span>戻る</span>
         </button>
-        <span className="text-[15px] font-semibold text-[#1A1C22] dark:text-[#1A1C22]">単語リスト</span>
+        <span className="text-lg font-bold text-main dark:text-main">単語リスト</span>
       </div>
 
       {/* Selection form */}
@@ -127,23 +120,23 @@ export default function WordList({ onNavigate, darkMode }: WordListProps) {
         <div className="relative">
           <button
             onClick={() => { setBookOpen(!bookOpen); setChapterOpen(false); }}
-            className="w-full card rounded-xl px-4 py-3 flex items-center justify-between font-semibold text-[#1A1C22] dark:text-[#1A1C22]"
+            className="w-full card rounded-xl px-4 py-3 flex items-center justify-between font-semibold text-main dark:text-main"
           >
             <div className="flex items-center gap-2.5">
-              <BookOpen size={16} stroke="var(--primary-400)" />
+              <BookOpen size={16} stroke="#0F64B5" />
               <span className="text-sm">{selectedBook.name}</span>
             </div>
             <div className="flex items-center gap-2">
-              <span className="text-[10px] text-[#4A4A50] dark:text-[#999AA0] font-normal">{selectedBook.chapters.length}章</span>
+              <span className="text-[10px] text-sub dark:text-hint font-normal">{selectedBook.chapters.length}章</span>
               <div className={`picker-bar ${bookOpen ? 'open' : ''}`}>
                 <span className="top" /><span className="middle" /><span className="bottom" />
               </div>
             </div>
           </button>
-          <div className={`dropdown-menu absolute top-full left-0 right-0 mt-1 bg-white dark:[#1C1828] rounded-xl shadow-lg z-30 ${bookOpen ? 'open' : ''}`}>
+          <div className={`dropdown-menu absolute top-full left-0 right-0 mt-1 bg-white dark:bg-surface rounded-xl shadow-lg z-30 ${bookOpen ? 'open' : ''}`}>
             {books.map((b) => (
               <button key={b.id} onClick={() => handleBookChange(b.id)}
-                className={`dropdown-item w-full px-4 py-3 text-left flex items-center justify-between ${selectedBookId === b.id ? "text-[#A78BFA]" : "text-[#1A1C22] dark:text-[#1A1C22]"}`}>
+                className={`dropdown-item w-full px-4 py-3 text-left flex items-center justify-between ${selectedBookId === b.id ? "text-primary" : "text-main dark:text-main"}`}>
                 <span className="text-sm font-semibold">{b.name}</span>
                 {selectedBookId === b.id && <span className="text-[10px]">✓</span>}
               </button>
@@ -154,45 +147,42 @@ export default function WordList({ onNavigate, darkMode }: WordListProps) {
         <div className="relative">
           <button
             onClick={() => { setChapterOpen(!chapterOpen); setBookOpen(false); }}
-            className="w-full card rounded-xl px-4 py-3 flex items-center justify-between font-semibold text-[#1A1C22] dark:text-[#1A1C22]"
+            className="w-full card rounded-xl px-4 py-3 flex items-center justify-between font-semibold text-main dark:text-main"
           >
             <div className="flex items-center gap-2.5">
-              <span className="text-[11px] font-bold [#D34947]">第{selectedChapter.id}課</span>
+              <span className="text-[11px] font-bold [#D13838]">第{selectedChapter.id}課</span>
               <span className="text-sm">{selectedChapter.name.split("·")[1]?.trim() || selectedChapter.name}</span>
             </div>
             <div className="flex items-center gap-2">
-              <span className="text-[10px] [#018B8D] font-normal">{selectedChapter.words.length}語</span>
+              <span className="text-[10px] [#0F64B5] font-normal">{selectedChapter.words.length}語</span>
               <div className={`picker-bar ${chapterOpen ? 'open' : ''}`}>
                 <span className="top" /><span className="middle" /><span className="bottom" />
               </div>
             </div>
           </button>
-          <div className={`dropdown-menu absolute top-full left-0 right-0 mt-1 bg-white dark:[#1C1828] rounded-xl shadow-lg z-30 max-h-[184px] overflow-y-auto scroll-area ${chapterOpen ? 'open' : ''}`}>
+          <div className={`dropdown-menu absolute top-full left-0 right-0 mt-1 bg-white dark:bg-surface rounded-xl shadow-lg z-30 max-h-[184px] overflow-y-auto scroll-area ${chapterOpen ? 'open' : ''}`}>
             {selectedBook.chapters.map((ch) => (
               <button key={ch.id} onClick={() => handleChapterChange(ch.id)}
-                className={`dropdown-item w-full px-4 py-3 text-left flex items-center justify-between ${selectedChapterId === ch.id ? "[#D34947]" : "text-[#1A1C22] dark:text-[#1A1C22]"}`}>
+                className={`dropdown-item w-full px-4 py-3 text-left flex items-center justify-between ${selectedChapterId === ch.id ? "[#D13838]" : "text-main dark:text-main"}`}>
                 <span className="text-sm font-semibold">{ch.name}</span>
-                <span className="text-[10px] [#018B8D]">{ch.words.length}語</span>
+                <span className="text-[10px] [#0F64B5]">{ch.words.length}語</span>
               </button>
             ))}
           </div>
         </div>
 
         <div className="flex items-center gap-2 px-1">
-          <span className="text-[10px] text-[#4A4A50] dark:text-[#999AA0]">
+          <span className="text-[10px] text-sub dark:text-hint">
             已学 {selectedChapter.words.length - 2}/{selectedChapter.words.length} 词
           </span>
-          <div className="flex-1 h-1 [#F3EEFF] dark:[#F3EEFF] rounded-full overflow-hidden">
-            <div className="h-full bg-[#018B8D] rounded-full" style={{ width: `${Math.round((selectedChapter.words.length - 2) / selectedChapter.words.length * 100)}%` }} />
+          <div className="flex-1 h-1 [#E8F2FB] dark:bg-primary-subtle rounded-full overflow-hidden">
+            <div className="h-full bg-primary rounded-full" style={{ width: `${Math.round((selectedChapter.words.length - 2) / selectedChapter.words.length * 100)}%` }} />
           </div>
         </div>
       </div>
 
       {/* Word List */}
-      {loading ? (
-        <Loader />
-      ) : (
-      <div className="flex-1 overflow-y-auto scroll-area px-4 pb-4">
+      <div className="flex-1 min-h-0 overflow-y-auto scroll-area px-4 pb-4">
         <div key={animKey} className="space-y-2">
           {selectedChapter.words.map((w, i) => {
             const offset = swipeX.current[w.id] || 0;
@@ -206,17 +196,17 @@ export default function WordList({ onNavigate, darkMode }: WordListProps) {
                       <Bookmark size={18} stroke="#fff" fill="#fff" />
                       <span className="text-[9px] text-white font-semibold">标记</span>
                     </button>
-                    <button onClick={() => { swipeX.current[w.id] = 0; setOpenSwipeId(null); tick(n => n + 1); }} className="flex-1 flex flex-col items-center justify-center gap-1 [#8B5CF6] active:opacity-80">
+                    <button onClick={() => { swipeX.current[w.id] = 0; setOpenSwipeId(null); tick(n => n + 1); }} className="flex-1 flex flex-col items-center justify-center gap-1 [#0F64B5] active:opacity-80">
                       <Pencil size={18} stroke="#fff" />
                       <span className="text-[9px] text-white font-semibold">编辑</span>
                     </button>
-                    <button onClick={() => { swipeX.current[w.id] = 0; setOpenSwipeId(null); tick(n => n + 1); }} className="flex-1 flex flex-col items-center justify-center gap-1 bg-[#018B8D] active:opacity-80">
+                    <button onClick={() => { swipeX.current[w.id] = 0; setOpenSwipeId(null); tick(n => n + 1); }} className="flex-1 flex flex-col items-center justify-center gap-1 bg-primary active:opacity-80">
                       <CheckCircle size={18} stroke="#fff" fill="#fff" />
                       <span className="text-[9px] text-white font-semibold">熟记</span>
                     </button>
                   </div>
                   {/* Spine — bridges action bar and card, visible when open */}
-                  <div className={`w-[16px] h-full transition-colors ${isOpen ? "bg-[#F3EEFF]" : "bg-[#F3EEFF]"}`} />
+                  <div className={`w-[16px] h-full transition-colors ${isOpen ? "bg-primary-subtle" : "bg-primary-subtle"}`} />
                 </div>
 
                 {/* Card that slides right */}
@@ -265,12 +255,12 @@ export default function WordList({ onNavigate, darkMode }: WordListProps) {
                   <div className="flex-1 min-w-0 p-3.5 flex items-center">
                     <div className="flex items-center justify-between w-full">
                       <div className="min-w-0 flex-1">
-                        <span className="text-[16px] font-bold text-[#1A1C22] dark:text-[#1A1C22] block leading-tight">{w.word}</span>
-                        <span className="text-[11px] [#A78BFA] mt-0.5 block">{w.reading}</span>
+                        <span className="text-[11px] text-primary block">{w.reading}</span>
+                        <span className="text-[16px] font-bold text-main dark:text-main block leading-tight">{w.word}</span>
                       </div>
                       <div className="text-right shrink-0 ml-4">
-                        <span className="text-[10px] font-semibold px-2 py-0.5 rounded-md [#F3EEFF] dark:[#F3EEFF] [#A78BFA] inline-block">{w.pos}</span>
-                        <p className="text-[13px] font-medium text-[#4A4A50] dark:text-[#999AA0] mt-1">{w.meaning}</p>
+                        <span className="text-[10px] font-semibold px-2 py-0.5 rounded-md [#E8F2FB] dark:bg-primary-subtle [#0F64B5] inline-block">{w.pos}</span>
+                        <p className="text-[13px] font-medium text-sub dark:text-hint mt-1">{w.meaning}</p>
                       </div>
                     </div>
                   </div>
@@ -281,7 +271,6 @@ export default function WordList({ onNavigate, darkMode }: WordListProps) {
         </div>
         <div className="h-4" />
       </div>
-      )}
     </>
   );
 }

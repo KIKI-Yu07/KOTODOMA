@@ -1,4 +1,6 @@
-node_modules/
-dist/
-server/node_modules/
+node_modules
+dist
 *.tsbuildinfo
+.env
+server/conversations
+server/data
