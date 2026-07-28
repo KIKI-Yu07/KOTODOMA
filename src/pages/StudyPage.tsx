@@ -1,149 +1,282 @@
-import { useState, useMemo, useCallback, useRef } from "react";
+import { useState, useMemo, useCallback, useRef, useEffect } from "react";
 import { ArrowLeft, Zap, AlertTriangle } from "lucide-react";
 import type { Page } from "../components/BottomNav";
-import StatusBar from "../components/StatusBar";
-import { loadProgress, answerWord, getReviewCount, WordProgress } from "../lib/spaced-repetition";
+import { loadProgress, answerWord, getReviewCount } from "../lib/spaced-repetition";
+import { setLocal } from "../lib/store";
+import { getExample } from "../data/examples";
+import { book2Data } from "../data/book2";
 
 interface StudyPageProps { onNavigate: (p: Page) => void; darkMode?: boolean; }
 
-const allWords = [
-  { id:"1-1",word:"生活",reading:"せいかつ",meaning:"生活",pos:"名詞"},{id:"1-2",word:"経験",reading:"けいけん",meaning:"经验",pos:"名詞・スル"},{id:"1-3",word:"出発",reading:"しゅっぱつ",meaning:"出发",pos:"名詞・スル"},{id:"1-4",word:"到着",reading:"とうちゃく",meaning:"到达",pos:"名詞・スル"},{id:"1-5",word:"準備",reading:"じゅんび",meaning:"准备",pos:"名詞・スル"},{id:"1-6",word:"片付ける",reading:"かたづける",meaning:"整理/收拾",pos:"動詞Ⅱ"},{id:"1-7",word:"洗濯",reading:"せんたく",meaning:"洗衣服",pos:"名詞・スル"},{id:"1-8",word:"掃除",reading:"そうじ",meaning:"打扫",pos:"名詞・スル"},{id:"1-9",word:"料理",reading:"りょうり",meaning:"烹饪",pos:"名詞・スル"},{id:"1-10",word:"買い物",reading:"かいもの",meaning:"购物",pos:"名詞・スル"},{id:"1-11",word:"散歩",reading:"さんぽ",meaning:"散步",pos:"名詞・スル"},{id:"1-12",word:"通勤",reading:"つうきん",meaning:"通勤",pos:"名詞・スル"},{id:"2-1",word:"感動",reading:"かんどう",meaning:"感动",pos:"名詞・スル"},{id:"2-2",word:"緊張",reading:"きんちょう",meaning:"紧张",pos:"名詞・スル"},{id:"2-3",word:"安心",reading:"あんしん",meaning:"放心",pos:"名詞・スル"},{id:"2-4",word:"満足",reading:"まんぞく",meaning:"满足",pos:"名詞・スル"},{id:"2-5",word:"失望",reading:"しつぼう",meaning:"失望",pos:"名詞・スル"},{id:"2-6",word:"我慢",reading:"がまん",meaning:"忍耐",pos:"名詞・スル"},{id:"2-7",word:"努力",reading:"どりょく",meaning:"努力",pos:"名詞・スル"},{id:"2-8",word:"感謝",reading:"かんしゃ",meaning:"感谢",pos:"名詞・スル"},{id:"2-9",word:"尊敬",reading:"そんけい",meaning:"尊敬",pos:"名詞・スル"},{id:"2-10",word:"信頼",reading:"しんらい",meaning:"信赖",pos:"名詞・スル"},
+const book1Words = [
+  {id:"1-1",w:"生活",r:"せいかつ",m:"生活",p:"名詞"},{id:"1-2",w:"経験",r:"けいけん",m:"经验",p:"名詞・スル"},{id:"1-3",w:"出発",r:"しゅっぱつ",m:"出发",p:"名詞・スル"},{id:"1-4",w:"到着",r:"とうちゃく",m:"到达",p:"名詞・スル"},{id:"1-5",w:"準備",r:"じゅんび",m:"准备",p:"名詞・スル"},{id:"1-6",w:"片付ける",r:"かたづける",m:"整理/收拾",p:"動詞Ⅱ"},{id:"1-7",w:"洗濯",r:"せんたく",m:"洗衣服",p:"名詞・スル"},{id:"1-8",w:"掃除",r:"そうじ",m:"打扫",p:"名詞・スル"},{id:"1-9",w:"料理",r:"りょうり",m:"烹饪",p:"名詞・スル"},{id:"1-10",w:"買い物",r:"かいもの",m:"购物",p:"名詞・スル"},{id:"1-11",w:"散歩",r:"さんぽ",m:"散步",p:"名詞・スル"},{id:"1-12",w:"通勤",r:"つうきん",m:"通勤",p:"名詞・スル"},{id:"2-1",w:"感動",r:"かんどう",m:"感动",p:"名詞・スル"},{id:"2-2",w:"緊張",r:"きんちょう",m:"紧张",p:"名詞・スル"},{id:"2-3",w:"安心",r:"あんしん",m:"放心",p:"名詞・スル"},{id:"2-4",w:"満足",r:"まんぞく",m:"满足",p:"名詞・スル"},{id:"2-5",w:"失望",r:"しつぼう",m:"失望",p:"名詞・スル"},{id:"2-6",w:"我慢",r:"がまん",m:"忍耐",p:"名詞・スル"},{id:"2-7",w:"努力",r:"どりょく",m:"努力",p:"名詞・スル"},{id:"2-8",w:"感謝",r:"かんしゃ",m:"感谢",p:"名詞・スル"},{id:"2-9",w:"尊敬",r:"そんけい",m:"尊敬",p:"名詞・スル"},{id:"2-10",w:"信頼",r:"しんらい",m:"信赖",p:"名詞・スル"},
 ];
 
-function getOptions(correct: string, all: string[]): string[] {
-  const wrongs = all.filter(m => m !== correct);
-  const picks = shuffle(wrongs).slice(0, 3);
-  return shuffle([correct, ...picks]);
-}
+const allWords = [...book1Words, ...book2Data.flatMap(ch => ch.words.map(w => ({ id:w.id, w:w.word, r:w.reading, m:w.meaning, p:w.pos })))];
 
-export default function StudyPage({ onNavigate, darkMode }: StudyPageProps) {
-  const dailyGoal = parseInt(localStorage.getItem("dailyGoal") || "15");
-  const allMeanings = useMemo(() => allWords.map(w => w.meaning), []);
-  const today = new Date().toISOString().slice(0, 10);
-  const progress = useMemo(() => loadProgress(), []);
+function genOptions(correct:string, all:string[]):string[]{const w=all.filter(m=>m!==correct);return shuffle([correct,...shuffle(w).slice(0,3)]);}
+function shuffle<T>(a:T[]):T[]{const b=[...a];for(let i=b.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[b[i],b[j]]=[b[j],b[i]]}return b}
 
-  // Build session: review words due today + new words up to dailyGoal
-  const sessionWords = useMemo(() => {
-    const dueNow = allWords.filter(w => {
-      const p = progress[w.id];
-      return p && p.nextReview <= today;
-    });
-    const doneIds = new Set(Object.keys(progress));
-    const newPool = allWords.filter(w => !doneIds.has(w.id));
-    const newCount = Math.max(0, dailyGoal - dueNow.length);
-    const newWords = shuffle(newPool).slice(0, newCount);
-    return shuffle([...dueNow, ...newWords]);
-  }, [dailyGoal, progress, today]);
+interface Q { prompt:string; correct:string; options:string[]; type:0|1|2 }
 
-  const [queue, setQueue] = useState(() => sessionWords.map(w => w.id));
-  const [picked, setPicked] = useState<string | null>(null);
-  const [rightCount, setRightCount] = useState<Record<string, number>>({});
+export default function StudyPage({ onNavigate }: StudyPageProps) {
+  const dailyGoal = parseInt(localStorage.getItem("dailyGoal")||"15");
+  const today = new Date().toISOString().slice(0,10);
+  const progress = useMemo(()=>loadProgress(),[]);
+  const allMs = useMemo(()=>allWords.map(w=>w.m),[]);
+  const allRs = useMemo(()=>allWords.map(w=>w.r),[]);
+
+  const { reviewWords, newWords } = useMemo(()=>{
+    const due = allWords.filter(w=>{const p=progress[w.id];return p&&p.nextReview<=today});
+    const done = new Set(Object.keys(progress));
+    // Filter by start chapter
+    const startCh = localStorage.getItem("startChapter") || "0";
+    let available = allWords.filter(w=>!done.has(w.id));
+    if (startCh !== "0") {
+      const startIdx = book2Data.findIndex(ch=>ch.id===startCh);
+      if (startIdx >= 0) {
+        const allowedIds = new Set(book2Data.slice(startIdx).flatMap(ch=>ch.words.map(w=>w.id)));
+        available = available.filter(w=>allowedIds.has(w.id));
+      }
+    }
+    const randomMode = localStorage.getItem("randomMode") !== "false";
+    const news = randomMode ? shuffle(available).slice(0, dailyGoal) : available.slice(0, dailyGoal);
+    return {reviewWords:due, newWords:news};
+  },[dailyGoal,progress,today]);
+
+  const allIds = useMemo(()=>[...reviewWords.map(w=>w.id),...newWords.map(w=>w.id)],[reviewWords,newWords]);
+  const allCount = allIds.length;
+
+  const phases = ["复习巩固","新词认知","多维练习"];
+  const typeLabels = ["假名→中文","汉字→假名","汉字→中文"];
+
+  // ── State ──
+  const [phase, setPhase] = useState(()=>reviewWords.length>0?0:newWords.length>0?1:2);
+  const [queue, setQueue] = useState<string[]>(()=>reviewWords.length?reviewWords.map(w=>w.id):newWords.length?newWords.map(w=>w.id):allIds);
+  const [picked, setPicked] = useState<string|null>(null);
   const [done, setDone] = useState(false);
   const [totalRight, setTotalRight] = useState(0);
+  const [dueTomorrow, setDueTomorrow] = useState(0);
   const [showExit, setShowExit] = useState(false);
-  const answerBuffer = useRef<Record<string, boolean>>({}); // buffer answers, commit only on done
+  const [showHint, setShowHint] = useState(false);
 
-  const currentId = queue[0];
-  const current = allWords.find(w => w.id === currentId) || allWords[0];
-  const [options, setOptions] = useState(() => getOptions(current.meaning, allMeanings));
+  // ── Refs ──
+  const phaseCorrect = useRef(new Set<string>());
+  const errorPool = useRef<string[]>([]);
+  const errorCount = useRef<Record<string,number>>({});
+  const answers = useRef<Record<string,boolean>>({});
+  const exampleCache = useRef<Record<string,string>>({});
+  const busy = useRef(false);
+  const timer = useRef<any>(null);
+  const audioCtx = useRef<AudioContext|null>(null);
 
-  const handleBack = () => { setShowExit(true); };
-  const confirmExit = () => { answerBuffer.current = {}; onNavigate("home"); };
-  const cancelExit = () => { setShowExit(false); };
+  const successAudio = useRef<HTMLAudioElement|null>(null);
+  const playSuccess = () => {
+    try {
+      if (!successAudio.current) successAudio.current = new Audio("/icons/success.mp3");
+      const a = successAudio.current;
+      a.currentTime = 0; a.volume = 0.6; a.play().catch(()=>{});
+    } catch {}
+  };
+  const playError = () => {
+    try {
+      playBeep(260, 0.3, "triangle");
+    } catch {}
+  };
+  const playBeep = (freq: number, dur: number, type: OscillatorType) => {
+    try {
+      if (!audioCtx.current) audioCtx.current = new (window.AudioContext||(window as any).webkitAudioContext)();
+      const ctx = audioCtx.current;
+      if (ctx.state==="suspended") ctx.resume();
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.connect(gain); gain.connect(ctx.destination);
+      osc.type = type; osc.frequency.value = freq;
+      gain.gain.setValueAtTime(0.25, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + dur);
+      osc.start(); osc.stop(ctx.currentTime + dur);
+    } catch {}
+  };
 
-  const choose = useCallback((opt: string) => {
-    if (picked || done || !current) return;
+  const ttsUnlocked = useRef(false);
+  const speak = (text: string) => {
+    try {
+      window.speechSynthesis.cancel();
+      const u = new SpeechSynthesisUtterance(text);
+      u.lang = "ja-JP"; u.rate = 0.85; u.volume = 1;
+      window.speechSynthesis.speak(u);
+    } catch {}
+  };
+
+
+  const currentId = queue[0]||"";
+  const cur = allWords.find(w=>w.id===currentId)||allWords[0];
+  const phaseWords = phase===0?reviewWords:phase===1?newWords:[...reviewWords,...newWords];
+  const phaseTotal = phaseWords.length;
+
+  useEffect(() => { if (cur.r && ttsUnlocked.current) speak(cur.r); }, [currentId]);
+
+  // ── Generate question ──
+  const makeQ = (wid:string, ph:number):Q => {
+    const w = allWords.find(x=>x.id===wid)||allWords[0];
+    if (ph===0){const t=Math.random()>.5?1:0;if(t===0)return{type:0,prompt:w.r,correct:w.m,options:genOptions(w.m,allMs)};return{type:1,prompt:w.w,correct:w.r,options:genOptions(w.r,allRs)}}
+    if (ph===1) return {type:2,prompt:w.w,correct:w.m,options:genOptions(w.m,allMs)};
+    const t=Math.floor(Math.random()*3)as 0|1|2;
+    if(t===0)return{type:0,prompt:w.r,correct:w.m,options:genOptions(w.m,allMs)};
+    if(t===1)return{type:1,prompt:w.w,correct:w.r,options:genOptions(w.r,allRs)};
+    return{type:2,prompt:w.w,correct:w.m,options:genOptions(w.m,allMs)};
+  };
+
+  const [question, setQuestion] = useState<Q>(()=>makeQ(currentId, phase));
+
+  // ── Advance ──
+  const advance = (rest:string[], ph:number) => {
+    if (timer.current) clearTimeout(timer.current);
+    if (rest.length>0) {
+      setQueue(rest);
+      setQuestion(makeQ(rest[0], ph));
+      setPicked(null); busy.current=false; return;
+    }
+    // Phase 3 re-queue: word still in queue, just show it
+    if (ph===2 && queue.length>0) {
+      setQuestion(makeQ(queue[0], ph));
+      setPicked(null); busy.current=false; return;
+    }
+    // Queue empty — check error pool
+    if (errorPool.current.length>0) {
+      const pool = [...new Set(errorPool.current)]; errorPool.current=[];
+      setQueue(pool); phaseCorrect.current=new Set();
+      setQuestion(makeQ(pool[0], ph));
+      setPicked(null); busy.current=false; return;
+    }
+    // Next phase or done
+    if (ph===0||ph===1) {
+      const np = ph+1; setPhase(np); phaseCorrect.current=new Set();
+      const nq = np===1?newWords.map(w=>w.id):allIds;
+      if (nq.length===0) { settle(); return; }
+      setQueue(nq); setQuestion(makeQ(nq[0], np));
+      setPicked(null); busy.current=false;
+    } else {
+      settle();
+    }
+  };
+
+  // ── Settlement ──
+  const settle = () => {
+    let tomorrowCount = 0;
+    for (const id of allIds) {
+      const ec = errorCount.current[id]||0;
+      const dt = ec>=2;
+      if (dt) { tomorrowCount++; const d=new Date();d.setDate(d.getDate()+1);answerWord(id,false,d.toISOString().slice(0,10)); }
+      else { answerWord(id, answers.current[id]??false); }
+    }
+    setDueTomorrow(tomorrowCount);
+    const ts = new Date().toISOString().slice(0,10);
+    if ((localStorage.getItem("lastStudyDate")||"")!==ts){setLocal("studyDays",String(parseInt(localStorage.getItem("studyDays")||"0")+1));setLocal("lastStudyDate",ts)}
+    setDone(true);
+  };
+
+  // ── Answer handler ──
+  const answer = useCallback((opt:string)=>{
+    if (picked||done||!cur||busy.current) return;
+    if (timer.current) clearTimeout(timer.current);
     setPicked(opt);
-    const correct = opt === current.meaning;
-    answerBuffer.current[current.id] = correct; // buffer, don't save yet
-    const rc = { ...rightCount };
-    if (correct) { rc[current.id] = (rc[current.id] || 0) + 1; setRightCount(rc); setTotalRight(t => t + 1); }
-    setTimeout(() => {
-      const rest = queue.slice(1);
-      if (correct) {
-        if (Object.keys(rc).length >= sessionWords.length) {
-          // All mastered! Commit buffer to storage
-          for (const [id, isCorrect] of Object.entries(answerBuffer.current)) {
-            answerWord(id, isCorrect);
-          }
-          // Track study days
-          const today = new Date().toISOString().slice(0,10);
-          const lastStudy = localStorage.getItem("lastStudyDate") || "";
-          if (lastStudy !== today) {
-            const days = parseInt(localStorage.getItem("studyDays") || "0") + 1;
-            localStorage.setItem("studyDays", String(days));
-            localStorage.setItem("lastStudyDate", today);
-          }
-          setDone(true); return;
-        }
-        setQueue([...rest, current.id]);
+    const ok = opt===question.correct;
+    answers.current[cur.id] = ok||(answers.current[cur.id]??false);
+    const rest = queue.slice(1);
+
+    if (ok) {
+      playSuccess();
+      setTotalRight(t=>t+1);
+      phaseCorrect.current.add(cur.id);
+      if (phase===0) answerWord(cur.id, true);
+      setQueue(rest);
+      busy.current=true;
+      timer.current = setTimeout(()=>{ advance(rest, phase); }, 500);
+    } else {
+      playError();
+      errorCount.current[cur.id]=(errorCount.current[cur.id]||0)+1;
+      if (phase===0||phase===1) {
+        // Phases 1&2: wrong → show answer → error pool
+        errorPool.current.push(cur.id);
+        setShowHint(true); busy.current=true;
+        timer.current = setTimeout(()=>{
+          setShowHint(false);
+          advance(rest, phase);
+        }, phase===0?1300:2000);
       } else {
+        // Phase 3: wrong → re-queue, ≥3 errors → show hint but still pass when correct
         const pos = Math.min(2, rest.length);
-        setQueue([...rest.slice(0, pos), current.id, ...rest.slice(pos)]);
+        const nextQ = [...rest.slice(0,pos), cur.id, ...rest.slice(pos)];
+        setQueue(nextQ); busy.current=true;
+        const ec = errorCount.current[cur.id];
+        if (ec >= 3) setShowHint(true);
+        timer.current = setTimeout(()=>{
+          setShowHint(false);
+          advance(nextQ.slice(1), phase);
+        }, ec >= 3 ? 3000 : 800);
       }
-      const nextId = rest[0] || current.id;
-      setOptions(getOptions(allWords.find(w => w.id === nextId)?.meaning || "", allMeanings));
-      setPicked(null);
-    }, 600);
-  }, [picked, queue, current, rightCount, sessionWords, allMeanings, done]);
+    }
+  },[picked,queue,cur,done,question,phase]);
+
+  // Pre-activate audio on first user gesture
+  useEffect(() => {
+    const unlock = () => {
+      if (!audioCtx.current) audioCtx.current = new (window.AudioContext||(window as any).webkitAudioContext)();
+      if (audioCtx.current.state==="suspended") audioCtx.current.resume();
+      document.removeEventListener("touchstart", unlock); document.removeEventListener("click", unlock);
+    };
+    document.addEventListener("touchstart", unlock); document.addEventListener("click", unlock);
+    return () => { document.removeEventListener("touchstart", unlock); document.removeEventListener("click", unlock); };
+  }, []);
+
+  const handleBack = ()=>{setShowExit(true);};
+  const confirmExit = ()=>{answers.current={};onNavigate("home");};
+  const cancelExit = ()=>{setShowExit(false);};
+
+  if (allCount===0){onNavigate("rest");return null;}
+
+  const showExample = phase===1 || showHint || (phase===2 && (errorCount.current[currentId]||0)>=3);
 
   if (done) return (<>
-    <StatusBar darkMode={darkMode} />
     <div className="flex-1 flex flex-col items-center justify-center px-8 text-center">
-      {/* Confetti — 16 random positions × 36 = 576 ribbons */}
       <div className="absolute inset-0 pointer-events-none overflow-hidden" style={{zIndex:50}}>
-        {(()=>{const origins=Array.from({length:16},()=>({ox:Math.random()*90+5+"%",oy:Math.random()*90+5+"%"}));return origins;})().
-          flatMap(o=>Array.from({length:36},(_,i)=>{
-            const angle = Math.random()*Math.PI*2, dist = 30+Math.random()*90;
-            const colors = ["#ff6584","#6c63ff","#ffd700","#3f3d56","#ff6584","#6c63ff"];
-            return {c:colors[i%6],x:Math.cos(angle)*dist,y:Math.sin(angle)*dist,r:(Math.random()-0.5)*180,i,ox:o.ox,oy:o.oy};
-          })).map((p,i)=>(
-          <span key={i} className="absolute block" style={{left:p.ox,top:p.oy,width:5,height:2,borderRadius:1,background:p.c,opacity:0.8,
-            animation:`confetti 2.2s ease-out forwards`,
-            ["--x" as any]:`${p.x}px`,["--y" as any]:`${p.y}px`,["--r" as any]:`${p.r}deg`}} />
-        ))}
+        {Array.from({length:12},()=>({ox:Math.random()*90+5+"%",oy:Math.random()*90+5+"%"})).flatMap(o=>Array.from({length:24},(_,i)=>{const a=Math.random()*Math.PI*2,d=30+Math.random()*90;return{ox:o.ox,oy:o.oy,x:Math.cos(a)*d,y:Math.sin(a)*d,r:(Math.random()-.5)*180,c:["#ff6584","#6c63ff","#ffd700","#3f3d56","#ff6584","#6c63ff"][i%6]}})).map((p,i)=>(<span key={i} className="absolute block" style={{left:p.ox,top:p.oy,width:5,height:2,borderRadius:1,background:p.c,opacity:.8,animation:"confetti 2.2s ease-out forwards",["--x" as any]:`${p.x}px`,["--y" as any]:`${p.y}px`,["--r" as any]:`${p.r}deg`}}/>))}
       </div>
-      <div className="relative w-48 h-48 mb-4 flex items-center justify-center">
-        <img src="/icons/complete.svg" alt="" className="w-full h-full object-contain opacity-70" />
-        {/* Dancing notes */}
-        <svg className="absolute inset-0 w-full h-full pointer-events-none" viewBox="0 0 200 200">
-          {[
-            {x:25,y:65,c:"#ff6584",t:"♪",s:20,d:0,speed:1.3},
-            {x:155,y:55,c:"#6c63ff",t:"♫",s:18,d:0.2,speed:1.6},
-            {x:15,y:140,c:"#ff6584",t:"♪",s:24,d:0.5,speed:1.1},
-            {x:165,y:145,c:"#6c63ff",t:"♫",s:16,d:0.7,speed:1.5},
-            {x:100,y:35,c:"#3f3d56",t:"♪",s:22,d:1.0,speed:1.8},
-            {x:60,y:120,c:"#ffd700",t:"♫",s:19,d:0.35,speed:1.4},
-          ].map((n,i)=>(
-            <text key={i} x={n.x} y={n.y} fontSize={n.s} fill={n.c} fontWeight="bold"
-              style={{animation:`bounce ${n.speed}s ease-in-out infinite`,animationDelay:`${n.d}s`,transformOrigin:`${n.x}px ${n.y}px`}}>{n.t}</text>
-          ))}
-        </svg>
-      </div>
+      <div className="relative w-48 h-48 mb-4 flex items-center justify-center"><img src="/icons/complete.svg" alt="" className="w-full h-full object-contain opacity-70"/></div>
       <h2 className="text-xl font-bold text-main mb-1">学習完了！</h2>
-      <p className="text-sm text-sub mb-2">{sessionWords.length} 語学習しました</p>
-      <p className="text-xs text-hint">正解: {totalRight} | 明日の復習: {getReviewCount()} 語</p>
+      <p className="text-sm text-sub mb-2">{allCount} 語学習しました</p>
+      <p className="text-xs text-hint">正解: {totalRight} | 明日复习: {dueTomorrow} 語</p>
       <button onClick={()=>onNavigate("home")} className="mt-6 px-8 py-3 bg-primary text-white rounded-full text-sm font-bold active:scale-95">ホームへ戻る</button>
     </div>
   </>);
 
-  if (sessionWords.length === 0) { onNavigate("rest"); return null; }
-
   return (<>
-    <StatusBar darkMode={darkMode} />
     <div className="flex items-center gap-3 px-4 py-2">
       <button onClick={handleBack} className="flex items-center gap-1 text-hint text-sm font-bold active:opacity-60"><ArrowLeft size={16} stroke="var(--color-text-tertiary)" strokeWidth={2}/><span>戻る</span></button>
-      <span className="text-[15px] font-semibold text-main">単語学習</span>
+      <span className="text-[15px] font-semibold text-main">単語学習 <span className="text-[10px] text-hint font-normal">· {phases[phase]}</span></span>
       <span className="ml-auto text-sm font-bold text-sub">✓ {totalRight}</span>
     </div>
     <div className="flex-1 flex flex-col items-center justify-center px-4">
-      <p className="text-[40px] font-extrabold text-main tracking-wider" dangerouslySetInnerHTML={{__html:rubyText(current.word,current.reading)}}/>
-      <p className="text-xs text-hint mt-1">{current.pos}</p>
+      {phase===2 && <p className="text-[10px] text-hint font-bold mb-2">{typeLabels[question.type]}</p>}
+      {(phase===1||showHint) && <p className="text-sm text-primary font-bold mb-1">{cur.r}</p>}
+      <p className="text-[40px] font-extrabold text-main tracking-wider">{question.prompt}</p>
+      <p className="text-xs text-hint mt-1">{cur.p}</p>
+      {showHint && <p className="text-lg font-extrabold text-success mt-2 animate-pop-in">{question.correct}</p>}
+      {showExample && (
+        <div className="mt-4 px-5 py-3 bg-primary-subtle rounded-2xl max-w-[320px] text-center">
+          {phase===2&&(errorCount.current[currentId]||0)>=3&&<p className="text-[10px] text-danger/60 mb-0.5">已错{errorCount.current[currentId]}次</p>}
+          <p className="text-[10px] text-hint/60 mb-1">例文</p>
+          <p className="text-xs text-main leading-relaxed">
+            {(()=>{const id=currentId;if(!exampleCache.current[id])exampleCache.current[id]=getExample(cur.w,cur.p||"");return exampleCache.current[id];})().split("【").map((part,i)=>i===0?part:part.split("】").map((p,j)=>j===0?<span key={i} className="font-extrabold text-primary">{p}</span>:p))}
+          </p>
+        </div>
+      )}
     </div>
     {showExit && (
       <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/40" onClick={cancelExit}>
         <div className="bg-surface rounded-2xl p-5 mx-8 shadow-xl text-center" onClick={e=>e.stopPropagation()}>
-          <AlertTriangle size={32} className="text-warning mx-auto mb-2" />
+          <AlertTriangle size={32} className="text-warning mx-auto mb-2"/>
           <h3 className="font-bold text-main mb-1">学習を中断しますか？</h3>
           <p className="text-xs text-sub mb-4">まだ完了していない単語の進捗は保存されません</p>
           <div className="flex gap-2">
@@ -155,29 +288,17 @@ export default function StudyPage({ onNavigate, darkMode }: StudyPageProps) {
     )}
     <div className="px-4 pb-4">
       <div className="grid grid-cols-2 gap-3 w-full max-w-[340px] mx-auto">
-        {options.map((opt,i)=>{
-          const isCorrect=opt===current.meaning;
-          const isPicked=picked===opt;
-          const show=picked!==null;
-          const base = "h-[76px] rounded-2xl border-2 font-bold text-[13px] flex items-center justify-center text-center px-3 transition-all active:scale-[0.97]";
-          let style = "bg-surface border-border text-main";
-          if (show) {
-            if (isCorrect) style = "bg-success-subtle border-success text-success shadow-sm";
-            else if (isPicked && !isCorrect) style = "bg-danger-subtle border-danger text-danger shadow-sm";
-            else style = "bg-surface border-border text-main opacity-30";
-          }
-          return (<button key={i} onClick={()=>choose(opt)} className={`${base} ${style}`}>{opt}</button>);
+        {question.options.map((opt,i)=>{
+          const isCorrect=opt===question.correct; const isPicked=picked===opt; const show=picked!==null;
+          const highlight=show&&(isCorrect||isPicked);
+          return(<button key={i} onClick={()=>answer(opt)} className={`relative h-[76px] rounded-2xl font-bold text-[13px] flex items-center justify-center text-center px-3 transition-all active:scale-[0.97] overflow-hidden
+            ${show?(isCorrect?"bg-success-subtle border-2 border-success text-success shadow-sm":isPicked?"bg-danger-subtle border-2 border-danger text-danger shadow-sm":"bg-surface border border-border text-main opacity-30"):"bg-surface border border-border text-main hover:border-primary/30"}`}>
+            {highlight && <svg className="absolute left-0 top-0 h-full" width="8" viewBox="0 0 8 64" preserveAspectRatio="none"><path d="M5 0 Q2.5 4 5 8 T5 16 Q2.5 20 5 24 T5 32 Q2.5 36 5 40 T5 48 Q2.5 52 5 56 T5 64 L0 64 L0 0 Z" fill={isCorrect?"#22c55e":"#ef4444"}/></svg>}
+            {highlight && <span className="absolute top-0.5 right-0.5 text-xs leading-none" style={{color:isCorrect?"#22c55e":"#ef4444"}}>{isCorrect?"✓":"✗"}</span>}
+            {opt}
+          </button>);
         })}
       </div>
     </div>
   </>);
 }
-
-function rubyText(word:string,reading:string):string{
-  const hasKanji=/[一-鿿]/.test(word);if(!hasKanji)return word;
-  let kanaStart=word.length;for(let i=word.length-1;i>=0;i--){if(/[一-鿿]/.test(word[i])){kanaStart=i+1;break;}}
-  const kanjiPart=word.slice(0,kanaStart);const kanaSuffix=word.slice(kanaStart);
-  let readingKanji=reading;if(kanaSuffix&&reading.endsWith(kanaSuffix))readingKanji=reading.slice(0,-kanaSuffix.length);
-  return `<ruby>${kanjiPart}<rt>${readingKanji}</rt></ruby>${kanaSuffix}`;
-}
-function shuffle<T>(arr:T[]):T[]{const a=[...arr];for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a}

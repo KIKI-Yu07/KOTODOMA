@@ -1,8 +1,8 @@
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;600;700;800&family=Noto+Serif+JP:wght@500;600;700&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
-
-@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;600;700;800&family=Noto+Serif+JP:wght@500;600;700&display=swap');
 
 @layer base {
   :root {
@@ -68,6 +68,14 @@
 @keyframes float { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-12px)} }
 @keyframes wiggle { 0%,100%{transform:rotate(0)} 25%{transform:rotate(-5deg)} 75%{transform:rotate(5deg)} }
 @keyframes bounce { 0%,100%{transform:translateY(0) rotate(-3deg)} 50%{transform:translateY(-16px) rotate(3deg)} }
+@keyframes pop-in { 0%{transform:scale(0.94);opacity:0} 60%{transform:scale(1.01)} 100%{transform:scale(1);opacity:1} }
+.animate-pop-in { animation: pop-in 0.25s ease-out forwards; will-change: transform, opacity; }
+@keyframes slideUpIn { 0%{transform:translateY(12px);opacity:0} 100%{transform:translateY(0);opacity:1} }
+.animate-slide-up { animation: slideUpIn 0.3s cubic-bezier(0.16,1,0.3,1) forwards; }
+@keyframes fadeIn { 0%{opacity:0;transform:translateY(4px)} 100%{opacity:1;transform:translateY(0)} }
+.animate-fade-in { animation: fadeIn 0.25s ease-out forwards; }
+@keyframes heartBreak { 0%{transform:scale(1)} 30%{transform:scale(1.3)} 50%{transform:scale(0.8)} 70%{transform:scale(1.1)} 100%{transform:scale(1)} }
+@keyframes pop-out { 0%{transform:scale(1);opacity:1} 100%{transform:scale(0.94);opacity:0} }
 @keyframes confetti { 0%{transform:translate(0,0) rotate(0) scale(1);opacity:1} 64%{transform:translate(var(--x),var(--y)) rotate(var(--r)) scale(1);opacity:1} 100%{transform:translate(var(--x),var(--y)) rotate(var(--r)) scale(0);opacity:0} }
 
 /* Diamond pattern hero (Uiverse.io) */
@@ -132,13 +140,100 @@
 .btn-press { @apply active:scale-95 transition-transform duration-100; }
 
 /* Page transition */
-.page-enter { animation: slideInRight 0.3s cubic-bezier(0.16,1,0.3,1); }
+.page-enter { animation: pageIn 0.35s cubic-bezier(0.16,1,0.3,1) both; }
+@keyframes pageIn { from { opacity:0; transform:translateY(6px) scale(0.98); } to { opacity:1; transform:translateY(0) scale(1); } }
 @keyframes slideInRight { from { opacity:0; transform:translateX(24px); } to { opacity:1; transform:translateX(0); } }
 
 /* Word list slides */
 .word-slide-left { animation: slideInLeft 0.4s cubic-bezier(0.16,1,0.3,1) both; }
 .word-slide-right { animation: slideInRight 0.4s cubic-bezier(0.16,1,0.3,1) both; }
 @keyframes slideInLeft { from { opacity:0; transform:translateX(-40px); } to { opacity:1; transform:translateX(0); } }
+
+/* Checklist checkbox animations — Uiverse.io by JkHuger */
+.chk-row { display:flex; align-items:center; }
+.chk-input { -webkit-appearance:none; appearance:none; position:relative; height:16px; width:16px; outline:none; border:none; border-radius:4px; margin:0 12px 0 0; cursor:pointer; background:transparent; display:grid; align-items:center; flex-shrink:0; }
+.chk-input::before, .chk-input::after { content:""; position:absolute; height:2px; top:auto; background:var(--check-color, #4F46E5); border-radius:2px; }
+.chk-input::before { width:0px; right:60%; transform-origin:right bottom; }
+.chk-input::after { width:0px; left:40%; transform-origin:left bottom; }
+.chk-input:checked { border-color:var(--check-color, #4F46E5); }
+.chk-input:checked::before { animation:check-01 0.4s ease forwards; }
+.chk-input:checked::after { animation:check-02 0.4s ease forwards; }
+.chk-label { color:var(--color-text); position:relative; cursor:pointer; display:inline-block; transition:color .3s ease; }
+.chk-label::before, .chk-label::after { content:""; position:absolute; }
+.chk-label::before { height:2px; width:8px; left:-21px; top:50%; background:var(--check-color, #4F46E5); border-radius:2px; transition:background .3s ease; }
+.chk-label::after { height:4px; width:4px; top:calc(50% - 2px); left:-19px; border-radius:50%; }
+.chk-input:checked + .chk-label { color:var(--color-disabled, #c3c8de); animation:chk-move 0.3s ease 0.1s forwards; }
+.chk-input:checked + .chk-label::before { background:var(--color-disabled, #c3c8de); animation:chk-slice 0.4s ease forwards; }
+.chk-input:checked + .chk-label::after { animation:chk-firework 0.5s ease forwards 0.1s; }
+
+/* Pushable 3D button */
+.pushable { position:relative; background:transparent; padding:0; border:none; cursor:pointer; outline-offset:4px; transition:filter 250ms; -webkit-tap-highlight-color:rgba(0,0,0,0); }
+.pushable .shadow-3d { position:absolute; top:0; left:0; height:100%; width:100%; background:#93C5FD; border-radius:6px; filter:blur(2px); transform:translateY(2px); transition:transform 600ms cubic-bezier(.3,.7,.4,1); }
+.pushable .edge-3d { position:absolute; top:0; left:0; height:100%; width:100%; border-radius:6px; background:linear-gradient(to right,#0A4A7A 0%,#0D5A9A 8%,#0A4A7A 92%,#083A5A 100%); }
+.pushable .front-3d { display:block; position:relative; border-radius:6px; background:#0F64B5; padding:14px 24px; color:white; font-weight:700; font-size:0.95rem; letter-spacing:1px; transform:translateY(-4px); transition:transform 600ms cubic-bezier(.3,.7,.4,1); }
+.pushable:hover { filter:brightness(110%); }
+.pushable:hover .front-3d { transform:translateY(-6px); transition:transform 250ms cubic-bezier(.3,.7,.4,1.5); }
+.pushable:active .front-3d { transform:translateY(-2px); transition:transform 34ms; }
+.pushable:hover .shadow-3d { transform:translateY(4px); transition:transform 250ms cubic-bezier(.3,.7,.4,1.5); }
+.pushable:active .shadow-3d { transform:translateY(1px); transition:transform 34ms; }
+
+/* Animated heart checkbox */
+.heart-check { display:block; position:relative; cursor:pointer; user-select:none; transition:100ms; }
+.heart-check input { position:absolute; opacity:0; cursor:pointer; height:0; width:0; }
+.heart-check .heart-mark { display:block; height:1.5em; width:1.5em; transition:100ms; }
+.heart-check .heart-mark svg { width:100%; height:100%; }
+.heart-check .heart-mark path { fill:none; stroke:var(--color-text-tertiary); stroke-width:20px; transition:all 300ms; }
+.heart-check input:checked ~ .heart-mark path { fill:#ff5353; stroke-width:0; }
+.heart-check input:checked ~ .heart-mark { animation:like_effect 400ms ease; }
+.heart-check:hover { transform:scale(1.1); }
+@keyframes like_effect { 0%{transform:scale(0)} 50%{transform:scale(1.2)} 100%{transform:scale(1)} }
+
+/* Animated checkbox with checkmark stroke */
+.cbx-wrapper { position:relative; display:block; overflow:hidden; }
+.cbx-wrapper .cbx-label { cursor:pointer; display:flex; align-items:center; }
+.cbx-wrapper .cbx-check { width:28px; height:28px; position:absolute; opacity:0; }
+.cbx-wrapper .cbx-label svg { vertical-align:middle; flex-shrink:0; margin-right:8px; }
+.cbx-wrapper .cbx-path { stroke-dasharray:400; stroke-dashoffset:400; transition:0.5s stroke-dashoffset; opacity:1; }
+.cbx-wrapper .cbx-check:checked + .cbx-label svg .cbx-path { stroke-dashoffset:0; }
+
+/* Radio slider tabs — Uiverse.io by GustavoAlmeidaPuff */
+.rslider-wrap { position:relative; display:flex; background:#fff; border-radius:10px; overflow:hidden; padding:3px; }
+.rslider-wrap input { position:absolute; opacity:0; pointer-events:none; }
+.rslider-wrap .rs-label { flex:1; cursor:pointer; font-size:0.8rem; font-weight:600; color:#9CA3AF; padding:14px 4px; text-align:center; position:relative; z-index:2; transition:color .25s ease; border-radius:8px; }
+.rslider-wrap input:checked + .rs-label { color:#1F2937; }
+.rslider-wrap .rs-bar { position:absolute; top:0; left:0; height:100%; z-index:0; transition:transform .4s cubic-bezier(.33,.83,.99,.98); }
+.rslider-wrap .rs-bar::before, .rslider-wrap .rs-bar::after { content:""; position:absolute; height:3px; width:100%; background:var(--color-primary); }
+.rslider-wrap .rs-bar::before { top:0; border-radius:0 0 9999px 9999px; }
+.rslider-wrap .rs-bar::after { bottom:0; border-radius:9999px 9999px 0 0; }
+.rslider-wrap .rs-slide { position:absolute; top:6px; left:0; height:calc(100% - 12px); border-radius:7px; background:#E5E7EB; z-index:0; transition:transform .4s cubic-bezier(.33,.83,.99,.98); }
+.rslider-wrap .rd-0:checked ~ .rs-bar, .rslider-wrap .rd-0:checked ~ .rs-slide { width:calc(100% / 3); transform:translateX(0); }
+.rslider-wrap .rd-1:checked ~ .rs-bar, .rslider-wrap .rd-1:checked ~ .rs-slide { width:calc(100% / 3); transform:translateX(100%); }
+.rslider-wrap .rd-2:checked ~ .rs-bar, .rslider-wrap .rd-2:checked ~ .rs-slide { width:calc(100% / 3); transform:translateX(200%); }
+@keyframes check-01 {
+  0% { width:4px; top:auto; transform:rotate(0); }
+  50% { width:0px; top:auto; transform:rotate(0); }
+  51% { width:0px; top:8px; transform:rotate(45deg); }
+  100% { width:5px; top:8px; transform:rotate(45deg); }
+}
+@keyframes check-02 {
+  0% { width:4px; top:auto; transform:rotate(0); }
+  50% { width:0px; top:auto; transform:rotate(0); }
+  51% { width:0px; top:8px; transform:rotate(-45deg); }
+  100% { width:10px; top:8px; transform:rotate(-45deg); }
+}
+@keyframes chk-move {
+  50% { padding-left:8px; padding-right:0px; }
+  100% { padding-right:4px; }
+}
+@keyframes chk-slice {
+  60% { width:100%; left:4px; }
+  100% { width:100%; left:-2px; padding-left:0; }
+}
+@keyframes chk-firework {
+  0% { opacity:1; box-shadow:0 0 0 -2px var(--check-color, #4F46E5),0 0 0 -2px var(--check-color, #4F46E5),0 0 0 -2px var(--check-color, #4F46E5),0 0 0 -2px var(--check-color, #4F46E5),0 0 0 -2px var(--check-color, #4F46E5),0 0 0 -2px var(--check-color, #4F46E5); }
+  30% { opacity:1; }
+  100% { opacity:0; box-shadow:0 -15px 0 0px var(--check-color, #4F46E5),14px -8px 0 0px var(--check-color, #4F46E5),14px 8px 0 0px var(--check-color, #4F46E5),0 15px 0 0px var(--check-color, #4F46E5),-14px 8px 0 0px var(--check-color, #4F46E5),-14px -8px 0 0px var(--check-color, #4F46E5); }
+}
 
 /* Dropdown */
 .dropdown-menu { clip-path: inset(10% 50% 90% 50% round 10px); transition: clip-path 0.4s ease; }

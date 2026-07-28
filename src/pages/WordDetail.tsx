@@ -1,33 +1,9 @@
-import { useState } from "react";
-import { Play } from "lucide-react";
-import StatusBar from "../components/StatusBar";
+import { useState, useMemo, useEffect } from "react";
+import { ArrowLeft, Zap, Play } from "lucide-react";
+import { exerciseData, compareItems, conjugateItems, sentenceItems } from "../data/grammar";
+import type { Exercise } from "../data/grammar";
 
 interface WordDetailProps { darkMode?: boolean; }
-
-const compareItems = [
-  { l:"は vs が",d:"主題と主語の使い分け",n:20,p:["は","が"] },
-  { l:"に vs で",d:"場所・手段の表現",n:18,p:["に","で"] },
-  { l:"を vs が",d:"目的語と自動詞",n:15,p:["を","が"] },
-  { l:"も・と・や",d:"並列助詞の比較",n:12,p:["も","と","や"] },
-  { l:"から vs まで",d:"起点と終点",n:10,p:["から","まで"] },
-  { l:"へ vs に",d:"方向表現",n:10,p:["へ","に"] },
-  { l:"より vs の",d:"比較と所属",n:8,p:["より","の"] },
-];
-const positionItems = [
-  { l:"主題の「は」",d:"文頭付近の主題提示",n:15,p:["は"] },{ l:"主語の「が」",d:"述語直前の主格",n:15,p:["が"] },
-  { l:"目的語の「を」",d:"動詞直前の対象",n:15,p:["を"] },{ l:"場所の「に/で」",d:"動作の場所表現",n:18,p:["に","で"] },
-  { l:"時間の「に」",d:"時点の位置",n:12,p:["に"] },{ l:"手段の「で」",d:"方法・道具",n:12,p:["で"] },
-  { l:"到達点の「へ/に」",d:"方向・目的地",n:10,p:["へ","に"] },{ l:"起点〜終点",d:"から/まで の語順",n:10,p:["から","まで"] },
-  { l:"並列の「と/や」",d:"並列接続の位置",n:8,p:["と","や"] },{ l:"所属の「の」",d:"修飾関係",n:10,p:["の"] },
-];
-const conjugateItems = [
-  { l:"て形変換",d:"動詞→て形",n:30 },{ l:"た形変換",d:"動詞→た形",n:30 },{ l:"ない形変換",d:"動詞→ない形",n:25 },
-  { l:"辞書形↔ます形",d:"相互変換",n:28 },{ l:"受身形・使役形",d:"上級変形",n:20 },
-];
-const sentenceItems = [
-  { l:"〜てください",d:"依頼表現",n:15 },{ l:"〜てもいい",d:"許可表現",n:12 },{ l:"〜なければならない",d:"義務表現",n:10 },
-  { l:"〜たことがある",d:"経験表現",n:14 },{ l:"条件表現",d:"と・ば・たら・なら",n:20 },
-];
 
 const tabConfig = [
   { id:"particle" as const, label:"助詞", sub:"Particles", emoji:"を", desc:"14種類の助詞の使い方をマスター" },
@@ -36,59 +12,203 @@ const tabConfig = [
 ];
 
 export default function WordDetail({ darkMode }: WordDetailProps) {
-  const [tab, setTab] = useState<"particle"|"conjugate"|"sentence">("particle");
-  const [subTab, setSubTab] = useState<"compare"|"position">("compare");
-  const items = tab==="particle"
-    ? (subTab==="compare"?compareItems:positionItems)
-    : tab==="conjugate"?conjugateItems:sentenceItems;
+  const [tab, setTab] = useState<"particle"|"conjugate"|"sentence">(()=>{
+    return (localStorage.getItem("grammar_tab") as "particle"|"conjugate"|"sentence") || "particle";
+  });
+  const [topic, setTopic] = useState<string | null>(null);
+  const [qIdx, setQIdx] = useState(0);
+  const [picked, setPicked] = useState<string | null>(null);
+  const [score, setScore] = useState({ right:0, wrong:0 });
+  const [done, setDone] = useState(false);
+  const [wrongHint, setWrongHint] = useState("");
+  const [waitingNext, setWaitingNext] = useState(false);
+  const [lives, setLives] = useState(3);
+  const [heartBreak, setHeartBreak] = useState(false);
+  const [blankIdx, setBlankIdx] = useState(0);
+  const [filled, setFilled] = useState<string[]>([]);
+  const [completedTopics, setCompletedTopics] = useState<Set<string>>(()=>{
+    try { return new Set(JSON.parse(localStorage.getItem("grammar_completed")||"[]")); } catch { return new Set(); }
+  });
+  const items = tab==="particle" ? compareItems : tab==="conjugate" ? conjugateItems : sentenceItems;
+
+  const exercises = topic ? (exerciseData[topic] || []) : [];
+  const curEx = exercises[qIdx];
+  const options = useMemo(() => {
+    if (!curEx) return [];
+    const correct = curEx.a;
+    let opts = curEx.particles || items.find(i=>i.l===topic)?.p || [];
+    if (!opts.includes(correct)) opts = [...opts, correct];
+    return opts.length <= 4 ? opts.slice(0,4) : opts.slice(0,6);
+  }, [curEx, topic]);
+
+  const answer = (opt: string) => {
+    if (picked) return;
+    setPicked(opt);
+    const isRight = opt === curEx.a;
+    const newFilled = [...filled, opt];
+    setFilled(newFilled);
+    const isFinal = blankIdx + 1 >= blankCount;
+    if (isFinal) {
+      if (isRight) {
+        setScore(s=>({...s, right:s.right+1}));
+        setWrongHint("");
+        setWaitingNext(false);
+        setTimeout(() => {
+          if (qIdx + 1 >= exercises.length) { setDone(true); return; }
+          setQIdx(qIdx+1); setPicked(null); setBlankIdx(0); setFilled([]);
+        }, 600);
+      } else {
+        setScore(s=>({...s, wrong:s.wrong+1}));
+        setWrongHint(curEx.hint || "");
+        setWaitingNext(true);
+        setLives(l=>{const n=l-1;if(n<=0)setTimeout(()=>setDone(true),1200);return Math.max(0,n);});
+        setHeartBreak(true); setTimeout(()=>setHeartBreak(false),500);
+      }
+    } else {
+      setTimeout(() => { setBlankIdx(b=>b+1); setPicked(null); }, 400);
+    }
+  };
+
+  const nextQuestion = () => {
+    if (qIdx + 1 >= exercises.length) { setDone(true); return; }
+    setQIdx(qIdx+1); setPicked(null); setWrongHint(""); setWaitingNext(false); setBlankIdx(0); setFilled([]);
+  };
+
+  const blankCount = curEx ? (curEx.q.match(/___/g)||[]).length : 0;
+
+  useEffect(()=>{if(done&&lives>0&&topic){const n=new Set(completedTopics);n.add(topic);localStorage.setItem("grammar_completed",JSON.stringify([...n]));setCompletedTopics(n)}},[done]);
+
+  const exitExercise = () => { setTopic(null); setQIdx(0); setPicked(null); setDone(false); setScore({right:0,wrong:0}); setWrongHint(""); setWaitingNext(false); setBlankIdx(0); setFilled([]);  };
+
+  if (topic && done) return (<>
+    <div className="flex-1 flex flex-col items-center justify-center px-8 text-center">
+      <Zap size={36} className="text-primary mb-4" />
+      <h2 className="text-lg font-bold text-main mb-2">{lives<=0?"闯关失败":"练习完成！"}</h2>
+      <p className="text-sm text-sub">{topic}</p>
+      {lives<=0 && <p className="text-xs text-danger mb-1">生命值耗尽</p>}
+      <div className="flex gap-4 mt-2 text-sm">
+        <span className="text-success font-bold">✓ {score.right}</span>
+        <span className="text-danger font-bold">✗ {score.wrong}</span>
+      </div>
+      <button onClick={exitExercise} className="mt-6 px-8 py-3 bg-primary text-white rounded-full text-sm font-bold active:scale-95">返回列表</button>
+    </div>
+  </>);
+
+  if (topic && curEx) return (<>
+    <div className="flex items-center justify-between px-4 pt-3 pb-1">
+      <button onClick={exitExercise} className="flex items-center gap-1 text-hint text-xs font-bold active:opacity-60">
+        <ArrowLeft size={16} stroke="var(--color-text-tertiary)" strokeWidth={2}/><span>戻る</span>
+      </button>
+      <span className="text-sm font-extrabold text-main">{topic}</span>
+      <span className="text-xs font-bold text-sub">{qIdx+1}/{exercises.length}</span>
+    </div>
+    <div className="flex justify-end px-4 pb-2">
+      <div className="flex gap-0.5">
+        {[0,1,2].map(i=>(
+          <svg key={i} width="18" height="18" viewBox="0 0 24 24" className={`transition-all duration-300 ${i>=lives?"opacity-30":""}`}
+            style={{fill:i>=lives?"none":"#ef4444",stroke:i>=lives?"#ef4444":"none",strokeWidth:i>=lives?2:0,animation:heartBreak&&i===lives?"heartBreak 0.5s ease-out":""}}>
+            <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
+          </svg>
+        ))}
+      </div>
+    </div>
+    <div className="flex-1 flex flex-col items-center justify-center px-6 relative">
+      {/* Question — always centered */}
+      <div className="flex flex-col items-center w-full">
+        <p className="text-2xl font-extrabold text-main text-center leading-relaxed">
+          {curEx.q.split("___").map((part,i,arr)=>(
+            <span key={i}>{part}{i < arr.length-1 ? (
+              <span className="inline-block w-14 mx-0.5">
+                <span className="block border-b-[3px] border-primary rounded-sm">
+                  {filled[i] ? (
+                  <span className="text-main">{filled[i]}</span>
+                ) : <span className="opacity-0">は</span>}
+                </span>
+              </span>
+            ) : null}</span>
+          ))}
+        </p>
+      </div>
+      {/* Hint — absolute positioned at bottom of question area, doesn't shift question */}
+      <div className="absolute bottom-20 left-4 right-4 flex justify-center pointer-events-none">
+        {wrongHint && (
+          <div className="animate-slide-up w-full max-w-[280px]">
+            <div className="bg-gradient-to-r from-[#DC2626] to-[#B91C1C] rounded-xl px-4 py-3 shadow-lg relative overflow-hidden">
+              <div className="absolute top-0 right-0 w-12 h-12 rounded-full bg-white/5"/>
+              <p className="text-[10px] text-red-200/70 font-bold tracking-wider mb-0.5">核心考法</p>
+              <p className="text-sm font-extrabold text-white leading-snug">{wrongHint}</p>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+    {/* Options — bottom of screen */}
+    <div className="px-4 pb-4">
+      <div className="w-full max-w-[280px] mx-auto">
+        <div className="flex flex-wrap justify-center gap-3 mb-2">
+        {options.map((opt,i)=>{
+          const isCorrect = opt === curEx.a;
+          const isPicked = picked === opt;
+          const show = picked !== null;
+          let cls = "w-16 h-16 rounded-2xl font-bold text-xl flex items-center justify-center transition-all active:scale-95 shadow-sm bg-surface border border-border text-main";
+          if (show) {
+            if (isCorrect) cls = "w-16 h-16 rounded-2xl font-bold text-xl flex items-center justify-center shadow-sm bg-success/10 border-2 border-success text-success";
+            else if (isPicked) cls = "w-16 h-16 rounded-2xl font-bold text-xl flex items-center justify-center shadow-sm bg-danger/10 border-2 border-danger text-danger";
+            else cls = "w-16 h-16 rounded-2xl font-bold text-xl flex items-center justify-center opacity-25 bg-surface border border-border";
+          }
+          return <button key={i} onClick={()=>answer(opt)} className={cls}>{opt}</button>;
+        })}
+        </div>
+        <div className="h-12">
+          {waitingNext && (
+            <button onClick={nextQuestion} className="animate-fade-in w-full py-3 bg-primary text-white rounded-full text-sm font-bold active:scale-95 shadow-lg shadow-primary/20">
+              {qIdx+1 >= exercises.length ? "查看结果" : "下一题 →"}
+            </button>
+          )}
+        </div>
+      </div>
+    </div>
+  </>);
 
   return (<>
-    <StatusBar darkMode={darkMode} />
     <div className="flex-1 min-h-0 overflow-y-auto scroll-area">
 
       {/* ── Header ── */}
-      <div className="flex items-center justify-end px-4 py-2">
+      <div className="flex items-center justify-between px-4 py-2">
+        <span className="text-[10px] text-hint/60 font-bold">点击标签切换 →</span>
         <span className="text-lg font-bold text-main">文法練習</span>
       </div>
 
-      {/* ── Tab Cards ── */}
+      {/* ── Tab Slider ── */}
       <div className="px-4 pb-4">
-        <div className="grid grid-cols-3 gap-2">
-          {tabConfig.map(t=>{const active=tab===t.id;return(
-            <button key={t.id} onClick={()=>setTab(t.id)}
-              className={`rounded-2xl p-3 text-left transition-all active:scale-95 ${active?"bg-primary text-white shadow-lg":"bg-surface text-main border border-border"}`}>
-              <span className={`text-2xl block mb-1 ${active?"opacity-90":"text-hint"}`}>{t.emoji}</span>
-              <p className={`text-xs font-extrabold ${active?"text-white":"text-main"}`}>{t.label}</p>
-              <p className={`text-[9px] mt-0.5 ${active?"text-white/50":"text-hint"}`}>{t.sub}</p>
-            </button>
-          )})}
+        <div className="rslider-wrap">
+          <input type="radio" id="tab-particle" name="maintab" className="rd-0" checked={tab==="particle"} onChange={()=>{setTab("particle");localStorage.setItem("grammar_tab","particle")}} />
+          <label htmlFor="tab-particle" className="rs-label"><span>助詞</span></label>
+          <input type="radio" id="tab-conjugate" name="maintab" className="rd-1" checked={tab==="conjugate"} onChange={()=>{setTab("conjugate");localStorage.setItem("grammar_tab","conjugate")}} />
+          <label htmlFor="tab-conjugate" className="rs-label"><span>変形</span></label>
+          <input type="radio" id="tab-sentence" name="maintab" className="rd-2" checked={tab==="sentence"} onChange={()=>{setTab("sentence");localStorage.setItem("grammar_tab","sentence")}} />
+          <label htmlFor="tab-sentence" className="rs-label"><span>文型</span></label>
+          <div className="rs-bar"/>
+          <div className="rs-slide"/>
         </div>
       </div>
 
       {/* ── Content Area ── */}
       <div className="px-4 pb-4 space-y-3">
 
-        {/* Particle mode — sub toggle */}
-        {tab === "particle" && (
-          <div className="flex rounded-[6px] overflow-hidden border border-border">
-            {["compare","position"].map((s,i)=>(
-              <button key={s} onClick={()=>setSubTab(s as any)}
-                className={`flex-1 py-2.5 text-xs font-bold transition-all ${subTab===s?"bg-primary text-white":"bg-surface text-sub"}`}>
-                {s==="compare"?"助詞の比較":"文中の位置"}
-              </button>
-            ))}
-          </div>
-        )}
+        {/* Mode hint */}
+        <p className="text-xs text-hint px-1">
+          {tab==="particle"?"助詞の比較テーマを選んで練習を始めましょう":
+           tab==="conjugate"?"動詞の活用パターンを選択してください":
+           "学習したい文型を選んでください"}
+        </p>
 
-        {/* Conjugate / Sentence mode — simple label */}
-        {tab !== "particle" && (
-          <p className="text-xs text-hint px-1">{tab==="conjugate"?"動詞の活用パターンを選択してください":"学習したい文型を選んでください"}</p>
-        )}
 
         {/* Exercise List */}
         <div className="space-y-2">
           {items.map((item,i)=>(
-            <div key={i} className="bg-surface rounded-2xl p-4 shadow-sm border border-border active:scale-[0.98] transition-all cursor-pointer">
+            <div key={i} onClick={()=>{setTopic(item.l);setQIdx(0);setPicked(null);setDone(false);setScore({right:0,wrong:0});setWrongHint("");setWaitingNext(false);setLives(3);setBlankIdx(0);setFilled([]);}}
+              className="bg-surface rounded-2xl p-4 shadow-sm border border-border active:scale-[0.98] transition-all cursor-pointer">
               <div className="flex items-center justify-between mb-1">
                 <p className="text-sm font-extrabold text-main">{item.l}</p>
                 <span className="text-[10px] font-bold text-primary bg-primary-subtle px-2 py-0.5 rounded-full">{item.n} 問</span>

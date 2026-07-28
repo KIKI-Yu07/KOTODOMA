@@ -1,7 +1,6 @@
 import { useState, useMemo } from "react";
 import { ArrowLeft, Search } from "lucide-react";
 import type { Page } from "../components/BottomNav";
-import StatusBar from "../components/StatusBar";
 import { book2Data } from "../data/book2";
 
 interface SearchPageProps { onNavigate: (p: Page) => void; darkMode?: boolean; }
@@ -28,7 +27,6 @@ export default function SearchPage({ onNavigate, darkMode }: SearchPageProps) {
   };
 
   return (<>
-    <StatusBar darkMode={darkMode} />
     <div className="flex items-center justify-between px-4 py-2">
       <button onClick={()=>onNavigate("home")} className="flex items-center gap-1 text-hint text-sm font-bold active:opacity-60">
         <ArrowLeft size={16} stroke="var(--color-text-tertiary)" strokeWidth={2} /><span>戻る</span>

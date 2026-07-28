@@ -1,13 +1,13 @@
 import { useState, useRef } from "react";
 import { ArrowLeft, Upload, Trash2, Plus, FileText, BookOpen, Pencil } from "lucide-react";
 import type { Page } from "../components/BottomNav";
-import StatusBar from "../components/StatusBar";
 
 interface WordBook { id: string; name: string; words: Word[]; }
 interface Word { word: string; reading: string; meaning: string; pos: string; }
 
-function loadBooks(): WordBook[] { try { return JSON.parse(localStorage.getItem("wordbooks") || "[]"); } catch { return []; } }
-function saveBooks(b: WordBook[]) { localStorage.setItem("wordbooks", JSON.stringify(b)); }
+import { setItem } from "../lib/store";
+function loadBooksSync(): WordBook[] { try { return JSON.parse(localStorage.getItem("wordbooks") || "[]"); } catch { return []; } }
+function saveBooks(b: WordBook[]) { const s = JSON.stringify(b); localStorage.setItem("wordbooks", s); setItem("wordbooks", s).catch(()=>{}); }
 function parseCSV(text: string): Word[] {
   const lines = text.trim().split(/\r?\n/).filter(l => l.trim());
   if (lines.length < 2) return [];
@@ -17,32 +17,29 @@ function parseCSV(text: string): Word[] {
 interface Props { onNavigate?: (p: Page) => void; }
 
 export default function WordLibrary({ onNavigate }: Props) {
-  const [books, setBooks] = useState<WordBook[]>(loadBooks);
+  const [books, setBooks] = useState<WordBook[]>(loadBooksSync);
   const [viewBook, setViewBook] = useState<WordBook | null>(null);
   const [showAdd, setShowAdd] = useState(false);
   const [showImport, setShowImport] = useState(false);
   const [newName, setNewName] = useState("");
   const [pasteText, setPasteText] = useState("");
   const [dragOver, setDragOver] = useState(false);
-  const [toast, setToast] = useState("");
   const [sortBy, setSortBy] = useState<"time" | "time-r" | "alpha" | "alpha-r">("time");
   const [editingName, setEditingName] = useState(false);
   const [editName, setEditName] = useState("");
   const fileRef = useRef<HTMLInputElement>(null);
 
-  const notify = (msg: string) => { setToast(msg); setTimeout(() => setToast(""), 2000); };
-  const addBook = () => { if (!newName.trim()) return; const b: WordBook = { id: Date.now().toString(36), name: newName.trim(), words: [] }; const updated = [...books, b]; setBooks(updated); saveBooks(updated); setNewName(""); setShowAdd(false); notify("作成しました"); };
-  const deleteBook = (id: string) => { const updated = books.filter(b => b.id !== id); setBooks(updated); saveBooks(updated); setViewBook(null); notify("削除しました"); };
+  const addBook = () => { if (!newName.trim()) return; const b: WordBook = { id: Date.now().toString(36), name: newName.trim(), words: [] }; const updated = [...books, b]; setBooks(updated); saveBooks(updated); setNewName(""); setShowAdd(false); };
+  const deleteBook = (id: string) => { const updated = books.filter(b => b.id !== id); setBooks(updated); saveBooks(updated); setViewBook(null); };
 
   const importWords = () => {
     if (!viewBook || !pasteText.trim()) return;
     const words = parseCSV(pasteText);
-    if (!words.length) { notify("解析できませんでした"); return; }
+    if (!words.length) { return; }
     const updated = books.map(b => b.id === viewBook.id ? { ...b, words: [...b.words, ...words] } : b);
     setBooks(updated); saveBooks(updated);
     setViewBook({ ...viewBook, words: [...viewBook.words, ...words] });
     setPasteText(""); setShowImport(false);
-    notify(`${words.length} 語追加`);
   };
 
   const handleFile = (file: File) => {
@@ -63,8 +60,6 @@ export default function WordLibrary({ onNavigate }: Props) {
   if (viewBook) {
     const g = gradientColors[books.findIndex(b => b.id === viewBook.id) % gradientColors.length].split(",");
     return (<div className="fixed inset-0 z-50 bg-bg flex flex-col">
-      <StatusBar />
-      {toast && <div className="absolute top-12 left-1/2 -translate-x-1/2 z-50 bg-success text-white px-5 py-2.5 rounded-full text-sm font-bold shadow-lg">{toast}</div>}
       <div className="flex-1 min-h-0 overflow-y-auto scroll-area">
         {/* Header */}
         <div className="flex items-center justify-between px-4 py-2">
@@ -160,10 +155,7 @@ export default function WordLibrary({ onNavigate }: Props) {
 
   // ── Book List View ──
   return (<>
-    <StatusBar />
     <div className="flex-1 min-h-0 overflow-y-auto scroll-area">
-      {toast && <div className="absolute top-12 left-1/2 -translate-x-1/2 z-50 bg-success text-white px-5 py-2.5 rounded-full text-sm font-bold shadow-lg">{toast}</div>}
-
       <div className="flex items-center justify-between px-4 py-2">
         <button onClick={() => onNavigate?.("vocab")} className="flex items-center gap-1 text-hint text-sm font-bold active:opacity-60">
           <ArrowLeft size={16} stroke="var(--color-text-tertiary)" strokeWidth={2} /><span>戻る</span>

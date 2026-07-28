@@ -1,7 +1,8 @@
 import { useState } from "react";
-import { ArrowLeft, BookOpen } from "lucide-react";
+import { ArrowLeft, BookOpen, ChevronDown } from "lucide-react";
 import type { Page } from "../components/BottomNav";
-import StatusBar from "../components/StatusBar";
+import { setLocal } from "../lib/store";
+import { book2Data } from "../data/book2";
 
 interface SettingsPageProps {
   onNavigate: (page: Page) => void;
@@ -18,19 +19,28 @@ export default function SettingsPage({ onNavigate, darkMode }: SettingsPageProps
   const origGoal = parseInt(localStorage.getItem("dailyGoal") || "15");
   const origBook = localStorage.getItem("selectedBook") || "all";
   const [dailyGoal, setDailyGoal] = useState(origGoal);
+  const origStart = localStorage.getItem("startChapter") || "0";
+  const origRandom = localStorage.getItem("randomMode") || "true";
   const [selectedBook, setSelectedBook] = useState(origBook);
+  const [startChapter, setStartChapter] = useState(origStart);
+  const [randomMode, setRandomMode] = useState(origRandom === "true");
+  const [chapOpen, setChapOpen] = useState(false);
   const [showUnsaved, setShowUnsaved] = useState(false);
+  const [saved, setSaved] = useState(false);
 
-  const isDirty = dailyGoal !== origGoal || selectedBook !== origBook;
+  const isDirty = dailyGoal !== origGoal || selectedBook !== origBook || startChapter !== origStart || randomMode !== (origRandom==="true");
   const handleBack = () => { if (isDirty) { setShowUnsaved(true); return; } onNavigate("home"); };
   const save = () => {
-    localStorage.setItem("dailyGoal", String(dailyGoal));
-    localStorage.setItem("selectedBook", selectedBook);
-    onNavigate("home");
+    if (!isDirty) return;
+    setLocal("dailyGoal", String(dailyGoal));
+    setLocal("selectedBook", selectedBook);
+    setLocal("startChapter", startChapter);
+    setLocal("randomMode", String(randomMode));
+    setSaved(true);
+    setTimeout(() => { setSaved(false); onNavigate("home"); }, 800);
   };
 
   return (<>
-    <StatusBar darkMode={darkMode} />
     <div className="flex items-center px-4 py-2 relative">
       <button onClick={handleBack}
         className="absolute left-4 z-10 flex items-center gap-1 text-hint text-sm font-bold active:opacity-60 transition-opacity">
@@ -47,7 +57,7 @@ export default function SettingsPage({ onNavigate, darkMode }: SettingsPageProps
         <h3 className="text-sm font-bold text-sub dark:text-hint mb-2">每日新学单词数</h3>
         <div className="bg-surface rounded-2xl shadow-sm border border-border p-4">
           <div className="flex items-center gap-2">
-            <button onClick={() => setDailyGoal(Math.max(5, dailyGoal - 5))} className="w-10 h-10 rounded-full bg-primary-subtle flex items-center justify-center text-primary text-xl font-bold active:scale-90 shrink-0">−</button>
+            <button onClick={() => setDailyGoal(Math.max(5, dailyGoal - 5))} className="w-10 h-10 rounded-full bg-primary-subtle flex items-center justify-center text-primary text-xl font-bold active:scale-90 transition-transform shrink-0" style={{willChange:"transform"}}>−</button>
             <div className="flex-1 flex items-center justify-between min-w-0">
               <div className="flex items-baseline gap-1 shrink-0">
                 <span className="text-[48px] font-extrabold text-primary leading-none tabular-nums w-[60px] text-right">{dailyGoal}</span>
@@ -55,13 +65,13 @@ export default function SettingsPage({ onNavigate, darkMode }: SettingsPageProps
               </div>
               <p className="text-xs text-hint italic w-[130px] text-right shrink-0">{dailyGoal <= 5 ? "何时能上岸" : dailyGoal <= 10 ? "老年人起步" : dailyGoal <= 15 ? "还行，不算太懒" : dailyGoal <= 20 ? "突然认真起来了？" : dailyGoal <= 25 ? "别装学霸，不用假努力" : dailyGoal <= 30 ? "别明天就放弃啊" : dailyGoal <= 35 ? "梦里啥都有" : dailyGoal <= 40 ? "词典你写的啊" : dailyGoal <= 45 ? "别这样，对身体不好" : "你知道50什么概念吗"}</p>
             </div>
-            <button onClick={() => setDailyGoal(Math.min(50, dailyGoal + 5))} className="w-10 h-10 rounded-full bg-primary flex items-center justify-center text-white text-xl font-bold active:scale-90 shrink-0">+</button>
+            <button onClick={() => setDailyGoal(Math.min(50, dailyGoal + 5))} className="w-10 h-10 rounded-full bg-primary flex items-center justify-center text-white text-xl font-bold active:scale-90 transition-transform shrink-0" style={{willChange:"transform"}}>+</button>
           </div>
           <div className="flex justify-between mt-3 px-2">
             {[5,10,15,20,25,30,35,40,45,50].map(n => (
               <button key={n} onClick={() => setDailyGoal(n)}
-                className={`w-8 h-8 rounded-full text-[10px] font-bold transition-all ${
-                  dailyGoal === n ? "bg-primary text-white scale-110" : "text-hint hover:text-sub"
+                className={`w-8 h-8 rounded-full text-[10px] font-bold transition-colors duration-150 ${
+                  dailyGoal === n ? "bg-primary text-white" : "text-hint hover:text-sub"
                 }`}>{n}</button>
             ))}
           </div>
@@ -93,11 +103,59 @@ export default function SettingsPage({ onNavigate, darkMode }: SettingsPageProps
           ))}
         </div>
       </div>
+
+      {/* Start Chapter — only for vol2 */}
+      {selectedBook === "vol2" && (
+        <div>
+          <h3 className="text-sm font-bold text-sub dark:text-hint mb-2">从第几课开始</h3>
+          <button onClick={()=>setChapOpen(true)} className="w-full flex items-center justify-between p-4 rounded-xl bg-white dark:bg-surface border border-border">
+            <span className="text-sm font-bold text-main">{startChapter === "0" ? "第1課" : `第${startChapter}課から`}</span>
+            <ChevronDown size={16} className="text-hint"/>
+          </button>
+          {/* Random mode toggle */}
+          <div className="flex items-center justify-between mt-3 px-1">
+            <div>
+              <span className="text-xs font-bold text-sub">随机抽取单词</span>
+              <p className="text-[10px] text-hint mt-0.5">关闭后按顺序学习</p>
+            </div>
+            <button onClick={()=>setRandomMode(!randomMode)}
+              className={`w-12 h-6 rounded-full transition-colors relative shrink-0 ${randomMode?"bg-primary":"bg-border"}`}>
+              <div className={`w-5 h-5 rounded-full bg-white shadow absolute top-0.5 transition-all ${randomMode?"left-6":"left-0.5"}`}/>
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Chapter picker modal */}
+      {chapOpen && (
+        <div className="absolute inset-0 z-50 flex items-end bg-black/40" onClick={()=>setChapOpen(false)}>
+          <div className="bg-surface rounded-t-2xl w-full max-h-[60%] overflow-y-auto shadow-xl" onClick={e=>e.stopPropagation()}>
+            <div className="sticky top-0 bg-surface px-4 pt-4 pb-2 border-b border-border">
+              <h3 className="text-sm font-extrabold text-main">选择起始课次</h3>
+            </div>
+            <div className="p-2">
+              {book2Data.map((ch,i) => (
+                <button key={ch.id} onClick={()=>{setStartChapter(ch.id);setChapOpen(false)}}
+                  className={`w-full text-left px-4 py-3 rounded-xl text-sm font-bold ${startChapter===ch.id?"bg-primary-subtle text-primary":"text-main"}`}>
+                  第{i+1}課 · {ch.name}（{ch.words.length}词）
+                </button>
+              ))}
+              <div className="h-4"/>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
 
     {/* Save */}
     <div className="px-4 py-3 bg-white dark:bg-surface border-t border-primary-subtle dark:border-primary-subtle">
-      <button onClick={save} className="w-full py-3.5 rounded-xl bg-primary text-white font-extrabold text-sm active:scale-[0.98] transition-all shadow-lg shadow-primary/20 hover:shadow-primary/30">保存して戻る</button>
+      <button onClick={save} className="pushable w-full">
+        <span className="shadow-3d"></span>
+        <span className="edge-3d"></span>
+        <span className={`front-3d text-center transition-colors duration-300 ${saved?"bg-emerald-500":""}`}>
+          {saved ? "✓ 已保存" : "保存して戻る"}
+        </span>
+      </button>
     </div>
 
     {showUnsaved && (

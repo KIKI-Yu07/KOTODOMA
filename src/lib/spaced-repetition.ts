@@ -1,4 +1,5 @@
 import { saveProgress as apiSave } from "./api";
+import { getItem, setItem } from "./store";
 
 // SM-2 Spaced Repetition Algorithm
 
@@ -13,13 +14,26 @@ export interface WordProgress {
 }
 
 const STORAGE_KEY = "word_progress";
+let cache: Record<string, WordProgress> | null = null;
 
 export function loadProgress(): Record<string, WordProgress> {
-  try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || "{}"); } catch { return {}; }
+  if (cache) return cache;
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    cache = raw ? JSON.parse(raw) : {};
+  } catch { cache = {}; }
+  // Load from IndexedDB async — update cache when ready
+  getItem(STORAGE_KEY).then(raw => {
+    if (raw) { cache = JSON.parse(raw); localStorage.setItem(STORAGE_KEY, raw); }
+  }).catch(()=>{});
+  return cache || {};
 }
 
 function saveProgress(p: Record<string, WordProgress>) {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(p));
+  cache = p;
+  const raw = JSON.stringify(p);
+  localStorage.setItem(STORAGE_KEY, raw);
+  setItem(STORAGE_KEY, raw).catch(() => {});
   apiSave(p).catch(() => {});
 }
 
@@ -36,7 +50,7 @@ function addDays(iso: string, days: number): string {
   return d.toISOString().slice(0, 10);
 }
 
-export function answerWord(wordId: string, correct: boolean): WordProgress {
+export function answerWord(wordId: string, correct: boolean, forcedNextReview?: string): WordProgress {
   const all = loadProgress();
   const p = all[wordId] || initWord(wordId);
   const today = todayISO();
@@ -54,7 +68,7 @@ export function answerWord(wordId: string, correct: boolean): WordProgress {
     p.interval = 1;
     p.ease = Math.max(1.3, p.ease - 0.2);
   }
-  p.nextReview = addDays(today, p.interval);
+  p.nextReview = forcedNextReview || addDays(today, p.interval);
 
   all[wordId] = p;
   saveProgress(all);

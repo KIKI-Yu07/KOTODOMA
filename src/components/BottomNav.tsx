@@ -1,4 +1,4 @@
-export type Page = "home" | "course" | "word" | "vocab" | "wordlist" | "flashreview" | "settings" | "study" | "profile" | "search" | "wordbooks" | "practice" | "rest";
+export type Page = "home" | "course" | "word" | "vocab" | "wordlist" | "flashreview" | "settings" | "study" | "profile" | "search" | "wordbooks" | "practice" | "rest" | "favorites" | "cardmatch" ;
 
 interface BottomNavProps { active: Page; onNavigate: (p: Page) => void; darkMode?: boolean; }
 

@@ -1,12 +1,10 @@
 import { ArrowLeft } from "lucide-react";
 import type { Page } from "../components/BottomNav";
-import StatusBar from "../components/StatusBar";
 
 interface Props { onNavigate: (p: Page) => void; }
 
 export default function RestPage({ onNavigate }: Props) {
   return (<>
-    <StatusBar />
     <div className="flex-1 flex flex-col items-center justify-center px-8 text-center">
       <img src="/icons/rest-day.svg" alt="" className="w-64 h-64 mb-6" />
       <h2 className="text-xl font-extrabold text-main mb-2">今日の目標達成！</h2>

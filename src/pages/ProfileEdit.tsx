@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { ArrowLeft, ChevronRight } from "lucide-react";
 import type { Page } from "../components/BottomNav";
-import StatusBar from "../components/StatusBar";
 import { loadProfile, saveProfile } from "../lib/userStore";
 
 interface ProfileEditProps { onNavigate: (p: Page) => void; darkMode?: boolean; }
@@ -16,7 +15,6 @@ export default function ProfileEdit({ onNavigate, darkMode }: ProfileEditProps) 
   const [avatar, setAvatar] = useState(origAvatar);
   const [editing, setEditing] = useState<string | null>(null);
   const [tempVal, setTempVal] = useState("");
-  const [toast, setToast] = useState("");
   const [showUnsaved, setShowUnsaved] = useState(false);
 
   const isDirty = nickname !== origNick || gender !== origGender || avatar !== origAvatar;
@@ -34,9 +32,18 @@ export default function ProfileEdit({ onNavigate, darkMode }: ProfileEditProps) 
     input.onchange = (e: any) => {
       const file = e.target?.files?.[0];
       if (!file) return;
-      const reader = new FileReader();
-      reader.onload = () => { setAvatar(reader.result as string); };
-      reader.readAsDataURL(file);
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement("canvas");
+        const max = 200;
+        let w = img.width, h = img.height;
+        if (w > h) { if (w > max) { h = h * max / w; w = max; } }
+        else { if (h > max) { w = w * max / h; h = max; } }
+        canvas.width = w; canvas.height = h;
+        canvas.getContext("2d")!.drawImage(img, 0, 0, w, h);
+        setAvatar(canvas.toDataURL("image/jpeg", 0.7));
+      };
+      img.src = URL.createObjectURL(file);
     };
     input.click();
   };
@@ -48,14 +55,15 @@ export default function ProfileEdit({ onNavigate, darkMode }: ProfileEditProps) 
     setEditing(null);
   };
 
-  const handleLogout = () => {
+  const [saved, setSaved] = useState(false);
+  const handleSave = () => {
+    if (!isDirty) return;
     saveProfile({ nickname, gender, avatar });
-    setToast("保存しました ✓");
-    setTimeout(() => setToast(""), 1000);
+    setSaved(true);
+    setTimeout(() => { setSaved(false); onNavigate("vocab"); }, 800);
   };
 
   return (<>
-    <StatusBar darkMode={darkMode} />
     <div className="flex items-center gap-3 px-4 py-2">
       <button onClick={handleBack} className="flex items-center gap-1 text-hint text-sm font-bold active:opacity-60">
         <ArrowLeft size={16} stroke="var(--color-text-tertiary)" strokeWidth={2} />
@@ -63,12 +71,6 @@ export default function ProfileEdit({ onNavigate, darkMode }: ProfileEditProps) 
       </button>
       <span className="text-[15px] font-semibold text-main">個人資料</span>
     </div>
-
-    {toast && (
-      <div className="absolute top-12 left-1/2 -translate-x-1/2 z-50 bg-success text-white px-5 py-2.5 rounded-full text-sm font-bold shadow-lg">
-        {toast}
-      </div>
-    )}
 
     <div className="flex-1 overflow-y-auto scroll-area">
       <div className="bg-surface rounded-[2px] shadow-sm mx-4 mt-3 overflow-hidden">
@@ -97,7 +99,13 @@ export default function ProfileEdit({ onNavigate, darkMode }: ProfileEditProps) 
       </div>
 
       <div className="mx-4 mt-6">
-        <button onClick={handleLogout} className="w-full py-3 rounded-[4px] bg-white text-main text-sm font-bold border border-border active:scale-[0.98]">ログアウト</button>
+        <button onClick={handleSave} className="pushable w-full mt-2">
+          <span className="shadow-3d"></span>
+          <span className="edge-3d"></span>
+          <span className={`front-3d text-center transition-colors duration-300 ${saved?"bg-emerald-500":""}`}>
+            {saved ? "✓ 已保存" : "保存して戻る"}
+          </span>
+        </button>
       </div>
     </div>
 

@@ -14,6 +14,8 @@ import SearchPage from "./pages/SearchPage";
 import MatchGame from "./pages/MatchGame";
 import RestPage from "./pages/RestPage";
 import PracticePage from "./pages/PracticePage";
+import FavoritesPage from "./pages/FavoritesPage";
+import CardMatch from "./pages/CardMatch";
 
 export default function App() {
   const [page, setPage] = useState<Page>("home");
@@ -21,7 +23,7 @@ export default function App() {
 
   return (
     <div className={`flex justify-center items-center sm:min-h-screen sm:bg-bg transition-colors ${darkMode ? "dark" : ""}`}>
-      <div className="phone flex flex-col">
+      <div className="phone flex flex-col" style={{paddingTop:"env(safe-area-inset-top, 20px)"}}>
         <div key={page} className="page-enter flex flex-col flex-1 overflow-hidden">
           {page === "home" && <Home onNavigate={setPage} darkMode={darkMode} onToggleDark={() => setDarkMode(!darkMode)} />}
           {page === "word" && <WordDetail darkMode={darkMode} />}
@@ -36,7 +38,9 @@ export default function App() {
         {page === "wordbooks" && <WordBooksPage onNavigate={setPage} />}
         {page === "practice" && <PracticePage onNavigate={setPage} darkMode={darkMode} />}
         {page === "rest" && <RestPage onNavigate={setPage} />}
-        </div>
+        {page === "favorites" && <FavoritesPage onNavigate={setPage} darkMode={darkMode} />}
+        {page === "cardmatch" && <CardMatch onNavigate={setPage} darkMode={darkMode} />}
+                        </div>
         <BottomNav active={page} onNavigate={setPage} darkMode={darkMode} />
       </div>
     </div>

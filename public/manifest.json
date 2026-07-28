@@ -1,0 +1,18 @@
+{
+  "name": "単語修羅 - 日语单词背诵",
+  "short_name": "単語修羅",
+  "description": "日语单词背诵学习App",
+  "start_url": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#F5F5F5",
+  "theme_color": "#0F64B5",
+  "icons": [
+    {
+      "src": "/icons/logo.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
