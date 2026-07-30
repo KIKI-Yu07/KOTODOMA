@@ -67,7 +67,7 @@ export default function SettingsPage({ onNavigate }: SettingsPageProps) {
         <h3 className="text-sm font-bold text-sub mb-2">每日新学单词数</h3>
         <div className="bg-surface rounded-2xl shadow-sm border border-border p-4">
           <div className="flex items-center gap-2">
-            <button onClick={() => setDailyGoal(Math.max(5, dailyGoal - 5))} className="w-10 h-10 rounded-full bg-primary-subtle flex items-center justify-center text-primary text-xl font-bold active:scale-90 transition-transform shrink-0" style={{willChange:"transform"}}>−</button>
+            <button onClick={() => setDailyGoal(Math.max(5, dailyGoal - 5))} className="min-h-[44px] min-w-[44px] rounded-full bg-primary-subtle flex items-center justify-center text-primary text-xl font-bold active:scale-90 transition-transform shrink-0" style={{willChange:"transform"}}>−</button>
             <div className="flex-1 flex items-center justify-between min-w-0">
               <div className="flex items-baseline gap-1 shrink-0">
                 <span className="text-[48px] font-extrabold text-primary leading-none tabular-nums w-[60px] text-right">{dailyGoal}</span>
@@ -75,12 +75,12 @@ export default function SettingsPage({ onNavigate }: SettingsPageProps) {
               </div>
               <p className="text-xs text-hint italic w-[130px] text-right shrink-0">{dailyGoal <= 5 ? "何时能上岸" : dailyGoal <= 10 ? "老年人起步" : dailyGoal <= 15 ? "还行，不算太懒" : dailyGoal <= 20 ? "突然认真起来了？" : dailyGoal <= 25 ? "别装学霸，不用假努力" : dailyGoal <= 30 ? "别明天就放弃啊" : dailyGoal <= 35 ? "梦里啥都有" : dailyGoal <= 40 ? "词典你写的啊" : dailyGoal <= 45 ? "别这样，对身体不好" : "你知道50什么概念吗"}</p>
             </div>
-            <button onClick={() => setDailyGoal(Math.min(50, dailyGoal + 5))} className="w-10 h-10 rounded-full bg-primary flex items-center justify-center text-white text-xl font-bold active:scale-90 transition-transform shrink-0" style={{willChange:"transform"}}>+</button>
+            <button onClick={() => setDailyGoal(Math.min(50, dailyGoal + 5))} className="min-h-[44px] min-w-[44px] rounded-full bg-primary flex items-center justify-center text-white text-xl font-bold active:scale-90 transition-transform shrink-0" style={{willChange:"transform"}}>+</button>
           </div>
           <div className="flex justify-between mt-3 px-2">
             {[5,10,15,20,25,30,35,40,45,50].map(n => (
               <button key={n} onClick={() => setDailyGoal(n)}
-                className={`w-8 h-8 rounded-full text-[10px] font-bold transition-colors duration-150 ${
+                className={`min-h-[44px] w-8 rounded-full text-[10px] font-bold transition-colors duration-150 ${
                   dailyGoal === n ? "bg-primary text-white" : "text-hint hover:text-sub"
                 }`}>{n}</button>
             ))}
@@ -95,12 +95,12 @@ export default function SettingsPage({ onNavigate }: SettingsPageProps) {
           {textBooks.map(b => (
             <button key={b.id} onClick={() => setSelectedBook(b.id)}
               className={`w-full flex items-center gap-3 p-4 rounded-xl transition-all active:scale-[0.98] ${
-                selectedBook === b.id ? "bg-[#FFE66D] shadow-sm" : "bg-white"
+                selectedBook === b.id ? "bg-highlight shadow-sm" : "bg-white"
               }`}>
               <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${
                 selectedBook === b.id ? "bg-white/40" : "bg-primary-subtle"
               }`}>
-                <BookOpen size={18} stroke={selectedBook === b.id ? "#0F1419" : "#1A1A1A"} />
+                <BookOpen size={18} stroke={selectedBook === b.id ? "#0F1419" : "var(--color-primary)"} />
               </div>
               <div className="flex-1 text-left">
                 <p className="text-sm font-bold text-main">{b.name}</p>
@@ -113,12 +113,12 @@ export default function SettingsPage({ onNavigate }: SettingsPageProps) {
           {/* Custom wordbook option */}
           <button onClick={() => setWbOpen(true)}
             className={`w-full flex items-center gap-3 p-4 rounded-xl transition-all active:scale-[0.98] ${
-              !isTextbook && selectedBook ? "bg-[#FFE66D] shadow-sm" : "bg-white"
+              !isTextbook && selectedBook ? "bg-highlight shadow-sm" : "bg-white"
             }`}>
             <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${
               !isTextbook && selectedBook ? "bg-white/40" : "bg-primary-subtle"
             }`}>
-              <Library size={18} stroke={!isTextbook && selectedBook ? "#0F1419" : "#1A1A1A"} />
+              <Library size={18} stroke={!isTextbook && selectedBook ? "#0F1419" : "var(--color-primary)"} />
             </div>
             <div className="flex-1 text-left">
               <p className="text-sm font-bold text-main">
@@ -192,7 +192,7 @@ export default function SettingsPage({ onNavigate }: SettingsPageProps) {
                 <p className="text-sm font-bold text-sub mb-1">还没有单词本</p>
                 <p className="text-xs text-hint mb-4">先去个人页面自定义单词本吧</p>
                 <button onClick={() => { setWbOpen(false); onNavigate("wordbooks"); }}
-                  className="inline-flex items-center gap-1.5 px-5 py-2.5 rounded-lg bg-[#1A1A1A] text-white text-sm font-medium active:scale-95">
+                  className="inline-flex items-center gap-1.5 px-5 py-2.5 rounded-lg bg-primary text-white text-sm font-medium active:scale-95">
                   <Plus size={16} />新建单词本
                 </button>
               </div>

@@ -2,7 +2,7 @@ import { useState, useMemo, useEffect } from "react";
 import { createPortal } from "react-dom";
 import { ArrowLeft, Check, Lock, Play, X, Flame, ArrowRight, MessageSquareQuote } from "lucide-react";
 import { categories, getStage, getQuestions, type Question } from "../data/grammar";
-import { playSuccess, playError } from "../lib/audio";
+import { playSuccess, playError, audioReady } from "../lib/audio";
 import { cn } from "../lib/utils";
 
 interface WordDetailProps {}
@@ -85,7 +85,7 @@ function QuizSession({ stageTitle, stageSubtitle, categoryLabel, stageNumber, qu
     <div className="fixed inset-0 z-[999] flex flex-col bg-bg" style={{position:"fixed",top:0,left:0,right:0,bottom:0}}>
       <header className="sticky top-0 z-20 border-b border-border bg-bg/95 backdrop-blur">
         <div className="mx-auto flex w-full max-w-xl items-center gap-3 px-5 py-3.5">
-          <button onClick={onBack} className="-ml-1.5 inline-flex size-8 items-center justify-center rounded-md text-hint transition-colors hover:bg-surface hover:text-main"><X size={18} strokeWidth={2}/></button>
+          <button onClick={onBack} className="-ml-1.5 inline-flex min-h-[44px] min-w-[44px] items-center justify-center rounded-md text-hint transition-colors hover:bg-surface hover:text-main"><X size={18} strokeWidth={2}/></button>
           <div className="min-w-0 flex-1"><p className="truncate font-mono text-[11px] uppercase tracking-widest text-hint">{categoryLabel} · 第{String(stageNumber).padStart(2,"0")}関</p><p className="truncate text-[13px] font-medium leading-tight tracking-tight text-main">{stageTitle}</p></div>
           <div className={cn("inline-flex items-center gap-1.5 rounded-md border px-2 py-1 font-mono text-[11px] tabular-nums transition-colors",streak>=2?"border-primary/40 bg-primary/8 text-primary":"border-border text-hint")}><Flame className="size-3.5" strokeWidth={2.5}/>{streak}</div>
         </div>
@@ -121,7 +121,7 @@ function QuizSession({ stageTitle, stageSubtitle, categoryLabel, stageNumber, qu
         </div>}
       </main>
 
-      <div className="fixed inset-x-0 bottom-0 z-20 border-t border-border bg-bg/95 backdrop-blur">
+      <div className="fixed inset-x-0 bottom-0 z-20 border-t border-border bg-bg/95 backdrop-blur" style={{paddingBottom:"env(safe-area-inset-bottom, 0px)"}}>
         <div className="mx-auto flex w-full max-w-xl items-center justify-between gap-4 px-5 py-4">
           <span className="font-mono text-[11px] tabular-nums text-hint">正确 {correctCount} / {results.length}</span>
           <button type="button" onClick={handleNext} disabled={!answered} className={cn("inline-flex items-center gap-2 rounded-md px-5 py-2.5 text-sm font-medium transition-all",answered?"bg-main text-bg hover:opacity-85":"cursor-not-allowed bg-border/30 text-hint")}>{current+1>=questions.length?"查看结果":"下一题"}<ArrowRight className="size-4" strokeWidth={2.5}/></button>
@@ -144,6 +144,7 @@ export default function WordDetail({}: WordDetailProps) {
     try { return new Set(JSON.parse(localStorage.getItem("grammar_completed")||"[]")); } catch { return new Set(); }
   });
   const [playingStage, setPlayingStage] = useState<string|null>(null);
+  const [loading, setLoading] = useState(false);
   const [scores, setScores] = useState<Record<string,number>>(()=>{
     try { return JSON.parse(localStorage.getItem("grammar_scores")||"{}"); } catch { return {}; }
   });
@@ -172,6 +173,14 @@ export default function WordDetail({}: WordDetailProps) {
     setScores(nextScores);
     localStorage.setItem("grammar_scores", JSON.stringify(nextScores));
   };
+
+  if (loading) return (
+    <div className="flex flex-col flex-1 min-h-0 items-center justify-center gap-6 px-8 text-center bg-bg">
+      <div className="word-loader" />
+      <p className="text-sub text-sm font-medium">音声読み込み中...</p>
+      <p className="text-hint text-xs">文法問題を準備しています</p>
+    </div>
+  );
 
   // If playing a stage, show quiz session
   if (playingStage) {
@@ -216,7 +225,7 @@ export default function WordDetail({}: WordDetailProps) {
       <main className="mx-auto max-w-md px-5 pb-16 pt-6">
         <p className="text-sm leading-relaxed text-sub">{active.caption}</p>
         <ol className="mt-6">
-          {active.stages.map((s,i)=>{const isLast=i===active.stages.length-1;const onPlay=()=>{setPlayingStage(s.id);};return(
+          {active.stages.map((s,i)=>{const isLast=i===active.stages.length-1;const onPlay=async ()=>{setLoading(true);await audioReady();setLoading(false);setPlayingStage(s.id);};return(
             <li key={s.id} className="relative flex gap-4">
               {!isLast&&<span className={cn("absolute left-4 top-8 bottom-0 w-px -translate-x-1/2",s.status==="cleared"?"bg-main":"bg-border")}/>}
               <div className={cn("relative z-10 flex size-8 shrink-0 items-center justify-center rounded-full border text-xs font-medium",s.status==="cleared"&&"border-main bg-main text-bg",s.status==="current"&&"border-primary bg-primary text-white",s.status==="locked"&&"border-dashed border-border bg-bg text-hint/60")}>{s.status==="cleared"?<Check size={16} strokeWidth={2.5}/>:<span className="font-mono tabular-nums">{String(i+1).padStart(2,"0")}</span>}</div>

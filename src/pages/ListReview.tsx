@@ -53,8 +53,8 @@ export default function ListReview({ onNavigate }: Props) {
       </div>
 
       {/* Swipe hint + dropdown */}
-      <div className="px-4 pb-2 flex items-center gap-2">
-        <div className="flex items-center gap-2 text-xs text-hint/60 bg-[#F8F8F8] rounded-lg px-3 py-2 flex-1">
+      <div className="px-5 pb-2 flex items-center gap-2">
+        <div className="flex items-center gap-2 text-xs text-hint/60 bg-surface-hover rounded-lg px-3 py-2 flex-1">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
           <span>向右滑动卡片标记为已掌握</span>
         </div>
@@ -98,8 +98,8 @@ export default function ListReview({ onNavigate }: Props) {
 
               if (known) {
                 return (
-                  <li key={w.id} className="animate-pop-in flex items-center gap-3 rounded-2xl border border-[#1A1A1A]/15 bg-[#1A1A1A]/[0.03] px-4 py-2.5">
-                    <span className="flex size-5 shrink-0 items-center justify-center rounded-full bg-[#1A1A1A] text-white">
+                  <li key={w.id} className="animate-pop-in flex items-center gap-3 rounded-2xl border border-primary/15 bg-primary/[0.03] px-4 py-2.5">
+                    <span className="flex size-5 shrink-0 items-center justify-center rounded-full bg-primary text-white">
                       <Check className="size-3" strokeWidth={3} />
                     </span>
                     <span className="min-w-0 flex-1 truncate font-serif text-base font-semibold text-main/70">
@@ -181,8 +181,8 @@ function SwipeWordCard({ index, word, isMasked, onToggle, onKnown, animIn }: {
   return (
     <li className={`relative overflow-hidden rounded-2xl ${animIn ? "animate-pop-in" : ""}`}>
       {/* Swipe reveal background */}
-      <div aria-hidden="true" className="absolute inset-0 flex items-center gap-2 rounded-2xl bg-[#F5F5F5] px-5 text-[#1A1A1A]" style={{ opacity: progress }}>
-        <span className="flex size-6 items-center justify-center rounded-full bg-[#1A1A1A] text-white transition-transform" style={{ transform: `scale(${0.7 + progress * 0.3})` }}>
+      <div aria-hidden="true" className="absolute inset-0 flex items-center gap-2 rounded-2xl bg-surface-subtle px-5 text-primary" style={{ opacity: progress }}>
+        <span className="flex size-6 items-center justify-center rounded-full bg-primary text-white transition-transform" style={{ transform: `scale(${0.7 + progress * 0.3})` }}>
           <Check className="size-3.5" strokeWidth={3} />
         </span>
         <span className="text-sm font-medium">{progress >= 1 ? "松手记为已掌握" : "记住了"}</span>
@@ -209,7 +209,7 @@ function SwipeWordCard({ index, word, isMasked, onToggle, onKnown, animIn }: {
               {word.p && <span className="rounded-full border border-border px-2 py-0.5 text-[11px] leading-4 text-sub">{word.p}</span>}
             </div>
             <div className="mt-1.5 flex items-start gap-2">
-              <span aria-hidden="true" className="mt-2 size-1 shrink-0 rounded-full bg-[#1A1A1A]" />
+              <span aria-hidden="true" className="mt-2 size-1 shrink-0 rounded-full bg-primary" />
               <MaskBlock masked={isMasked("meaning")} onToggle={() => onToggle("meaning")}>
                 <span className="text-[15px] leading-relaxed text-main/70">{word.m}</span>
               </MaskBlock>
@@ -250,8 +250,8 @@ function MaskBlock({ masked, onToggle, children, className = "" }: {
         {children}
       </span>
       <span aria-hidden="true"
-        className={`absolute inset-y-[8%] -inset-x-1.5 rounded-md bg-[#E8E8E8] transition-[opacity,transform] duration-200 ease-out ${
-          masked ? "scale-100 opacity-100 group-hover:bg-[#F0F0F0] group-active:scale-[0.98]" : "scale-95 opacity-0"
+        className={`absolute inset-y-[8%] -inset-x-1.5 rounded-md bg-disabled-dark transition-[opacity,transform] duration-200 ease-out ${
+          masked ? "scale-100 opacity-100 group-hover:bg-surface-gray group-active:scale-[0.98]" : "scale-95 opacity-0"
         }`} />
     </button>
   );

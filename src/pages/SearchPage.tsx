@@ -13,7 +13,7 @@ function SearchResult({ w, query }: { w: {id:string;w:string;r:string;m:string;p
     const escaped = query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
     const parts = text.split(new RegExp(`(${escaped})`, 'gi'));
     return parts.map((p, i) => p.toLowerCase() === query.toLowerCase()
-      ? `<mark class="bg-[#FFE66D] text-main rounded px-0.5 font-bold">${p}</mark>` : p).join('');
+      ? `<mark class="bg-highlight text-main rounded px-0.5 font-bold">${p}</mark>` : p).join('');
   };
   return (
     <div {...handlers} className="bg-surface rounded-xl p-3 shadow-sm border border-border">

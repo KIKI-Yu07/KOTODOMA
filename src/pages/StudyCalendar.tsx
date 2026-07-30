@@ -66,11 +66,11 @@ export default function StudyCalendar({ onNavigate }: Props) {
 
       {/* Month navigator */}
       <div className="flex items-center justify-between px-5 mb-3">
-        <button onClick={prevMonth} className="size-8 flex items-center justify-center rounded-lg hover:bg-white active:scale-90">
+        <button onClick={prevMonth} className="min-h-[44px] min-w-[44px] flex items-center justify-center rounded-lg hover:bg-white active:scale-90">
           <ChevronLeft size={18} className="text-main" />
         </button>
         <span className="text-sm font-bold text-main">{year}年{month + 1}月</span>
-        <button onClick={nextMonth} className="size-8 flex items-center justify-center rounded-lg hover:bg-white active:scale-90">
+        <button onClick={nextMonth} className="min-h-[44px] min-w-[44px] flex items-center justify-center rounded-lg hover:bg-white active:scale-90">
           <ChevronRight size={18} className="text-main" />
         </button>
       </div>
@@ -101,12 +101,12 @@ export default function StudyCalendar({ onNavigate }: Props) {
               return (
                 <div key={day} className="aspect-square flex flex-col items-center justify-center">
                   {isToday ? (
-                    <span className="size-8 rounded-full bg-[#1A1A1A] text-white flex items-center justify-center text-sm font-bold">{day}</span>
+                    <span className="size-8 rounded-full bg-primary text-white flex items-center justify-center text-sm font-bold">{day}</span>
                   ) : (
                     <span className="text-sm text-main">{day}</span>
                   )}
                   {isStudied && (
-                    <span className={`mt-0.5 rounded-full ${isToday ? "bg-white" : "bg-[#1A1A1A]"} h-1 w-1`} />
+                    <span className={`mt-0.5 rounded-full ${isToday ? "bg-white" : "bg-primary"} h-1 w-1`} />
                   )}
                 </div>
               );
@@ -117,8 +117,8 @@ export default function StudyCalendar({ onNavigate }: Props) {
 
       {/* Legend */}
       <div className="px-5 pb-8 flex items-center justify-center gap-6 text-xs text-sub">
-        <span className="flex items-center gap-1.5"><span className="size-2 rounded-full bg-[#1A1A1A]" />已打卡</span>
-        <span className="flex items-center gap-1.5"><span className="size-2 rounded-full bg-[#1A1A1A]/20" />未打卡</span>
+        <span className="flex items-center gap-1.5"><span className="size-2 rounded-full bg-primary" />已打卡</span>
+        <span className="flex items-center gap-1.5"><span className="size-2 rounded-full bg-primary/20" />未打卡</span>
       </div>
     </div>
   );

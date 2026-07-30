@@ -52,7 +52,7 @@ export default function FeedbackPage({ onNavigate }: Props) {
 
   return (
     <div className="flex-1 min-h-0 overflow-y-auto scroll-area bg-bg">
-      <div className="flex items-center justify-between px-4 py-2">
+      <div className="flex items-center justify-between px-5 py-2">
         <button onClick={() => onNavigate("vocab")}
           className="flex items-center gap-1 text-hint text-sm font-bold active:opacity-60">
           <ArrowLeft size={16} strokeWidth={2} />
@@ -66,13 +66,13 @@ export default function FeedbackPage({ onNavigate }: Props) {
           value={text}
           onChange={e => setText(e.target.value)}
           disabled={sending}
-          className="w-full h-[160px] p-4 text-sm text-main outline-none resize-none bg-white rounded-xl border border-border focus:border-[#1A1A1A] transition-colors disabled:opacity-50"
+          className="w-full h-[160px] p-4 text-sm text-main outline-none resize-none bg-white rounded-xl border border-border focus:border-primary transition-colors disabled:opacity-50"
           placeholder="例如: 希望增加xxx功能 / 某个地方不太好用..."
         />
         <button onClick={handleSend}
           disabled={!text.trim() || sending}
           className={`w-full mt-4 py-3.5 rounded-xl text-sm font-medium transition-all flex items-center justify-center gap-2 ${
-            text.trim() && !sending ? "bg-[#1A1A1A] text-white active:scale-[0.98]" : "bg-[#D4D4D4] text-white cursor-not-allowed"
+            text.trim() && !sending ? "bg-primary text-white active:scale-[0.98]" : "bg-disabled text-white cursor-not-allowed"
           }`}>
           {sending && (
             <svg className="animate-spin size-4" viewBox="0 0 24 24" fill="none">

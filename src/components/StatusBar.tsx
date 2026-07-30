@@ -1,7 +1,7 @@
 interface StatusBarProps {}
 
 export default function StatusBar({}: StatusBarProps) {
-  const fg = "#1A1C22";
+  const fg = "var(--color-primary)";
   return (
     <div className="flex justify-between items-center px-6 pt-3 pb-1">
       <span className="text-xs font-semibold" style={{ color: fg }}>9:41</span>

@@ -5,7 +5,7 @@ import { loadProgress, answerWord, getReviewCount } from "../lib/spaced-repetiti
 import { setLocal } from "../lib/store";
 import { getExample } from "../data/examples";
 import { getWordSource } from "../lib/wordSource";
-import { playSuccess, playError } from "../lib/audio";
+import { playSuccess, playError, audioReady } from "../lib/audio";
 import { useLongPress } from "../lib/longPress";
 import { toggleFavorite } from "../lib/favorites";
 
@@ -89,27 +89,16 @@ export default function StudyPage({ onNavigate }: StudyPageProps) {
     } catch {}
   };
 
-  // ── Preload audio ──
+  // Preload audio via shared instances
   useEffect(() => {
-    let loaded = 0;
-    const total = 2;
-    const onLoad = () => {
-      loaded++;
-      setLoadingText(`音声読み込み中... ${loaded}/${total}`);
-      if (loaded >= total) {
-        setLoadingText("準備完了");
-        setTimeout(() => setLoading(false), 400);
-      }
-    };
-    // Shared audio instances (from lib/audio.ts)
-    const s = new Audio("/icons/success.mp3");
-    const e = new Audio("/icons/error.wav");
-    s.addEventListener("canplaythrough", onLoad, { once: true });
-    e.addEventListener("canplaythrough", onLoad, { once: true });
-    s.load(); e.load();
+    setLoadingText("音声読み込み中...");
+    audioReady().then(() => {
+      setLoadingText("準備完了");
+      setTimeout(() => setLoading(false), 400);
+    });
+    const t = setTimeout(() => setLoading(false), 3000);
     // Pre-warm TTS
     try { const u = new SpeechSynthesisUtterance(""); u.volume = 0; u.lang = "ja-JP"; speechSynthesis.speak(u); } catch {}
-    const t = setTimeout(() => setLoading(false), 3000);
     return () => clearTimeout(t);
   }, []);
 
@@ -321,7 +310,7 @@ export default function StudyPage({ onNavigate }: StudyPageProps) {
       <h1 className="font-serif text-3xl text-main">お疲れさまでした</h1>
       <button
         onClick={() => onNavigate("home")}
-        className="bg-[#1A1A1A] text-white hover:bg-[#1A1A1A]/88 mt-2 rounded-full px-10 py-3.5 text-sm font-medium tracking-wide transition-colors"
+        className="bg-primary text-white hover:bg-primary/88 mt-2 rounded-full px-10 py-3.5 text-sm font-medium tracking-wide transition-colors"
       >
         返回首页
       </button>
@@ -355,7 +344,7 @@ export default function StudyPage({ onNavigate }: StudyPageProps) {
         <div className="px-5 pb-3">
           <div className="bg-border h-px w-full">
             <div
-              className="bg-[#1A1A1A] h-px transition-all duration-500"
+              className="bg-primary h-px transition-all duration-500"
               style={{ width: `${progressPct}%` }}
             />
           </div>
@@ -373,7 +362,7 @@ export default function StudyPage({ onNavigate }: StudyPageProps) {
         {/* Phase transition banner — absolute overlay, doesn't shift content */}
         {phaseBanner && (
         <div className="absolute left-0 right-0 z-20 flex justify-center pointer-events-none" style={{top: 'env(safe-area-inset-top, 0px)'}}>
-          <div className="animate-pop-in bg-[#1A1A1A] text-white text-center py-3 px-8 mx-5 rounded-xl w-full max-w-[340px]">
+          <div className="animate-pop-in bg-primary text-white text-center py-3 px-8 mx-5 rounded-xl w-full max-w-[340px]">
             <p className="text-[11px] tracking-[0.2em] opacity-60">NEXT PHASE</p>
             <p className="text-sm font-semibold mt-0.5">{phaseBanner}</p>
           </div>
@@ -394,7 +383,7 @@ export default function StudyPage({ onNavigate }: StudyPageProps) {
 
         {/* Main word */}
         <LongPressWord wordId={currentId} onFavorite={() => toggleFavorite(currentId)}>
-          <h1 className="font-serif text-5xl leading-none tracking-wide text-main md:text-6xl">
+          <h1 className="font-serif text-5xl leading-none tracking-wide text-main md:text-6xl break-words">
             {question.prompt}
           </h1>
         </LongPressWord>
@@ -406,7 +395,7 @@ export default function StudyPage({ onNavigate }: StudyPageProps) {
         <button
           type="button"
           onClick={() => { ttsUnlocked.current = true; speak(cur.r); }}
-          className="text-sub hover:text-main border-border hover:border-[#1A1A1A]/40 mt-7 flex items-center gap-2 rounded-full border px-4 py-2 text-xs transition-colors"
+          className="text-sub hover:text-main border-border hover:border-primary/40 mt-7 flex items-center gap-2 rounded-full border px-4 py-2 text-xs transition-colors"
           aria-label="播放读音"
         >
           <Volume2 className="size-4" strokeWidth={1.5} />
@@ -435,17 +424,17 @@ export default function StudyPage({ onNavigate }: StudyPageProps) {
         {/* Example sentence — reserved space to prevent layout shift */}
         <div className="mt-5 min-h-[80px] flex items-center justify-center">
           {showExample ? (
-            <div className="rounded-xl bg-[#F5F5F5] px-5 py-3 max-w-[320px] text-center animate-pop-in">
+            <div className="rounded-xl bg-surface-subtle px-5 py-3 max-w-[320px] text-center animate-pop-in">
               {phase===2 && (errorCount.current[currentId]||0) >= 3 && (
                 <p className="text-danger/60 mb-0.5 text-[10px]">已错{errorCount.current[currentId]}次</p>
               )}
               <p className="text-hint mb-1 text-[10px]">例文</p>
               <p className="text-main text-xs leading-relaxed">
-                {(()=>{const id=currentId;if(!exampleCache.current[id])exampleCache.current[id]=getExample(cur.w,cur.p||"");return exampleCache.current[id];})().split("【").map((part,i)=>i===0?part:part.split("】").map((p,j)=>j===0?<span key={i} className="text-[#1A1A1A] font-extrabold">{p}</span>:p))}
+                {(()=>{const id=currentId;if(!exampleCache.current[id])exampleCache.current[id]=getExample(cur.w,cur.p||"");return exampleCache.current[id];})().split("【").map((part,i)=>i===0?part:part.split("】").map((p,j)=>j===0?<span key={i} className="text-primary font-extrabold">{p}</span>:p))}
               </p>
             </div>
           ) : (
-            <div className="rounded-xl bg-[#F5F5F5] px-5 py-3 max-w-[320px] text-center invisible">
+            <div className="rounded-xl bg-surface-subtle px-5 py-3 max-w-[320px] text-center invisible">
               <p className="text-hint mb-1 text-[10px] leading-relaxed">&nbsp;</p>
               <p className="text-main text-xs leading-relaxed">&nbsp;</p>
             </div>
@@ -454,17 +443,17 @@ export default function StudyPage({ onNavigate }: StudyPageProps) {
       </main>
 
       {/* ── Options ── */}
-      <footer className="px-5 pt-2 pb-8 flex-shrink-0 relative">
+      <footer className="px-5 pt-2 flex-shrink-0 relative" style={{paddingBottom:"calc(2rem + env(safe-area-inset-bottom, 0px))"}}>
         <div className="mx-auto grid w-full max-w-[340px] grid-cols-2 gap-3">
           {question.options.map((option) => {
             const isAnswer = option === question.correct;
             const isPicked = option === picked;
 
-            let tone = 'bg-white border-border text-main hover:border-[#1A1A1A]/40';
+            let tone = 'bg-white border-border text-main hover:border-primary/40';
             if (answered && isAnswer) {
-              tone = 'bg-[#1A1A1A] border-[#1A1A1A] text-white';
+              tone = 'bg-primary border-primary text-white';
             } else if (answered && isPicked) {
-              tone = 'bg-[#F5F5F5] border-border text-sub line-through';
+              tone = 'bg-surface-subtle border-border text-sub line-through';
             } else if (answered) {
               tone = 'bg-white border-border text-sub/60';
             }
@@ -484,7 +473,7 @@ export default function StudyPage({ onNavigate }: StudyPageProps) {
         </div>
 
         {/* Bottom hint — absolute so it doesn't shift layout */}
-        <div className="absolute bottom-0 left-0 right-0 h-10 flex items-center justify-center text-[11px] tracking-[0.2em] text-hint pointer-events-none">
+        <div className="absolute bottom-0 left-0 right-0 flex items-center justify-center text-[11px] tracking-[0.2em] text-hint pointer-events-none" style={{paddingBottom:"calc(env(safe-area-inset-bottom, 0px))",height:"calc(2.5rem + env(safe-area-inset-bottom, 0px))"}}>
           選択してください
         </div>
       </footer>
@@ -498,8 +487,8 @@ export default function StudyPage({ onNavigate }: StudyPageProps) {
             <h3 className="text-main text-[15px] font-semibold mb-1">学習を中断しますか？</h3>
             <p className="text-sub text-[13px] mb-5">まだ完了していない単語の進捗は保存されません</p>
             <div className="flex gap-3">
-              <button onClick={cancelExit} className="flex-1 py-2.5 rounded-xl bg-[#F5F5F5] text-main text-sm font-medium">続ける</button>
-              <button onClick={confirmExit} className="flex-1 py-2.5 rounded-xl bg-[#1A1A1A] text-white text-sm font-medium">中断する</button>
+              <button onClick={cancelExit} className="flex-1 py-2.5 rounded-xl bg-surface-subtle text-main text-sm font-medium">続ける</button>
+              <button onClick={confirmExit} className="flex-1 py-2.5 rounded-xl bg-primary text-white text-sm font-medium">中断する</button>
             </div>
           </div>
         </div>

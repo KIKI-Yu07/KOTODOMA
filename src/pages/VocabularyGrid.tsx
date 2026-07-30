@@ -27,9 +27,9 @@ function MenuList({ items }: { items: MenuItem[] }) {
             <button
               type="button"
               onClick={item.action}
-              className="group flex w-full items-center gap-4 px-5 py-4 text-left transition-colors active:bg-[#F5F5F5]"
+              className="group flex w-full items-center gap-4 px-5 py-4 text-left transition-colors active:bg-surface-subtle"
             >
-              <span className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-[#F5F5F5]">
+              <span className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-surface-subtle">
                 <Icon className="size-[18px] text-main" aria-hidden="true" />
               </span>
               <span className="min-w-0 flex-1">
@@ -152,12 +152,12 @@ export default function VocabularyGrid({ onNavigate }: VocabGridProps) {
               <img
                 src={av}
                 alt=""
-                className="size-[52px] shrink-0 rounded-full object-cover ring-2 ring-[#F5F5F5]"
+                className="size-[52px] shrink-0 rounded-full object-cover ring-2 ring-surface-subtle"
               />
             ) : (
               <div
                 aria-hidden="true"
-                className="flex size-[52px] shrink-0 items-center justify-center rounded-full bg-[#1A1A1A] text-lg font-semibold tracking-tight text-white shadow-sm"
+                className="flex size-[52px] shrink-0 items-center justify-center rounded-full bg-primary text-lg font-semibold tracking-tight text-white shadow-sm"
               >
                 {(nick || "小")[0]}
               </div>
@@ -203,11 +203,11 @@ export default function VocabularyGrid({ onNavigate }: VocabGridProps) {
       </header>
 
       {/* ── Progress Card ── */}
-      <section className="px-4 pt-4">
+      <section className="px-5 pt-4">
         <button
           type="button"
           onClick={() => onNavigate("learned")}
-          className="group w-full rounded-xl bg-[#1A1A1A] px-5 py-5 text-left text-white transition-opacity active:opacity-90"
+          className="group w-full rounded-xl bg-primary px-5 py-5 text-left text-white transition-opacity active:opacity-90"
         >
           <div className="flex items-start justify-between gap-4">
             <div>
@@ -248,13 +248,13 @@ export default function VocabularyGrid({ onNavigate }: VocabGridProps) {
       </section>
 
       {/* ── Main Menu ── */}
-      <section className="px-4 pt-4">
+      <section className="px-5 pt-4">
         <h2 className="sr-only">学習メニュー</h2>
         <MenuList items={mainItems} />
       </section>
 
       {/* ── About ── */}
-      <section className="px-4 pt-4">
+      <section className="px-5 pt-4">
         <h2 className="sr-only">关于</h2>
         <MenuList items={aboutItems} />
       </section>

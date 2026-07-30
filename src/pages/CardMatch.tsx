@@ -176,7 +176,7 @@ export default function CardMatch({ onNavigate }: Props) {
             <div className="absolute top-4 right-4 text-[10px] font-bold text-hint/40">{idx + 1}/{words.length}</div>
             <div className="p-6 flex flex-col items-center justify-center h-full">
               <span className="text-lg text-primary font-bold tracking-wider">{current.r}</span>
-              <span className="text-4xl font-extrabold text-main mt-4 tracking-wider">{current.w}</span>
+              <span className="text-4xl font-extrabold text-main mt-4 tracking-wider break-words">{current.w}</span>
               <span className="text-sm text-hint mt-3">{current.m}</span>
             </div>
           </div>

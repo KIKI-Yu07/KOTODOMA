@@ -37,9 +37,9 @@ function AddWordModal({ onClose, onAdd }: { onClose: () => void; onAdd: (w: Word
         <div className="px-5 pb-3">
           <div className="flex items-center justify-between">
             <div><h3 className="text-base font-bold text-main">录入单词</h3><p className="text-sm text-sub mt-0.5">支持读音、释义、词性</p></div>
-            <button onClick={onClose} className="size-8 flex items-center justify-center rounded-lg text-hint hover:bg-[#F5F5F5]"><X size={18} strokeWidth={2} /></button>
+            <button onClick={onClose} className="size-8 flex items-center justify-center rounded-lg text-hint hover:bg-surface-subtle"><X size={18} strokeWidth={2} /></button>
           </div>
-          <div className="flex mt-3 bg-[#F5F5F5] rounded-lg p-0.5">
+          <div className="flex mt-3 bg-surface-subtle rounded-lg p-0.5">
             {([["single","逐个录入"],["batch","批量导入"]] as const).map(([k,l]) => (
               <button key={k} onClick={() => setMode(k)} className={`flex-1 py-1.5 text-xs font-medium rounded-md transition-colors ${mode === k ? "bg-white text-main shadow-sm" : "text-sub"}`}>{l}</button>
             ))}
@@ -48,32 +48,32 @@ function AddWordModal({ onClose, onAdd }: { onClose: () => void; onAdd: (w: Word
         {mode === "single" ? (
           <div className="px-5 pb-6">
             <div className="flex gap-3">
-              <div className="flex-1"><label className="text-sm font-bold text-main">单词 <span className="text-danger">*</span></label><input value={word} onChange={e => setWord(e.target.value)} className="w-full h-10 mt-1.5 px-3 rounded-lg border border-border text-sm text-main outline-none focus:border-[#1A1A1A]" placeholder="例: 生活" /></div>
-              <div className="flex-1"><label className="text-sm font-bold text-main">读音</label><input value={reading} onChange={e => setReading(e.target.value)} className="w-full h-10 mt-1.5 px-3 rounded-lg border border-border text-sm text-main outline-none focus:border-[#1A1A1A]" placeholder="例: せいかつ" /></div>
+              <div className="flex-1"><label className="text-sm font-bold text-main">单词 <span className="text-danger">*</span></label><input value={word} onChange={e => setWord(e.target.value)} className="w-full h-10 mt-1.5 px-3 rounded-lg border border-border text-sm text-main outline-none focus:border-primary" placeholder="例: 生活" /></div>
+              <div className="flex-1"><label className="text-sm font-bold text-main">读音</label><input value={reading} onChange={e => setReading(e.target.value)} className="w-full h-10 mt-1.5 px-3 rounded-lg border border-border text-sm text-main outline-none focus:border-primary" placeholder="例: せいかつ" /></div>
             </div>
-            <div className="mt-4"><label className="text-sm font-bold text-main">释义 <span className="text-danger">*</span></label><input value={meaning} onChange={e => setMeaning(e.target.value)} className="w-full h-10 mt-1.5 px-3 rounded-lg border border-border text-sm text-main outline-none focus:border-[#1A1A1A]" placeholder="例: 生活" /></div>
+            <div className="mt-4"><label className="text-sm font-bold text-main">释义 <span className="text-danger">*</span></label><input value={meaning} onChange={e => setMeaning(e.target.value)} className="w-full h-10 mt-1.5 px-3 rounded-lg border border-border text-sm text-main outline-none focus:border-primary" placeholder="例: 生活" /></div>
             <div className="mt-4"><label className="text-sm font-bold text-main">词性</label>
               <div className="flex flex-wrap gap-2 mt-1.5">
                 {["名詞","動詞","形容詞","副詞","連体詞","その他"].map(t => (
-                  <button key={t} onClick={() => setPos(pos === t ? "" : t)} className={`px-3 py-1 text-xs rounded-full border ${pos === t ? "bg-[#1A1A1A] text-white border-[#1A1A1A]" : "bg-white text-sub border-border"}`}>{t}</button>
+                  <button key={t} onClick={() => setPos(pos === t ? "" : t)} className={`px-3 py-1 text-xs rounded-full border ${pos === t ? "bg-primary text-white border-primary" : "bg-white text-sub border-border"}`}>{t}</button>
                 ))}
               </div>
             </div>
             <div className="flex gap-3 mt-6">
-              <button onClick={onClose} className="flex-1 py-2.5 rounded-lg border border-border text-sm font-medium text-main hover:bg-[#F5F5F5]">取消</button>
-              <button onClick={handleAdd} disabled={!word.trim() || !meaning.trim()} className={`flex-1 py-2.5 rounded-lg text-sm font-medium ${word.trim() && meaning.trim() ? "bg-[#1A1A1A] text-white" : "bg-[#D4D4D4] text-white cursor-not-allowed"}`}>添加到词库</button>
+              <button onClick={onClose} className="flex-1 py-2.5 rounded-lg border border-border text-sm font-medium text-main hover:bg-surface-subtle">取消</button>
+              <button onClick={handleAdd} disabled={!word.trim() || !meaning.trim()} className={`flex-1 py-2.5 rounded-lg text-sm font-medium ${word.trim() && meaning.trim() ? "bg-primary text-white" : "bg-disabled text-white cursor-not-allowed"}`}>添加到词库</button>
             </div>
           </div>
         ) : (
           <div className="px-5 pb-6">
             <p className="text-xs text-sub mb-3">CSV形式: 単語,読み,意味,品詞</p>
-            <div onDragOver={e => { e.preventDefault(); setDragOver(true); }} onDragLeave={() => setDragOver(false)} onDrop={e => { e.preventDefault(); setDragOver(false); if (e.dataTransfer.files[0]) handleFile(e.dataTransfer.files[0]); }} className={`border-2 border-dashed rounded-xl p-4 text-center ${dragOver ? "border-[#1A1A1A] bg-[#F5F5F5]" : "border-border"}`}>
+            <div onDragOver={e => { e.preventDefault(); setDragOver(true); }} onDragLeave={() => setDragOver(false)} onDrop={e => { e.preventDefault(); setDragOver(false); if (e.dataTransfer.files[0]) handleFile(e.dataTransfer.files[0]); }} className={`border-2 border-dashed rounded-xl p-4 text-center ${dragOver ? "border-primary bg-surface-subtle" : "border-border"}`}>
               <Upload size={20} className="text-hint mx-auto mb-1" /><p className="text-xs text-hint mb-2">拖拽CSV文件</p>
-              <button onClick={() => fileRef.current?.click()} className="px-4 py-2 rounded-lg bg-[#1A1A1A] text-white text-xs font-bold"><FileText size={14} className="inline mr-1" />选择文件</button>
+              <button onClick={() => fileRef.current?.click()} className="px-4 py-2 rounded-lg bg-primary text-white text-xs font-bold"><FileText size={14} className="inline mr-1" />选择文件</button>
               <input ref={fileRef} type="file" accept=".csv,.tsv,.txt" className="hidden" onChange={e => { if (e.target.files?.[0]) handleFile(e.target.files[0]); }} />
             </div>
-            <textarea className="w-full h-[80px] mt-3 p-3 rounded-lg bg-[#F5F5F5] text-main text-xs outline-none resize-none" value={pasteText} onChange={e => setPasteText(e.target.value)} placeholder={"単語,読み,意味,品詞\n例: 生活,せいかつ,生活,名詞"} />
-            <button onClick={handleBatchImport} disabled={!pasteText.trim()} className={`w-full mt-3 py-2.5 rounded-lg text-sm font-medium ${pasteText.trim() ? "bg-[#1A1A1A] text-white" : "bg-[#D4D4D4] text-white cursor-not-allowed"}`}>批量追加</button>
+            <textarea className="w-full h-[80px] mt-3 p-3 rounded-lg bg-surface-subtle text-main text-xs outline-none resize-none" value={pasteText} onChange={e => setPasteText(e.target.value)} placeholder={"単語,読み,意味,品詞\n例: 生活,せいかつ,生活,名詞"} />
+            <button onClick={handleBatchImport} disabled={!pasteText.trim()} className={`w-full mt-3 py-2.5 rounded-lg text-sm font-medium ${pasteText.trim() ? "bg-primary text-white" : "bg-disabled text-white cursor-not-allowed"}`}>批量追加</button>
           </div>
         )}
       </div>
@@ -118,7 +118,7 @@ export default function WordBooksPage({ onNavigate }: Props) {
       <div className="flex items-center justify-between px-4 pb-2">
         {editingName ? (
           <div className="flex items-center gap-2">
-            <input value={editName} onChange={e => setEditName(e.target.value)} className="w-[140px] px-3 py-1.5 rounded-lg border border-border text-sm outline-none focus:border-[#1A1A1A]" />
+            <input value={editName} onChange={e => setEditName(e.target.value)} className="w-[140px] px-3 py-1.5 rounded-lg border border-border text-sm outline-none focus:border-primary" />
             <button onClick={() => { const u = books.map(b => b.id === viewBook.id ? { ...b, name: editName || b.name } : b); setBooks(u); saveBooks(u); setViewBook({ ...viewBook, name: editName || viewBook.name }); setEditingName(false); }} className="text-xs font-bold text-main">确定</button>
             <button onClick={() => setEditingName(false)} className="text-xs text-hint">取消</button>
           </div>
@@ -184,8 +184,8 @@ export default function WordBooksPage({ onNavigate }: Props) {
         ) : (
           <div className="space-y-2">
             {books.map(b => (
-              <button key={b.id} onClick={() => setViewBook(b)} className="w-full bg-white rounded-xl px-4 py-4 flex items-center gap-4 active:bg-[#F5F5F5] transition-colors text-left">
-                <div className="size-11 rounded-xl bg-[#1A1A1A] flex items-center justify-center shrink-0">
+              <button key={b.id} onClick={() => setViewBook(b)} className="w-full bg-white rounded-xl px-4 py-4 flex items-center gap-4 active:bg-surface-subtle transition-colors text-left">
+                <div className="size-11 rounded-xl bg-primary flex items-center justify-center shrink-0">
                   <span className="text-white text-base font-semibold">{b.name[0] || "词"}</span>
                 </div>
                 <div className="flex-1 min-w-0">
@@ -200,7 +200,7 @@ export default function WordBooksPage({ onNavigate }: Props) {
       </div>
 
       <div className="px-4 pb-4">
-        <button onClick={() => setShowAdd(true)} className="w-full py-3.5 rounded-xl bg-[#1A1A1A] text-white text-sm font-semibold active:scale-[0.98] flex items-center justify-center gap-2">
+        <button onClick={() => setShowAdd(true)} className="w-full py-3.5 rounded-xl bg-primary text-white text-sm font-semibold active:scale-[0.98] flex items-center justify-center gap-2">
           <Plus size={18} strokeWidth={2} />新建单词本
         </button>
       </div>
@@ -209,10 +209,10 @@ export default function WordBooksPage({ onNavigate }: Props) {
         <div className="absolute inset-0 z-50 flex items-end bg-black/40" onClick={() => setShowAdd(false)}>
           <div className="bg-white rounded-t-2xl w-full p-6 shadow-xl" onClick={e => e.stopPropagation()}>
             <h3 className="text-base font-bold text-main mb-4">新建单词本</h3>
-            <input value={newName} onChange={e => setNewName(e.target.value)} className="w-full px-4 py-3 rounded-xl bg-[#F5F5F5] text-main outline-none text-sm mb-4" placeholder="输入单词本名称" />
+            <input value={newName} onChange={e => setNewName(e.target.value)} className="w-full px-4 py-3 rounded-xl bg-surface-subtle text-main outline-none text-sm mb-4" placeholder="输入单词本名称" />
             <div className="flex gap-3">
               <button onClick={() => setShowAdd(false)} className="flex-1 py-3 rounded-xl border border-border text-sm font-medium text-main">取消</button>
-              <button onClick={addBook} className="flex-1 py-3 rounded-xl bg-[#1A1A1A] text-white text-sm font-medium">创建</button>
+              <button onClick={addBook} className="flex-1 py-3 rounded-xl bg-primary text-white text-sm font-medium">创建</button>
             </div>
           </div>
         </div>

@@ -186,9 +186,9 @@ export default function WordList({ onNavigate }: WordListProps) {
                   </div>
                 ) : (
                   <div onClick={() => toggleGroup(g.date)}
-                    className="flex items-center justify-between py-2.5 cursor-pointer active:bg-[#F8F8F8] -mx-2 px-2 rounded-lg">
+                    className="flex items-center justify-between py-2.5 cursor-pointer active:bg-surface-hover -mx-2 px-2 rounded-lg">
                     <div className="flex items-center gap-2">
-                      <span className="size-5 rounded-full border-2 border-[#D0D0D0] flex items-center justify-center">
+                      <span className="size-5 rounded-full border-2 border-border-medium flex items-center justify-center">
                         {isCollapsed ? <ChevronRight size={12} className="text-hint" /> : <ChevronDown size={12} className="text-hint" />}
                       </span>
                       <span className="text-base font-bold text-main">
@@ -202,7 +202,7 @@ export default function WordList({ onNavigate }: WordListProps) {
 
               {/* Words under date/chapter */}
               {(!g.date || !isCollapsed) && (
-                <div className={g.date ? "divide-y divide-[#F0F0F0]" : "divide-y divide-[#F0F0F0]"}>
+                <div className={g.date ? "divide-y divide-surface-gray" : "divide-y divide-surface-gray"}>
                   {g.words.map(w => {
                     const active = selected.has(w.id);
                     return (
@@ -232,11 +232,11 @@ export default function WordList({ onNavigate }: WordListProps) {
       </div>
 
       {/* Bottom bar */}
-      <div className="flex items-center justify-between px-5 py-3 border-t border-border bg-white">
+      <div className="flex items-center justify-between px-5 py-3 border-t border-border bg-white" style={{paddingBottom:"calc(0.75rem + env(safe-area-inset-bottom, 0px))"}}>
         <div className="flex items-center gap-2">
           <span className="text-sm text-sub">已选</span>
           <span className={`min-w-[22px] h-[22px] rounded-full flex items-center justify-center text-xs text-white font-bold ${
-            selected.size > 0 ? "bg-[#FF4D4F]" : "bg-hint/30"
+            selected.size > 0 ? "bg-danger" : "bg-hint/30"
           }`}>{selected.size}</span>
         </div>
         <button
@@ -246,7 +246,7 @@ export default function WordList({ onNavigate }: WordListProps) {
             onNavigate("listreview");
           }}
           className={`px-8 py-2.5 rounded-lg text-sm font-medium transition-colors ${
-            selected.size > 0 ? "bg-[#1A1A1A] text-white" : "bg-[#E8E8E8] text-hint"
+            selected.size > 0 ? "bg-primary text-white" : "bg-disabled-dark text-hint"
           }`}>开始学习</button>
       </div>
     </div>

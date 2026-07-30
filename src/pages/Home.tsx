@@ -97,7 +97,7 @@ export default function Home({ onNavigate }: HomeProps) {
 
   return (<div className="flex-1 min-h-0 overflow-y-auto scroll-area bg-bg">
     {/* ── Hero Panel (ink background) ── */}
-    <header className="bg-[#1A1A1A] text-white flex flex-col rounded-b-[2rem] px-6 pt-6 pb-9">
+    <header className="bg-primary text-white flex flex-col rounded-b-[2rem] px-6 pt-6 pb-9">
       <div>
         <p className="text-white/30 text-[11px] tracking-[0.32em]">DAILY TARGET</p>
         <h1 className="mt-3 font-serif text-[2rem] leading-tight">今日の学習目標</h1>
@@ -110,7 +110,7 @@ export default function Home({ onNavigate }: HomeProps) {
             <dd className="mt-1 flex items-baseline gap-1.5">
               <span className={`font-serif text-[2.5rem] leading-none ${s.dim && !(s as any).lastColor ? "text-white/30" : "text-white"}`}>
                 {(s as any).lastColor
-                  ? <>{String(s.v).slice(0, -1)}<span style={{color:"#FFD700"}}>{String(s.v).slice(-1)}</span></>
+                  ? <>{String(s.v).slice(0, -1)}<span style={{color:"var(--color-gold)"}}>{String(s.v).slice(-1)}</span></>
                   : s.v}
               </span>
               <span className="text-white/30 text-[11px]">{s.u}</span>
@@ -119,7 +119,7 @@ export default function Home({ onNavigate }: HomeProps) {
         ))}
       </dl>
 
-      <button onClick={handleStart} className="bg-white text-[#1A1A1A] hover:bg-white/90 mt-9 w-full rounded-full py-4 text-base font-semibold tracking-wide transition-colors">学習を始める</button>
+      <button onClick={handleStart} className="bg-white text-primary hover:bg-white/90 mt-9 w-full rounded-full py-4 text-base font-semibold tracking-wide transition-colors">学習を始める</button>
 
       <div className="text-white/30 mt-5 flex items-center gap-4 text-[11px]">
         <button onClick={()=>onNavigate("settings")} className="hover:text-white/70 transition-colors">目标设定</button>
@@ -134,7 +134,7 @@ export default function Home({ onNavigate }: HomeProps) {
       <div className="mt-4 flex items-start justify-between gap-5">
         <div>
           <p className="text-hint text-xs">{todayWord.rn}</p>
-          <p className="text-main mt-1.5 font-serif text-2xl leading-snug">{todayWord.jp}</p>
+          <p className="text-main mt-1.5 font-serif text-2xl leading-snug text-balance">{todayWord.jp}</p>
           <p className="text-hint mt-3 text-xs">{todayWord.zh}</p>
         </div>
         <img src={`/icons/d${new Date().getDay()}.svg`} alt="" className="h-14 w-[72px] object-contain shrink-0"/>

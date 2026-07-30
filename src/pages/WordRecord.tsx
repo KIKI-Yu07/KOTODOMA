@@ -112,13 +112,13 @@ export default function WordRecord({ onNavigate }: Props) {
       <div className="flex px-4 gap-2 pb-3">
         <button onClick={() => setTab("remembered")}
           className={`flex-1 py-2.5 rounded-xl text-sm font-bold transition-colors ${
-            tab === "remembered" ? "bg-[#1A1A1A] text-white" : "bg-white text-sub border border-border"
+            tab === "remembered" ? "bg-primary text-white" : "bg-white text-sub border border-border"
           }`}>
           记住了 <span className="font-mono text-xs ml-1">({remembered.length})</span>
         </button>
         <button onClick={() => setTab("forgotten")}
           className={`flex-1 py-2.5 rounded-xl text-sm font-bold transition-colors ${
-            tab === "forgotten" ? "bg-[#1A1A1A] text-white" : "bg-white text-sub border border-border"
+            tab === "forgotten" ? "bg-primary text-white" : "bg-white text-sub border border-border"
           }`}>
           忘记了 <span className="font-mono text-xs ml-1">({forgotten.length})</span>
         </button>
@@ -126,7 +126,7 @@ export default function WordRecord({ onNavigate }: Props) {
 
       {list.length > 0 && (
         <div className="px-4 pb-2">
-          <div className="flex items-center gap-2 text-xs text-hint/60 bg-[#F8F8F8] rounded-lg px-3 py-2">
+          <div className="flex items-center gap-2 text-xs text-hint/60 bg-surface-hover rounded-lg px-3 py-2">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
             <span>左滑删除记录</span>
           </div>

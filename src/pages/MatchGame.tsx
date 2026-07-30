@@ -192,12 +192,12 @@ export default function MatchGame({ onNavigate, onBack, onReplay, onRetry, mode,
             <div className="bg-surface rounded-2xl shadow-sm border border-border pt-12 px-5 pb-5">
               <div className="flex items-center justify-center gap-5">
                 <div className="text-center">
-                  <p className="text-xl font-extrabold" style={{color:"#22c55e"}}>{right}</p>
+                  <p className="text-xl font-extrabold" style={{color:"var(--color-success-bright)"}}>{right}</p>
                   <p className="text-[10px] text-hint">正解</p>
                 </div>
                 <div className="w-px h-8 bg-border" />
                 <div className="text-center">
-                  <p className="text-xl font-extrabold" style={{color: wrong > 0 ? "#ef4444" : "var(--color-text-tertiary)"}}>{wrong}</p>
+                  <p className="text-xl font-extrabold" style={{color: wrong > 0 ? "var(--color-danger)" : "var(--color-text-tertiary)"}}>{wrong}</p>
                   <p className="text-[10px] text-hint">不正解</p>
                 </div>
                 <div className="w-px h-8 bg-border" />
@@ -222,7 +222,7 @@ export default function MatchGame({ onNavigate, onBack, onReplay, onRetry, mode,
   const remaining = words.length - idx - 1;
 
   // ── Wuxia Quiz Header ──
-  if (mode === "zh2jp") return (<div className="relative flex flex-1 flex-col overflow-hidden bg-bg">
+  if (mode === "zh2jp") return (<div className="relative flex min-h-0 flex-1 flex-col overflow-hidden bg-bg">
     <header className="relative z-10 shrink-0 px-4 pt-4 pb-3">
       <div className="flex items-center justify-between gap-3">
         <button onClick={()=>onBack()} className="-ml-1 flex items-center gap-1 rounded-sm px-1.5 py-1 text-hint transition-colors active:text-main">
@@ -243,7 +243,7 @@ export default function MatchGame({ onNavigate, onBack, onReplay, onRetry, mode,
         {Array.from({length:words.length}).map((_,i)=>(<span key={i} className={`h-[3px] flex-1 rounded-full transition-colors duration-500 ${i<=idx?"bg-primary/70":"bg-border/30"}`}/>))}
       </div>
       <div className={`overflow-hidden transition-all duration-300 ${lastAnswer?"max-h-8 opacity-100 mt-2":"max-h-0 opacity-0"}`}>
-        {lastAnswer&&<p className="text-center leading-tight" style={{color:lastAnswer.correct?"#22c55e":"#ef4444"}}>{lastAnswer.correct?<span className="font-serif text-[11px] tracking-wider">正</span>:<span className="block text-[10px]">{lastAnswer.r}</span>}</p>}
+        {lastAnswer&&<p className="text-center leading-tight" style={{color:lastAnswer.correct?"var(--color-success-bright)":"var(--color-danger)"}}>{lastAnswer.correct?<span className="font-serif text-[11px] tracking-wider">正</span>:<span className="block text-[10px]">{lastAnswer.r}</span>}</p>}
       </div>
     </header>
 
@@ -255,7 +255,7 @@ export default function MatchGame({ onNavigate, onBack, onReplay, onRetry, mode,
           <LongPressWrapper word={cur.w} reading={cur.r}>
             <div className="flex items-center gap-4">
               <span className="h-8 w-px bg-gradient-to-b from-transparent via-primary/40 to-transparent"/>
-              <h2 className="font-serif text-[40px] leading-tight font-medium tracking-[0.08em] text-main">{cur.r}</h2>
+              <h2 className="font-serif text-[40px] leading-tight font-medium tracking-[0.08em] text-main break-all">{cur.r}</h2>
               <span className="h-8 w-px bg-gradient-to-b from-transparent via-primary/40 to-transparent"/>
             </div>
           </LongPressWrapper>
@@ -290,7 +290,7 @@ export default function MatchGame({ onNavigate, onBack, onReplay, onRetry, mode,
       </ul>
     </div>
 
-    <footer className="relative z-10 shrink-0 pb-6 text-center">
+    <footer className="relative z-10 shrink-0 pb-6 text-center" style={{paddingBottom:"calc(1.5rem + env(safe-area-inset-bottom, 0px))"}}>
       <p className="font-serif text-[10px] tracking-[0.35em] text-hint/30">一 字 一 劍 · 日 進 其 功</p>
     </footer>
   </div>);
@@ -305,7 +305,7 @@ export default function MatchGame({ onNavigate, onBack, onReplay, onRetry, mode,
     <div className={`overflow-hidden transition-all duration-300 ${lastAnswer ? "max-h-9 opacity-100" : "max-h-0 opacity-0"}`}>
       {lastAnswer && (
         <div className={`flex items-center justify-center gap-2 px-4 py-1 border-b ${lastAnswer.correct ? "bg-success/5 border-success/10" : "bg-danger/5 border-danger/10"}`}>
-          <div className="flex flex-col items-center leading-tight" style={{color: lastAnswer.correct ? "#22c55e" : "#ef4444"}}>
+          <div className="flex flex-col items-center leading-tight" style={{color: lastAnswer.correct ? "var(--color-success-bright)" : "var(--color-danger)"}}>
             <span className="text-[10px]">{lastAnswer.r}</span>
             <span className="font-serif text-sm font-bold">{lastAnswer.w}</span>
           </div>
@@ -360,7 +360,7 @@ export default function MatchGame({ onNavigate, onBack, onReplay, onRetry, mode,
             <span className="seal-stamp">{optType==="kanji"?"選漢字":"選中文"}</span>
             <div className="flex items-center gap-4 mt-6">
               <span className="h-8 w-px bg-gradient-to-b from-transparent via-primary/40 to-transparent"/>
-              <h2 className="font-serif text-[40px] leading-tight font-medium tracking-[0.08em] text-main">{cur.r}</h2>
+              <h2 className="font-serif text-[40px] leading-tight font-medium tracking-[0.08em] text-main break-all">{cur.r}</h2>
               <span className="h-8 w-px bg-gradient-to-b from-transparent via-primary/40 to-transparent"/>
             </div>
             <p className="mt-4 text-xs leading-relaxed tracking-[0.14em] text-hint">{optType==="kanji"?"辨其音，择其正解":"辨其音，择其释义"}</p>
@@ -397,13 +397,13 @@ export default function MatchGame({ onNavigate, onBack, onReplay, onRetry, mode,
           </ul>
 
           {/* Footer */}
-          <p className="text-center font-serif text-[10px] tracking-[0.15em] text-hint/40 pb-4">一字一劍 · 日進其功</p>
+          <p className="text-center font-serif text-[10px] tracking-[0.15em] text-hint/40" style={{paddingBottom:"env(safe-area-inset-bottom, 0px)"}}>一字一劍 · 日進其功</p>
         </div>
       ) : (
         <>
           <span className="seal-stamp mb-4">找茬</span>
-          <p className="text-2xl font-extrabold text-main mb-3 tracking-wider">{shownReading}</p>
-          <p className="text-lg font-bold text-sub mb-4">{cur.w}</p>
+          <p className="text-2xl font-extrabold text-main mb-3 tracking-wider break-all">{shownReading}</p>
+          <p className="text-lg font-bold text-sub mb-4 break-words">{cur.w}</p>
           <p className="text-xs text-hint mb-6 tracking-[0.14em]">辨其真假，择其正音</p>
           <ul className="grid grid-cols-2 gap-2.5 w-full max-w-[340px]">
             {options.map((opt, i) => {

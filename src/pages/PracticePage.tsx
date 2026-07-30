@@ -4,6 +4,7 @@ import type { Page } from "../components/BottomNav";
 import MatchGame from "./MatchGame";
 import { loadProgress } from "../lib/spaced-repetition";
 import { getWordSource, getTextbookChapters, getAllTextbookWords } from "../lib/wordSource";
+import { audioReady } from "../lib/audio";
 function loadBooksSync() { try { return JSON.parse(localStorage.getItem("wordbooks") || "[]"); } catch { return []; } }
 
 interface Props { onNavigate: (p: Page) => void; }
@@ -27,6 +28,7 @@ const srcBtns: { key:Source; label:string; hint:string }[] = [
 ];
 
 export default function PracticePage({ onNavigate }: Props) {
+  const [loading, setLoading] = useState(true);
   const [step, setStep] = useState<Step>("menu");
   const [gameMode, setGameMode] = useState<GameMode>("zh2jp");
   const [gameWords, setGameWords] = useState<{w:string;r:string;m:string}[]>([]);
@@ -39,6 +41,12 @@ export default function PracticePage({ onNavigate }: Props) {
   const [currentWB, setCurrentWB] = useState<any>(null);
 
   useEffect(() => { if (step === "wordbooks") setWordBooks(loadBooksSync()); }, [step]);
+
+  useEffect(() => {
+    audioReady().then(() => setTimeout(() => setLoading(false), 400));
+    const t = setTimeout(() => setLoading(false), 3000);
+    return () => clearTimeout(t);
+  }, []);
 
   const sourceWords = useMemo(() => getWordSource(), []);
   const reviewCount = useMemo(() => Object.values(loadProgress()).filter(p => p.lastReview).length, []);
@@ -96,7 +104,16 @@ export default function PracticePage({ onNavigate }: Props) {
 
   if (step==="play") return <MatchGame key={gameKey} onNavigate={onNavigate} onBack={()=>{setStep("menu");setSelChapters(new Set())}} onReplay={replay} onRetry={retry} mode={gameMode} words={gameWords} />;
 
-  return (<div className="flex flex-col flex-1 relative" style={{background:"#F5F0E8"}}>
+  if (loading) return (
+    <div className="flex flex-col flex-1 min-h-0 items-center justify-center gap-6 px-8 text-center relative" style={{background:"#F5F0E8"}}>
+      <div className="absolute inset-0 pointer-events-none" style={{backgroundImage:"url(/icons/bg-arena.jpg)", backgroundSize:"cover", backgroundPosition:"center", opacity:0.08}} />
+      <div className="relative z-10 word-loader" />
+      <p className="relative z-10 text-sub text-sm font-medium">音声読み込み中...</p>
+      <p className="relative z-10 text-hint text-xs">修羅場の準備をしています</p>
+    </div>
+  );
+
+  return (<div className="flex flex-col flex-1 min-h-0 relative" style={{background:"#F5F0E8"}}>
     <div className="absolute inset-0 pointer-events-none" style={{backgroundImage:"url(/icons/bg-arena.jpg)", backgroundSize:"cover", backgroundPosition:"center", opacity:0.12}} />
     <div className="relative z-10 flex items-center justify-between px-5 py-3">
       <button onClick={goBack} className="flex items-center gap-1.5 text-hint text-xs font-bold active:opacity-60">
@@ -170,7 +187,7 @@ export default function PracticePage({ onNavigate }: Props) {
             {[{k:"vol1" as const,l:"第一册",n:vol1Chs.reduce((s,ch)=>s+ch.words.length,0),c:vol1Chs.length},{k:"vol2" as const,l:"第二册",n:vol2Chs.reduce((s,ch)=>s+ch.words.length,0),c:vol2Chs.length}].map(b=>(
               <div key={b.k} className="cbx-wrapper mb-2 last:mb-0" onClick={()=>{setTextbook(b.k);setSelChapters(new Set())}}>
                 <input type="checkbox" className="cbx-check" checked={textbook===b.k} readOnly />
-                <label className={`cbx-label p-3 rounded-xl transition-all ${textbook===b.k?"bg-[#E6F2FF]":"bg-[#F8F8F8] hover:bg-[#F0F0F0]"}`}>
+                <label className={`cbx-label p-3 rounded-xl transition-all ${textbook===b.k?"bg-[#E6F2FF]":"bg-surface-hover hover:bg-[#F0F0F0]"}`}>
                   <svg width="26" height="26" viewBox="0 0 95 95">
                     <rect x="30" y="20" width="50" height="50" stroke={textbook===b.k?"#4F46E5":"#CCC"} fill="none" strokeWidth="3"/>
                     <g transform="translate(0,-952.36222)">
