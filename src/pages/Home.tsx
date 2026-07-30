@@ -1,148 +1,207 @@
 import { useState } from "react";
-import { Settings, Search } from "lucide-react";
+import { ChevronRight, BookOpen, Layers, Swords } from "lucide-react";
 import type { Page } from "../components/BottomNav";
-import { getReviewCount } from "../lib/spaced-repetition";
-import { getNickname, getAvatar } from "../lib/userStore";
+import { loadProgress } from "../lib/spaced-repetition";
+import { getWordSource } from "../lib/wordSource";
 
-interface HomeProps { onNavigate: (p: Page) => void; darkMode: boolean; onToggleDark: () => void; }
+interface HomeProps { onNavigate: (p: Page) => void; }
 
 const quotes = [
   { jp:"継続は力なり",rn:"けいぞくはちからなり",zh:"坚持就是力量" },
   { jp:"千里の道も一歩から",rn:"せんりのみちもいっぽから",zh:"千里之行始于足下" },
   { jp:"習うより慣れろ",rn:"ならうよりなれろ",zh:"熟能生巧" },
   { jp:"一念岩をも通す",rn:"いちねんいわをもとおす",zh:"精诚所至金石为开" },
+  { jp:"明日は明日の風が吹く",rn:"あしたはあしたのかぜがふく",zh:"明天自有明天的风，顺其自然" },
+  { jp:"塵も積もれば山となる",rn:"ちりもつもればやまとなる",zh:"积少成多" },
+  { jp:"石の上にも三年",rn:"いしのうえにもさんねん",zh:"功到自然成" },
+  { jp:"急がば回れ",rn:"いそがばまわれ",zh:"欲速则不达" },
+  { jp:"七転び八起き",rn:"ななころびやおき",zh:"百折不挠" },
+  { jp:"自業自得",rn:"じごうじとく",zh:"自作自受" },
+  { jp:"猿も木から落ちる",rn:"さるもきからおちる",zh:"智者千虑必有一失" },
+  { jp:"犬も歩けば棒に当たる",rn:"いぬもあるけばぼうにあたる",zh:"多行必有所获" },
+  { jp:"二兎を追う者は一兎をも得ず",rn:"にとをおうものはいっとをもえず",zh:"贪多嚼不烂" },
+  { jp:"花より団子",rn:"はなよりだんご",zh:"务实不务虚" },
+  { jp:"能ある鷹は爪を隠す",rn:"のうあるたかはつめをかくす",zh:"真人不露相" },
+  { jp:"朱に交われば赤くなる",rn:"しゅにまじわればあかくなる",zh:"近朱者赤" },
+  { jp:"良薬は口に苦し",rn:"りょうやくはくちににがし",zh:"良药苦口" },
+  { jp:"言わぬが花",rn:"いわぬがはな",zh:"沉默是金" },
+  { jp:"残り物には福がある",rn:"のこりものにはふくがある",zh:"剩下的往往是最好的" },
+  { jp:"若い時の苦労は買ってでもせよ",rn:"わかいときのくろうはかってでもせよ",zh:"年轻时应该多吃苦" },
+  { jp:"棚からぼたもち",rn:"たなからぼたもち",zh:"天上掉馅饼" },
+  { jp:"郷に入っては郷に従え",rn:"ごうにいってはごうにしたがえ",zh:"入乡随俗" },
+  { jp:"苦あれば楽あり",rn:"くあればらくあり",zh:"先苦后甜" },
+  { jp:"一石二鳥",rn:"いっせきにちょう",zh:"一石二鸟" },
+  { jp:"十人十色",rn:"じゅうにんといろ",zh:"十人十色" },
+  { jp:"住めば都",rn:"すめばみやこ",zh:"久居则安" },
+  { jp:"時は金なり",rn:"ときはかねなり",zh:"时间就是金钱" },
+  { jp:"口は災いの元",rn:"くちはわざわいのもと",zh:"祸从口出" },
+  { jp:"井の中の蛙大海を知らず",rn:"いのなかのかわずたいかいをしらず",zh:"井底之蛙" },
+  { jp:"雨降って地固まる",rn:"あめふってじかたまる",zh:"不打不相识" },
+  { jp:"帯に短し襷に長し",rn:"おびにみじかしたすきにながし",zh:"高不成低不就" },
+  { jp:"早起きは三文の徳",rn:"はやおきはさんもんのとく",zh:"早起三分利" },
+  { jp:"好きこそ物の上手なれ",rn:"すきこそもののじょうずなれ",zh:"兴趣是最好的老师" },
+  { jp:"馬には乗ってみよ人には添うてみよ",rn:"うまにはのってみよひとにはそうてみよ",zh:"路遥知马力日久见人心" },
+  { jp:"終わり良ければすべて良し",rn:"おわりよければすべてよし",zh:"结局好一切皆好" },
+  { jp:"明日のことを言えば鬼が笑う",rn:"あしたのことをいえばおにがわらう",zh:"未来不可预知" },
+  { jp:"知らぬが仏",rn:"しらぬがほとけ",zh:"眼不见为净" },
+  { jp:"老いては子に従え",rn:"おいてはこにしたがえ",zh:"老了要听儿女的话" },
+  { jp:"百聞は一見に如かず",rn:"ひゃくぶんはいっけんにしかず",zh:"百闻不如一见" },
+  { jp:"備えあれば憂いなし",rn:"そなえあればうれいなし",zh:"有备无患" },
+  { jp:"蒔かぬ種は生えぬ",rn:"まかぬたねははえぬ",zh:"不种则无获" },
+  { jp:"可愛い子には旅をさせよ",rn:"かわいいこにはたびをさせよ",zh:"要让心爱的孩子去历练" },
+  { jp:"触らぬ神に祟りなし",rn:"さわらぬかみにたたりなし",zh:"多一事不如少一事" },
+  { jp:"弘法も筆の誤り",rn:"こうぼうもふでのあやまり",zh:"智者千虑必有一失" },
+  { jp:"四十にして惑わず",rn:"しじゅうにしてまどわず",zh:"四十不惑" },
+  { jp:"天は自ら助くる者を助く",rn:"てんはみずからたすくるものをたすく",zh:"天助自助者" },
+  { jp:"楽あれば苦あり",rn:"らくあればくあり",zh:"有乐必有苦" },
+  { jp:"負けるが勝ち",rn:"まけるがかち",zh:"以退为进" },
+  { jp:"人間万事塞翁が馬",rn:"にんげんばんじさいおうがうま",zh:"塞翁失马焉知非福" },
+  { jp:"若いうちの苦労は買ってでもしろ",rn:"わかいうちのくろうはかってでもしろ",zh:"年轻时多吃苦是好事" },
+  { jp:"初心忘るべからず",rn:"しょしんわするべからず",zh:"勿忘初心" },
+  { jp:"努力は必ず報われる",rn:"どりょくはかならずむくわれる",zh:"努力必有回报" },
+  { jp:"人生は一期一会",rn:"じんせいはいちごいちえ",zh:"人生只有一次相遇" },
+  { jp:"鉄は熱いうちに打て",rn:"てつはあついうちにうて",zh:"趁热打铁" },
 ];
 
-export default function Home({ onNavigate, darkMode, onToggleDark }: HomeProps) {
-  const [dailyGoal] = useState(() => parseInt(localStorage.getItem("dailyGoal")||"15"));
-  const reviewCount = getReviewCount();
-  const nick = getNickname();
-  const av = getAvatar();
+const weekDays = ["月","火","水","木","金","土","日"];
+
+export default function Home({ onNavigate }: HomeProps) {
+  const [showReset, setShowReset] = useState(false);
+  const dailyGoal = parseInt(localStorage.getItem("dailyGoal")||"15");
+  const sourceIds = new Set(getWordSource().map(w => w.id));
+  const totalLearned = Object.keys(loadProgress()).filter(id => sourceIds.has(id)).length;
+  const totalWords = getWordSource().length;
+  const remaining = Math.max(0, totalWords - totalLearned);
   const studyDays = parseInt(localStorage.getItem("studyDays")||"0");
   const todayWord = quotes[new Date().getDate() % quotes.length];
-  return (
-    <div className="flex-1 min-h-0 overflow-y-auto scroll-area bg-bg">
-      {/* Hero */}
-      <div className="pattern-hero overflow-hidden dark:bg-[#1A2A4A]">
-        <div className="relative z-10 px-5 pt-3 pb-5">
-          <div className="flex justify-between items-center mb-5">
-            <div className="flex items-center gap-3">
-              {av ? <img src={av} alt="" className="w-12 h-12 rounded-full object-cover ring-2 ring-white/15" /> :
-               <div className="w-12 h-12 rounded-full bg-white/20 flex items-center justify-center text-lg font-bold text-white ring-2 ring-white/15">{(nick||"小")[0]}</div>}
-              <div>
-                <p className="text-white/60 text-xs">{studyDays > 0 ? `已坚持 ${studyDays} 天` : "こんにちは"}</p>
-                <h1 className="text-white text-lg font-bold">{nick}</h1>
-              </div>
-            </div>
-            <button onClick={()=>onNavigate("search")} className="w-9 h-9 rounded-full bg-white/15 flex items-center justify-center active:scale-90">
-              <Search size={16} stroke="white" />
-            </button>
-          </div>
+  const todayDow = new Date().getDay();
+  // Build set of studied dates for weekly calendar
+  const studiedDates = (() => { try { return new Set(JSON.parse(localStorage.getItem("studyDates")||"[]")); } catch { return new Set<string>(); } })();
+  // Generate this week's dates (Mon-Sun) — use local date strings to avoid UTC offset issues
+  const weekDates = (() => {
+    const today = new Date();
+    const monOffset = todayDow === 0 ? -6 : 1 - todayDow;
+    const mon = new Date(today.getFullYear(), today.getMonth(), today.getDate() + monOffset);
+    return Array.from({length:7},(_,i)=>{
+      const d = new Date(mon.getFullYear(), mon.getMonth(), mon.getDate() + i);
+      return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;
+    });
+  })();
 
-          {/* Challenge Card */}
-          <div className="bg-white/10 backdrop-blur-xl rounded-2xl p-4 text-center border border-white/15">
-            <p className="text-white/40 text-[10px] font-bold uppercase tracking-wider mb-1">Daily Target</p>
-            <h2 className="text-white text-xl font-extrabold mb-3">今日の学習目標</h2>
-            <div className="flex justify-center gap-6 mb-3">
-              <div className="text-center"><p className="text-white text-3xl font-extrabold">{dailyGoal}</p><p className="text-white/40 text-[10px]">新学</p></div>
-              <div className="w-px bg-white/10"/>
-              <div className="text-center"><p className="text-white text-3xl font-extrabold">{reviewCount}</p><p className="text-white/40 text-[10px]">复习</p></div>
-              <div className="w-px bg-white/10"/>
-              <div className="text-center"><p className="text-[#FFD700] text-3xl font-extrabold">{studyDays}</p><p className="text-white/40 text-[10px]">坚持</p></div>
-            </div>
-            <button onClick={()=>{
-              const today = new Date().toISOString().slice(0,10);
-              const last = localStorage.getItem("lastStudyDate")||"";
-              onNavigate(last===today?"rest":"study");
-            }} className="w-full py-3 bg-white text-[#0F64B5] rounded-full font-extrabold text-base active:scale-[0.97]">
-              学習を始める
-            </button>
-            <div className="flex justify-center gap-3 mt-2">
-              <button onClick={()=>onNavigate("settings")} className="text-white/40 text-[10px] font-bold active:text-white/70">
-                <Settings size={10} className="inline mr-1" />目標設定
-              </button>
-              <button onClick={()=>{const r=indexedDB.deleteDatabase("nihongo_app");r.onsuccess=r.onerror=()=>{localStorage.clear();location.reload()}}} className="text-white/30 text-[10px] active:text-white/60">
-                リセット
-              </button>
-            </div>
-          </div>
-        </div>
-        <div className="h-5 bg-bg rounded-t-[20px]"/>
+  const handleStart = () => {
+    const d = new Date();
+    const today = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;
+    const last = localStorage.getItem("lastStudyDate")||"";
+    onNavigate(last===today?"rest":"study");
+  };
+
+  return (<div className="flex-1 min-h-0 overflow-y-auto scroll-area bg-bg">
+    {/* ── Hero Panel (ink background) ── */}
+    <header className="bg-[#1A1A1A] text-white flex flex-col rounded-b-[2rem] px-6 pt-6 pb-9">
+      <div>
+        <p className="text-white/30 text-[11px] tracking-[0.32em]">DAILY TARGET</p>
+        <h1 className="mt-3 font-serif text-[2rem] leading-tight">今日の学習目標</h1>
       </div>
 
-      {/* Content */}
-      <div className="px-5 pb-4 space-y-3 -mt-2">
-
-        {/* Today's Quote */}
-        <div className="bg-white dark:bg-surface rounded-2xl p-4 shadow-sm border border-border relative overflow-hidden">
-          <img src={`/icons/d${new Date().getDay()}.svg`} alt="" className="absolute right-2 bottom-0 w-28 h-28 opacity-20 dark:opacity-10 pointer-events-none" />
-          <div className="relative z-10">
-            <p className="text-[10px] text-hint font-bold uppercase tracking-wider mb-1">今日の一言</p>
-            <p className="text-xs text-primary mb-0.5">{todayWord.rn}</p>
-            <p className="font-serif text-xl font-bold text-main">{todayWord.jp}</p>
-            <p className="text-xs text-sub mt-1">{todayWord.zh}</p>
+      <dl className="mt-8 flex items-end gap-10">
+        {[{label:"NEW",v:dailyGoal,u:""},{label:"WORDS",v:totalLearned,u:"",dim:true},{label:"DAYS",v:studyDays,u:"",dim:true},{label:"LEFT",v:remaining,u:"",dim:true,lastColor:true}].map(s=>(
+          <div key={s.label}>
+            <dt className="text-white/30 text-[10px] tracking-[0.24em]">{s.label}</dt>
+            <dd className="mt-1 flex items-baseline gap-1.5">
+              <span className={`font-serif text-[2.5rem] leading-none ${s.dim && !(s as any).lastColor ? "text-white/30" : "text-white"}`}>
+                {(s as any).lastColor
+                  ? <>{String(s.v).slice(0, -1)}<span style={{color:"#FFD700"}}>{String(s.v).slice(-1)}</span></>
+                  : s.v}
+              </span>
+              <span className="text-white/30 text-[11px]">{s.u}</span>
+            </dd>
           </div>
-        </div>
+        ))}
+      </dl>
 
-        {/* Quick Links */}
-        <div className="grid grid-cols-4 gap-2">
-          {[
-            {ill:<FlashReviewSvg c="#3B82F6"/>, bg:"bg-[#EFF6FF] dark:bg-[#1E3A5F]/60", label:"瞬間レビュー", a:"flashreview"as Page},
-            {ill:<WordListSvg c="#10B981"/>, bg:"bg-[#ECFDF5] dark:bg-[#064E3B]/40", label:"列表学习", a:"wordlist"as Page, img:"/icons/bg-wordlist.jpg"},
-            {ill:<GrammarSvg c="#8B5CF6"/>, bg:"bg-[#F5F3FF] dark:bg-[#3B1F7E]/40", label:"记忆卡片", a:"cardmatch"as Page, img:"/icons/bg-cardmatch.jpg"},
-            {ill:<MatchZhSvg c="#F59E0B"/>, bg:"bg-[#FFFBEB] dark:bg-[#78350F]/40", label:"单词修罗", a:"practice"as Page, img:"/icons/bg-shura.jpg"},
-          ].map((c,i)=>(
-            <button key={i} onClick={()=>onNavigate(c.a)}
-              className={`flex flex-col items-center justify-center gap-1 aspect-square rounded-xl border-0 active:scale-95 transition-all relative overflow-hidden ${(c as any).img?"":" "+c.bg}`}
-              style={(c as any).img?{backgroundImage:`url(${(c as any).img})`,backgroundSize:"cover",backgroundPosition:"center"}:{}}>
-              {(c as any).img&&<div className="absolute inset-0 bg-black/30" />}
-              {(c as any).img?null:<span className="relative z-10">{c.ill}</span>}
-              <span className="relative z-10 text-sm font-extrabold tracking-wider" style={(c as any).img?{color:"#fff",textShadow:"0 2px 8px rgba(0,0,0,0.6)",fontFamily:"serif"}:{}}>{c.label}</span>
-            </button>
-          ))}
-        </div>
+      <button onClick={handleStart} className="bg-white text-[#1A1A1A] hover:bg-white/90 mt-9 w-full rounded-full py-4 text-base font-semibold tracking-wide transition-colors">学習を始める</button>
 
-        {/* Decorative Card */}
-        <div className="bg-white dark:bg-surface rounded-2xl p-5 shadow-sm border border-border relative overflow-hidden select-none pointer-events-none">
-          {/* Seigaiha wave pattern background */}
-          <div className="absolute inset-0 opacity-[0.04] dark:opacity-[0.06]">
-            <svg width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
-              <defs><pattern id="wave" x="0" y="0" width="60" height="60" patternUnits="userSpaceOnUse">
-                <circle cx="30" cy="30" r="28" fill="none" stroke="currentColor" strokeWidth="2" className="text-primary"/>
-                <circle cx="0" cy="0" r="28" fill="none" stroke="currentColor" strokeWidth="2" className="text-primary"/>
-                <circle cx="60" cy="0" r="28" fill="none" stroke="currentColor" strokeWidth="2" className="text-primary"/>
-                <circle cx="0" cy="60" r="28" fill="none" stroke="currentColor" strokeWidth="2" className="text-primary"/>
-                <circle cx="60" cy="60" r="28" fill="none" stroke="currentColor" strokeWidth="2" className="text-primary"/>
-              </pattern></defs>
-              <rect width="100%" height="100%" fill="url(#wave)"/>
-            </svg>
-          </div>
-          {/* Decorative line + text */}
-          <div className="relative z-10 flex flex-col items-center gap-3">
-            <div className="flex items-center gap-3 w-full">
-              <div className="h-px flex-1 bg-border"/>
-              <span className="text-[10px] text-hint font-bold tracking-[0.2em]">日 語 学 習</span>
-              <div className="h-px flex-1 bg-border"/>
-            </div>
-            <div className="flex items-center justify-center gap-2">
-              <div className="w-1.5 h-1.5 rounded-full bg-primary/30"/>
-              <div className="w-2 h-2 rounded-full bg-primary/50"/>
-              <div className="w-1.5 h-1.5 rounded-full bg-primary/30"/>
-            </div>
-            <p className="text-[10px] text-hint/60 tracking-wider">継続は力なり</p>
-          </div>
-        </div>
-
-        <div className="h-2"/>
+      <div className="text-white/30 mt-5 flex items-center gap-4 text-[11px]">
+        <button onClick={()=>onNavigate("settings")} className="hover:text-white/70 transition-colors">目标设定</button>
+        <span className="bg-white/20 h-3 w-px"/>
+        <button onClick={() => setShowReset(true)} className="hover:text-white/70 transition-colors">重置</button>
       </div>
-    </div>
-  );
+    </header>
+
+    {/* ── Quote ── */}
+    <section className="px-6 pt-8">
+      <p className="text-main text-xs font-semibold tracking-[0.2em]">今日の一言</p>
+      <div className="mt-4 flex items-start justify-between gap-5">
+        <div>
+          <p className="text-hint text-xs">{todayWord.rn}</p>
+          <p className="text-main mt-1.5 font-serif text-2xl leading-snug">{todayWord.jp}</p>
+          <p className="text-hint mt-3 text-xs">{todayWord.zh}</p>
+        </div>
+        <img src={`/icons/d${new Date().getDay()}.svg`} alt="" className="h-14 w-[72px] object-contain shrink-0"/>
+      </div>
+    </section>
+
+    {/* ── Study Modes ── */}
+    <section className="mt-8 px-6">
+      <p className="text-main border-border border-b pb-3 text-xs font-semibold tracking-[0.2em]">学習モード</p>
+      <ul>
+        {[
+          {icon:BookOpen,title:"列表学习",sub:"单词列表",meta:"自主",a:"wordlist"as Page},
+          {icon:Layers,title:"记忆卡片",sub:"滑动记忆",meta:"翻卡",a:"cardmatch"as Page},
+          {icon:Swords,title:"单词修罗",sub:"游戏挑战",meta:"修身",a:"practice"as Page},
+        ].map(({icon:Icon,title,sub,meta,a})=>(
+          <li key={title} className="border-border border-b last:border-b-0">
+            <button onClick={()=>onNavigate(a)} className="hover:bg-surface/60 -mx-2 flex w-[calc(100%+1rem)] items-center gap-4 rounded-lg px-2 py-4 text-left transition-colors">
+              <Icon size={20} strokeWidth={1.5} className="text-main shrink-0"/>
+              <span className="min-w-0 flex-1">
+                <span className="text-main block font-serif text-base leading-snug">{title}</span>
+                <span className="text-hint mt-0.5 block text-xs">{sub}</span>
+              </span>
+              <span className="text-hint text-xs">{meta}</span>
+              <ChevronRight size={16} strokeWidth={1.5} className="text-hint shrink-0"/>
+            </button>
+          </li>
+        ))}
+      </ul>
+    </section>
+
+    {/* ── Study Record ── */}
+    <button className="mt-9 px-6 mb-6 w-full text-left" onClick={() => onNavigate("calendar")}>
+      <div className="flex items-baseline justify-between">
+        <p className="text-main text-xs font-semibold tracking-[0.2em]">学習の記録</p>
+        <p className="text-hint text-[11px]">连续 {studyDays} 天</p>
+      </div>
+
+      <ul className="mt-5 grid grid-cols-7 gap-2">
+        {weekDays.map((d,i)=>{
+          const todayIdx = (todayDow + 6) % 7;
+          const studied = studiedDates.has(weekDates[i]);
+          const state = i === todayIdx ? "today" : studied ? "done" : "rest";
+          return (<li key={d} className="flex flex-col items-center gap-3">
+            <span className={`text-xs ${state==="rest"?"text-hint/50":"text-main"}`}>{d}</span>
+            <span className={state==="today"?"bg-main h-8 w-[3px] rounded-full":state==="done"?"bg-red-500 h-8 w-[3px] rounded-full":"bg-gray-300 h-8 w-[3px] rounded-full"}/>
+          </li>);
+        })}
+      </ul>
+
+    </button>
+
+    <footer className="border-border mt-14 flex flex-col items-center gap-2 pb-8 md:mt-auto md:border-t md:pt-8">
+      <p className="text-hint text-[10px] tracking-[0.36em]">日 課 学 習</p>
+      <p className="text-main font-serif text-sm">継続は力なり</p>
+    </footer>
+
+    {showReset && (
+      <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/40" onClick={() => setShowReset(false)}>
+        <div className="bg-white rounded-2xl w-[280px] p-5 shadow-xl text-center" onClick={e => e.stopPropagation()}>
+          <h3 className="font-bold text-main mb-1">确认重置</h3>
+          <p className="text-xs text-sub mb-4">将清除所有学习进度和数据，此操作不可撤销</p>
+          <div className="flex gap-2">
+            <button onClick={() => setShowReset(false)} className="flex-1 py-2.5 rounded-xl bg-gray-100 text-main text-sm font-bold">取消</button>
+            <button onClick={() => { localStorage.clear(); indexedDB.deleteDatabase("nihongo_app"); setTimeout(() => location.reload(), 200); }} className="flex-1 py-2.5 rounded-xl bg-red-500 text-white text-sm font-bold">确认</button>
+          </div>
+        </div>
+      </div>
+    )}
+  </div>);
 }
-
-// Thin line-art SVG icons — reference style
-const S = 20;
-function FlashReviewSvg({c}:{c:string}){return(<svg width={S} height={S} viewBox="0 0 24 24" fill="none" stroke="#94A3B8" strokeWidth="2" strokeLinecap="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10" fill="none" stroke={c} strokeWidth="2"/></svg>)}
-function WordListSvg({c}:{c:string}){return(<svg width={S} height={S} viewBox="0 0 24 24" fill="none"><path d="M4 6h16M4 10h16M4 14h10" stroke="#94A3B8" strokeWidth="2" strokeLinecap="round"/><rect x="4" y="16" width="6" height="4" rx="1" fill={c} opacity=".4"/><rect x="14" y="16" width="6" height="4" rx="1" fill={c} opacity=".7"/></svg>)}
-function GrammarSvg({c}:{c:string}){return(<svg width={S} height={S} viewBox="0 0 24 24" fill="none"><path d="M8 4v16M16 4v16M6 2h12M6 22h12" stroke="#94A3B8" strokeWidth="2" strokeLinecap="round"/><path d="M10 8h4M10 12h4" stroke={c} strokeWidth="1.5" strokeLinecap="round"/></svg>)}
-
-function MatchZhSvg({c}:{c:string}){return(<svg width={S} height={S} viewBox="0 0 24 24" fill="none"><circle cx="9" cy="9" r="2" stroke="#94A3B8" strokeWidth="2"/><circle cx="15" cy="15" r="2" stroke={c} strokeWidth="2"/><path d="M10.5 10.5L13.5 13.5" stroke="#94A3B8" strokeWidth="2" strokeLinecap="round"/></svg>)}

@@ -1,282 +1,254 @@
-import { useState, useRef } from "react";
-import { ArrowLeft, BookOpen, Bookmark, Pencil, CheckCircle, Heart } from "lucide-react";
+import { useState, useMemo, useRef, useEffect } from "react";
+import { ArrowLeft, ChevronDown, ChevronRight } from "lucide-react";
 import type { Page } from "../components/BottomNav";
-import { book2Data } from "../data/book2";
-import { isFavorite, toggleFavorite } from "../lib/favorites";
+import { getWordSource, getTextbookChapters, type WordEntry } from "../lib/wordSource";
 
-interface WordListProps {
-  onNavigate: (page: Page) => void;
-  darkMode?: boolean;
-}
+interface WordListProps { onNavigate: (page: Page) => void; }
 
-interface Word {
-  id: string;
-  word: string;
-  reading: string;
-  meaning: string;
-  pos: string;
-  example: string;
-  exampleReading: string;
-  exampleMeaning: string;
-}
+type FilterTab = "all" | "learned" | "unlearned";
 
-interface Chapter {
-  id: string;
-  name: string;
-  words: Word[];
-}
+export default function WordList({ onNavigate }: WordListProps) {
+  const [tab, setTab] = useState<FilterTab>("all");
+  const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [sortBy, setSortBy] = useState<"time" | "alpha">("time");
+  const [collapsed, setCollapsed] = useState<Set<string>>(new Set());
+  const [showCount, setShowCount] = useState(20);
+  const sentinelRef = useRef<HTMLDivElement>(null);
 
-interface Book {
-  id: string;
-  name: string;
-  chapters: Chapter[];
-}
+  const allWords = useMemo(() => getWordSource(), []);
 
-const books: Book[] = [
-  {
-    id: "vol1",
-    name: "第一册",
-    chapters: [
-      { id: "1", name: "第1課 · 日常・生活", words: [
-        { id:"1-1", word:"生活", reading:"せいかつ", meaning:"生活", pos:"名詞", example:"日本での生活に慣れました。", exampleReading:"にほんでのせいかつになれました。", exampleMeaning:"已经习惯了在日本的生活。" },
-        { id:"1-2", word:"経験", reading:"けいけん", meaning:"经验", pos:"名詞・スル", example:"留学の経験を活かしたい。", exampleReading:"りゅうがくのけいけんをいかしたい。", exampleMeaning:"想活用留学的经验。" },
-        { id:"1-3", word:"出発", reading:"しゅっぱつ", meaning:"出发", pos:"名詞・スル", example:"明日の朝6時に出発します。", exampleReading:"あしたのあさ6じにしゅっぱつします。", exampleMeaning:"明天早上6点出发。" },
-        { id:"1-4", word:"到着", reading:"とうちゃく", meaning:"到达", pos:"名詞・スル", example:"電車はまもなく到着します。", exampleReading:"でんしゃはまもなくとうちゃくします。", exampleMeaning:"电车马上就要到了。" },
-        { id:"1-5", word:"準備", reading:"じゅんび", meaning:"准备", pos:"名詞・スル", example:"旅行の準備はもうできた？", exampleReading:"りょこうのじゅんびはもうできた？", exampleMeaning:"旅行的准备已经做好了吗？" },
-        { id:"1-6", word:"片付ける", reading:"かたづける", meaning:"整理/收拾", pos:"動詞Ⅱ", example:"部屋をきれいに片付けてください。", exampleReading:"へやをきれいにかたづけてください。", exampleMeaning:"请把房间收拾干净。" },
-        { id:"1-7", word:"洗濯", reading:"せんたく", meaning:"洗衣服", pos:"名詞・スル", example:"今日は洗濯日和ですね。", exampleReading:"きょうはせんたくびよりですね。", exampleMeaning:"今天是适合洗衣服的好天气呢。" },
-        { id:"1-8", word:"掃除", reading:"そうじ", meaning:"打扫", pos:"名詞・スル", example:"週末に家の掃除をします。", exampleReading:"しゅうまつにいえのそうじをします。", exampleMeaning:"周末打扫家里。" },
-        { id:"1-9", word:"料理", reading:"りょうり", meaning:"烹饪", pos:"名詞・スル", example:"母の料理は世界一おいしい。", exampleReading:"ははのりょうりはせかいいちおいしい。", exampleMeaning:"妈妈做的菜是世界上最好吃的。" },
-        { id:"1-10", word:"買い物", reading:"かいもの", meaning:"购物", pos:"名詞・スル", example:"デパートへ買い物に行きました。", exampleReading:"デパートへかいものにいきました。", exampleMeaning:"去百货商店购物了。" },
-        { id:"1-11", word:"散歩", reading:"さんぽ", meaning:"散步", pos:"名詞・スル", example:"毎朝公園を散歩しています。", exampleReading:"まいあさこうえんをさんぽしています。", exampleMeaning:"每天早上在公园散步。" },
-        { id:"1-12", word:"通勤", reading:"つうきん", meaning:"通勤", pos:"名詞・スル", example:"通勤に1時間かかります。", exampleReading:"つうきんに1じかんかかります。", exampleMeaning:"通勤需要一个小时。" },
-      ]},
-      { id: "2", name: "第2課 · 感情・状態", words: [
-        { id:"2-1", word:"感動", reading:"かんどう", meaning:"感动", pos:"名詞・スル", example:"映画に感動して涙が出た。", exampleReading:"えいがにかんどうしてなみだがでた。", exampleMeaning:"被电影感动得流泪了。" },
-        { id:"2-2", word:"緊張", reading:"きんちょう", meaning:"紧张", pos:"名詞・スル", example:"面接前はいつも緊張します。", exampleReading:"めんせつまえはいつもきんちょうします。", exampleMeaning:"面试前总是很紧张。" },
-        { id:"2-3", word:"安心", reading:"あんしん", meaning:"放心", pos:"名詞・スル", example:"無事だと聞いて安心した。", exampleReading:"ぶじだときいてあんしんした。", exampleMeaning:"听说平安无事就放心了。" },
-        { id:"2-4", word:"満足", reading:"まんぞく", meaning:"满足", pos:"名詞・スル", example:"今の生活に満足しています。", exampleReading:"いまのせいかつにまんぞくしています。", exampleMeaning:"对现在的生活很满足。" },
-        { id:"2-5", word:"失望", reading:"しつぼう", meaning:"失望", pos:"名詞・スル", example:"結果に失望してしまった。", exampleReading:"けっかにしつぼうしてしまった。", exampleMeaning:"对结果感到失望了。" },
-        { id:"2-6", word:"我慢", reading:"がまん", meaning:"忍耐", pos:"名詞・スル", example:"もう我慢できない！", exampleReading:"もうがまんできない！", exampleMeaning:"已经忍无可忍了！" },
-        { id:"2-7", word:"努力", reading:"どりょく", meaning:"努力", pos:"名詞・スル", example:"努力は必ず報われる。", exampleReading:"どりょくはかならずむくわれる。", exampleMeaning:"努力一定会有回报。" },
-        { id:"2-8", word:"感謝", reading:"かんしゃ", meaning:"感谢", pos:"名詞・スル", example:"ご支援に心から感謝します。", exampleReading:"ごしえんにこころからかんしゃします。", exampleMeaning:"衷心感谢您的支持。" },
-        { id:"2-9", word:"尊敬", reading:"そんけい", meaning:"尊敬", pos:"名詞・スル", example:"彼はみんなから尊敬されている。", exampleReading:"かれはみんなからそんけいされている。", exampleMeaning:"他受到大家的尊敬。" },
-        { id:"2-10", word:"信頼", reading:"しんらい", meaning:"信赖", pos:"名詞・スル", example:"信頼できる友達がいる。", exampleReading:"しんらいできるともだちがいる。", exampleMeaning:"有值得信赖的朋友。" },
-      ]},
-    ],
-  },
-  {
-    id: "vol2",
-    name: "第二册",
-    chapters: book2Data,  },
-];
+  // Build date-groups from study progress
+  const progress = useMemo(() => {
+    try { return JSON.parse(localStorage.getItem("word_progress") || "{}") as Record<string,{lastReview?:string}>; }
+    catch { return {} as Record<string,{lastReview?:string}>; }
+  }, []);
 
-export default function WordList({ onNavigate, darkMode }: WordListProps) {
-  const [selectedBookId, setSelectedBookId] = useState(books[0].id);
-  const [selectedChapterId, setSelectedChapterId] = useState(books[0].chapters[0].id);
-  const [bookOpen, setBookOpen] = useState(false);
-  const [chapterOpen, setChapterOpen] = useState(false);
-  const [openSwipeId, setOpenSwipeId] = useState<string | null>(null);
-  const [animKey, setAnimKey] = useState(0);
-  const [favToggles, setFavToggles] = useState<Record<string,number>>({});
-  const swipeX = useRef<Record<string, number>>({});
-  const [, tick] = useState(0);
-  const touchStart = useRef(0);
+  const textbookChapters = useMemo(() => getTextbookChapters(), []);
 
-  const selectedBook = books.find((b) => b.id === selectedBookId)!;
-  const selectedChapter = selectedBook.chapters.find((c) => c.id === selectedChapterId)!;
+  // Group words: "已学" by date, "全部"/"未学" by textbook chapter
+  const groups = useMemo(() => {
+    const learnedIds = new Set(Object.keys(progress).filter(id => progress[id]?.lastReview));
 
-  const handleBookChange = (bookId: string) => {
-    setSelectedBookId(bookId);
-    const book = books.find((b) => b.id === bookId)!;
-    setSelectedChapterId(book.chapters[0].id);
-    setBookOpen(false);
-    setOpenSwipeId(null);
-    swipeX.current = {};
-    setAnimKey(k => k + 1);
+    // "已学" tab — group by study date
+    if (tab === "learned") {
+      const map = new Map<string, WordEntry[]>();
+      for (const w of allWords) {
+        if (!learnedIds.has(w.id)) continue;
+        const date = progress[w.id]?.lastReview || "未分组";
+        if (!map.has(date)) map.set(date, []);
+        map.get(date)!.push(w);
+      }
+      const entries = [...map.entries()].sort((a, b) => b[0].localeCompare(a[0]));
+      if (sortBy === "alpha") {
+        const all: WordEntry[] = [];
+        entries.forEach(([, words]) => all.push(...words));
+        all.sort((a, b) => a.w.localeCompare(b.w, "ja"));
+        return [{ date: "", words: all }];
+      }
+      return entries.map(([date, words]) => ({ date, words }));
+    }
+
+    // "全部" / "未学" — group by textbook chapter
+    const chapterMap = new Map<string, { name: string; words: WordEntry[] }>();
+    const ungrouped: WordEntry[] = [];
+    const wordIdToChapter = new Map<string, string>();
+
+    // Build ID → chapter mapping from textbook data
+    for (const book of textbookChapters) {
+      for (const ch of book.chapters) {
+        for (const w of ch.words) {
+          wordIdToChapter.set(w.id, ch.name);
+        }
+      }
+    }
+
+    for (const w of allWords) {
+      if (tab === "unlearned" && learnedIds.has(w.id)) continue;
+      const chName = wordIdToChapter.get(w.id);
+      if (chName) {
+        if (!chapterMap.has(chName)) chapterMap.set(chName, { name: chName, words: [] });
+        chapterMap.get(chName)!.words.push(w);
+      } else {
+        ungrouped.push(w);
+      }
+    }
+
+    if (sortBy === "alpha") {
+      const all: WordEntry[] = [];
+      chapterMap.forEach(ch => all.push(...ch.words));
+      all.push(...ungrouped);
+      all.sort((a, b) => a.w.localeCompare(b.w, "ja"));
+      return [{ date: "", words: all }];
+    }
+
+    const result = [...chapterMap.values()].map(ch => ({ date: ch.name, words: ch.words }));
+    if (ungrouped.length > 0) result.push({ date: "未分组", words: ungrouped });
+    return result;
+  }, [allWords, tab, sortBy, progress, textbookChapters]);
+
+  const totalInTab = groups.reduce((s, g) => s + g.words.length, 0);
+
+  // Build map of real group sizes before slicing
+  const groupSizes = useMemo(() => {
+    const map = new Map<string, number>();
+    for (const g of groups) map.set(g.date, g.words.length);
+    return map;
+  }, [groups]);
+
+  // Slice groups to showCount total words for lazy load
+  const slicedGroups = useMemo(() => {
+    let remaining = showCount;
+    const result: { date: string; words: WordEntry[] }[] = [];
+    for (const g of groups) {
+      if (remaining <= 0) break;
+      const slice = g.words.slice(0, remaining);
+      result.push({ date: g.date, words: slice });
+      remaining -= slice.length;
+    }
+    return result;
+  }, [groups, showCount]);
+
+  const hasMore = slicedGroups.reduce((s, g) => s + g.words.length, 0) < totalInTab;
+
+  useEffect(() => {
+    const el = sentinelRef.current;
+    if (!el || !hasMore) return;
+    const ob = new IntersectionObserver(([e]) => { if (e.isIntersecting) setShowCount(c => c + 20); }, { threshold: 0.1 });
+    ob.observe(el);
+    return () => ob.disconnect();
+  }, [hasMore, slicedGroups]);
+
+  const toggleGroup = (date: string) => {
+    const next = new Set(collapsed);
+    next.has(date) ? next.delete(date) : next.add(date);
+    setCollapsed(next);
   };
 
-  const handleChapterChange = (chapterId: string) => {
-    setSelectedChapterId(chapterId);
-    setChapterOpen(false);
-    setOpenSwipeId(null);
-    swipeX.current = {};
-    setAnimKey(k => k + 1);
+  const toggleWord = (id: string) => {
+    const next = new Set(selected);
+    next.has(id) ? next.delete(id) : next.add(id);
+    setSelected(next);
+  };
+
+  const formatDate = (d: string) => {
+    if (!d || d === "未分组") return d || "";
+    const parts = d.split("-");
+    if (parts.length === 3) return `${parseInt(parts[1])}月${parseInt(parts[2])}日`;
+    return d;
   };
 
   return (
-    <>
-      <div className="flex items-center justify-between px-4 py-2">
+    <div className="flex-1 min-h-0 flex flex-col bg-white">
+      {/* Header */}
+      <div className="flex items-center justify-between px-4 py-3">
         <button onClick={() => onNavigate("home")}
-          className="flex items-center gap-1 text-hint text-sm font-bold active:opacity-60 transition-opacity">
-          <ArrowLeft size={16} stroke="var(--color-text-tertiary)" strokeWidth={2} />
-          <span>戻る</span>
+          className="flex items-center gap-1 text-hint active:opacity-60">
+          <ArrowLeft size={20} strokeWidth={1.5} />
         </button>
-        <span className="text-lg font-bold text-main dark:text-main">単語リスト</span>
+        <span className="text-2xl font-semibold tracking-tight text-main">选择单词</span>
       </div>
 
-      {/* Selection form */}
-      <div className="px-4 pb-3 space-y-2">
-        <div className="relative">
-          <button
-            onClick={() => { setBookOpen(!bookOpen); setChapterOpen(false); }}
-            className="w-full card rounded-xl px-4 py-3 flex items-center justify-between font-semibold text-main dark:text-main"
-          >
-            <div className="flex items-center gap-2.5">
-              <BookOpen size={16} stroke="#0F64B5" />
-              <span className="text-sm">{selectedBook.name}</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <span className="text-[10px] text-sub dark:text-hint font-normal">{selectedBook.chapters.length}章</span>
-              <div className={`picker-bar ${bookOpen ? 'open' : ''}`}>
-                <span className="top" /><span className="middle" /><span className="bottom" />
-              </div>
-            </div>
-          </button>
-          <div className={`dropdown-menu absolute top-full left-0 right-0 mt-1 bg-white dark:bg-surface rounded-xl shadow-lg z-30 ${bookOpen ? 'open' : ''}`}>
-            {books.map((b) => (
-              <button key={b.id} onClick={() => handleBookChange(b.id)}
-                className={`dropdown-item w-full px-4 py-3 text-left flex items-center justify-between ${selectedBookId === b.id ? "text-primary" : "text-main dark:text-main"}`}>
-                <span className="text-sm font-semibold">{b.name}</span>
-                {selectedBookId === b.id && <span className="text-[10px]">✓</span>}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        <div className="relative">
-          <button
-            onClick={() => { setChapterOpen(!chapterOpen); setBookOpen(false); }}
-            className="w-full card rounded-xl px-4 py-3 flex items-center justify-between font-semibold text-main dark:text-main"
-          >
-            <div className="flex items-center gap-2.5">
-              <span className="text-[11px] font-bold [#D13838]">第{selectedChapter.id}課</span>
-              <span className="text-sm">{selectedChapter.name.split("·")[1]?.trim() || selectedChapter.name}</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <span className="text-[10px] [#0F64B5] font-normal">{selectedChapter.words.length}語</span>
-              <div className={`picker-bar ${chapterOpen ? 'open' : ''}`}>
-                <span className="top" /><span className="middle" /><span className="bottom" />
-              </div>
-            </div>
-          </button>
-          <div className={`dropdown-menu absolute top-full left-0 right-0 mt-1 bg-white dark:bg-surface rounded-xl shadow-lg z-30 max-h-[184px] overflow-y-auto scroll-area ${chapterOpen ? 'open' : ''}`}>
-            {selectedBook.chapters.map((ch) => (
-              <button key={ch.id} onClick={() => handleChapterChange(ch.id)}
-                className={`dropdown-item w-full px-4 py-3 text-left flex items-center justify-between ${selectedChapterId === ch.id ? "[#D13838]" : "text-main dark:text-main"}`}>
-                <span className="text-sm font-semibold">{ch.name}</span>
-                <span className="text-[10px] [#0F64B5]">{ch.words.length}語</span>
-              </button>
-            ))}
-          </div>
-        </div>
-
-        <div className="flex items-center gap-2 px-1">
-          <span className="text-[10px] text-sub dark:text-hint">
-            已学 {selectedChapter.words.length - 2}/{selectedChapter.words.length} 词
-          </span>
-          <div className="flex-1 h-1 [#E8F2FB] dark:bg-primary-subtle rounded-full overflow-hidden">
-            <div className="h-full bg-primary rounded-full" style={{ width: `${Math.round((selectedChapter.words.length - 2) / selectedChapter.words.length * 100)}%` }} />
-          </div>
+      {/* Tabs — glass radio group */}
+      <div className="px-4 pb-3">
+        <div className="tab-radio-group">
+          <input type="radio" name="tab" id="tab-all" checked={tab === "all"} onChange={() => { setTab("all"); setShowCount(20); }} />
+          <label htmlFor="tab-all">全部</label>
+          <input type="radio" name="tab" id="tab-learned" checked={tab === "learned"} onChange={() => { setTab("learned"); setShowCount(20); }} />
+          <label htmlFor="tab-learned">已学</label>
+          <input type="radio" name="tab" id="tab-unlearned" checked={tab === "unlearned"} onChange={() => { setTab("unlearned"); setShowCount(20); }} />
+          <label htmlFor="tab-unlearned">未学</label>
+          <div className="tab-glider" />
         </div>
       </div>
 
-      {/* Word List */}
-      <div className="flex-1 min-h-0 overflow-y-auto scroll-area px-4 pb-4">
-        <div key={animKey} className="space-y-2">
-          {selectedChapter.words.map((w, i) => {
-            const offset = swipeX.current[w.id] || 0;
-            const isOpen = openSwipeId === w.id;
-            return (
-              <div key={w.id} className={`relative h-[72px] overflow-hidden rounded-[8px] ${i % 2 === 0 ? "word-slide-right" : "word-slide-left"}`} style={{ animationDelay: `${i * 0.04}s` }}>
-                {/* Action bar + spine — fixed, revealed when card slides right */}
-                <div className="absolute inset-y-0 left-0 flex items-stretch z-0">
-                  <div className="flex items-stretch rounded-l-[8px] overflow-hidden" style={{ width: 180 }}>
-                    <button onClick={() => { swipeX.current[w.id] = 0; setOpenSwipeId(null); tick(n => n + 1); }} className="flex-1 flex flex-col items-center justify-center gap-1 bg-[#EB5C20] active:opacity-80">
-                      <Bookmark size={18} stroke="#fff" fill="#fff" />
-                      <span className="text-[9px] text-white font-semibold">标记</span>
-                    </button>
-                    <button onClick={() => { swipeX.current[w.id] = 0; setOpenSwipeId(null); tick(n => n + 1); }} className="flex-1 flex flex-col items-center justify-center gap-1 [#0F64B5] active:opacity-80">
-                      <Pencil size={18} stroke="#fff" />
-                      <span className="text-[9px] text-white font-semibold">编辑</span>
-                    </button>
-                    <button onClick={() => { swipeX.current[w.id] = 0; setOpenSwipeId(null); tick(n => n + 1); }} className="flex-1 flex flex-col items-center justify-center gap-1 bg-primary active:opacity-80">
-                      <CheckCircle size={18} stroke="#fff" fill="#fff" />
-                      <span className="text-[9px] text-white font-semibold">熟记</span>
-                    </button>
+      {/* Status */}
+      <div className="flex items-center justify-between px-4 pb-3">
+        <span className="text-xs text-sub">共{totalInTab}词</span>
+        <button onClick={() => setSortBy(s => s === "time" ? "alpha" : "time")}
+          className="flex items-center gap-1 text-xs text-hint">
+          {sortBy === "time" ? "按时间排序" : "按字母排序"}
+          <ChevronDown size={12} strokeWidth={1.5} />
+        </button>
+      </div>
+
+      {/* Word list grouped by date */}
+      <div className="flex-1 min-h-0 overflow-y-auto scroll-area px-4">
+        {slicedGroups.map(g => {
+          const isCollapsed = collapsed.has(g.date);
+          return (
+            <div key={g.date}>
+              {/* Date / Chapter header */}
+              {g.date ? (
+                g.date === "未分组" ? (
+                  <div className="py-2.5">
+                    <span className="text-base font-bold text-main">未分组</span>
+                    <span className="text-xs text-hint ml-2">{groupSizes.get(g.date)}词</span>
                   </div>
-                  {/* Spine — bridges action bar and card, visible when open */}
-                  <div className={`w-[16px] h-full transition-colors ${isOpen ? "bg-primary-subtle" : "bg-primary-subtle"}`} />
-                </div>
-
-                {/* Card that slides right */}
-                <div
-                  className="absolute inset-y-0 left-0 card flex items-stretch z-10 select-none !rounded-[8px]"
-                  style={{
-                    width: '100%',
-                    borderRadius: offset > 0 ? '0 8px 8px 0' : '8px',
-                    transform: `translateX(${offset}px)`,
-                    transition: offset === 0 || offset === 180 ? 'transform 0.25s cubic-bezier(0.16, 1, 0.3, 1)' : 'none',
-                    touchAction: 'pan-y',
-                  }}
-                  onTouchStart={(e) => { touchStart.current = e.touches[0].clientX; }}
-                  onTouchMove={(e) => {
-                    const dx = e.touches[0].clientX - touchStart.current;
-                    if (Math.abs(dx) > 8) e.preventDefault();
-                    swipeX.current[w.id] = Math.max(0, Math.min(180, Math.round(dx)));
-                    tick(n => n + 1);
-                  }}
-                  onTouchEnd={() => {
-                    const dx = swipeX.current[w.id] || 0;
-                    swipeX.current[w.id] = dx > 50 ? 180 : 0;
-                    setOpenSwipeId(dx > 50 ? w.id : null);
-                    tick(n => n + 1);
-                  }}
-                  onMouseDown={(e) => { touchStart.current = e.clientX; }}
-                  onMouseMove={(e) => {
-                    if (e.buttons === 1) {
-                      const dx = e.clientX - touchStart.current;
-                      swipeX.current[w.id] = Math.max(0, Math.min(180, Math.round(dx)));
-                      tick(n => n + 1);
-                    }
-                  }}
-                  onMouseUp={() => {
-                    const dx = swipeX.current[w.id] || 0;
-                    swipeX.current[w.id] = dx > 50 ? 180 : 0;
-                    setOpenSwipeId(dx > 50 ? w.id : null);
-                    tick(n => n + 1);
-                  }}
-                  onMouseLeave={() => {
-                    const dx = swipeX.current[w.id] || 0;
-                    if (dx > 0 && dx < 180) { swipeX.current[w.id] = dx > 50 ? 180 : 0; tick(n => n + 1); }
-                  }}
-                >
-                  {/* Word content */}
-                  <div className="flex-1 min-w-0 p-3.5 flex items-center">
-                    <div className="flex items-center justify-between w-full">
-                      <div className="min-w-0 flex-1">
-                        <span className="text-[11px] text-primary block">{w.reading}</span>
-                        <span className="text-[16px] font-bold text-main dark:text-main block leading-tight">{w.word}</span>
-                      </div>
-                      <div className="text-right shrink-0 ml-4">
-                        <span className="text-[10px] font-semibold px-2 py-0.5 rounded-md [#E8F2FB] dark:bg-primary-subtle [#0F64B5] inline-block">{w.pos}</span>
-                        <p className="text-[13px] font-medium text-sub dark:text-hint mt-1">{w.meaning}</p>
-                      </div>
-                      <label className="heart-check ml-2 shrink-0" key={w.id + "_" + (favToggles[w.id]||0)} onClick={e=>e.stopPropagation()}>
-                        <input type="checkbox" defaultChecked={isFavorite(w.id)} onChange={()=>{toggleFavorite(w.id);setFavToggles(p=>({...p,[w.id]:(p[w.id]||0)+1}));}} />
-                        <div className="heart-mark">
-                          <svg viewBox="0 0 256 256"><rect fill="none" height="256" width="256"/><path d="M224.6,51.9a59.5,59.5,0,0,0-43-19.9,60.5,60.5,0,0,0-44,17.6L128,59.1l-7.5-7.4C97.2,28.3,59.2,26.3,35.9,47.4a59.9,59.9,0,0,0-2.3,87l83.1,83.1a15.9,15.9,0,0,0,22.6,0l81-81C243.7,113.2,245.6,75.2,224.6,51.9Z"/></svg>
-                        </div>
-                      </label>
+                ) : (
+                  <div onClick={() => toggleGroup(g.date)}
+                    className="flex items-center justify-between py-2.5 cursor-pointer active:bg-[#F8F8F8] -mx-2 px-2 rounded-lg">
+                    <div className="flex items-center gap-2">
+                      <span className="size-5 rounded-full border-2 border-[#D0D0D0] flex items-center justify-center">
+                        {isCollapsed ? <ChevronRight size={12} className="text-hint" /> : <ChevronDown size={12} className="text-hint" />}
+                      </span>
+                      <span className="text-base font-bold text-main">
+                        {tab === "learned" ? formatDate(g.date) : g.date}
+                      </span>
                     </div>
+                    <span className="text-xs text-hint">{groupSizes.get(g.date)}词</span>
                   </div>
+                )
+              ) : null}
+
+              {/* Words under date/chapter */}
+              {(!g.date || !isCollapsed) && (
+                <div className={g.date ? "divide-y divide-[#F0F0F0]" : "divide-y divide-[#F0F0F0]"}>
+                  {g.words.map(w => {
+                    const active = selected.has(w.id);
+                    return (
+                      <div key={w.id} className="chk-row py-2.5 cursor-pointer" onClick={() => toggleWord(w.id)}>
+                        <input type="checkbox" className="chk-input pointer-events-none" checked={active} readOnly />
+                        <span className="chk-label flex items-center gap-3">
+                          <div className="min-w-0 flex-1">
+                            <span className="text-[15px] font-bold text-[#333]">{w.w}</span>
+                            <span className="text-xs text-hint ml-2">{w.r}</span>
+                          </div>
+                          <span className="text-xs text-hint shrink-0">{w.m}</span>
+                        </span>
+                      </div>
+                    );
+                  })}
                 </div>
-              </div>
-            );
-          })}
-        </div>
+              )}
+            </div>
+          );
+        })}
+        {hasMore && (
+          <div ref={sentinelRef} className="flex items-center justify-center py-4">
+            <span className="text-xs text-hint/50">加载中...</span>
+          </div>
+        )}
         <div className="h-4" />
       </div>
-    </>
+
+      {/* Bottom bar */}
+      <div className="flex items-center justify-between px-5 py-3 border-t border-border bg-white">
+        <div className="flex items-center gap-2">
+          <span className="text-sm text-sub">已选</span>
+          <span className={`min-w-[22px] h-[22px] rounded-full flex items-center justify-center text-xs text-white font-bold ${
+            selected.size > 0 ? "bg-[#FF4D4F]" : "bg-hint/30"
+          }`}>{selected.size}</span>
+        </div>
+        <button
+          disabled={selected.size === 0}
+          onClick={() => {
+            localStorage.setItem("wl_selected", JSON.stringify([...selected]));
+            onNavigate("listreview");
+          }}
+          className={`px-8 py-2.5 rounded-lg text-sm font-medium transition-colors ${
+            selected.size > 0 ? "bg-[#1A1A1A] text-white" : "bg-[#E8E8E8] text-hint"
+          }`}>开始学习</button>
+      </div>
+    </div>
   );
 }

@@ -1,9 +1,7 @@
-interface StatusBarProps {
-  darkMode?: boolean;
-}
+interface StatusBarProps {}
 
-export default function StatusBar({ darkMode }: StatusBarProps) {
-  const fg = darkMode ? "#E0E0E0" : "#1A1C22";
+export default function StatusBar({}: StatusBarProps) {
+  const fg = "#1A1C22";
   return (
     <div className="flex justify-between items-center px-6 pt-3 pb-1">
       <span className="text-xs font-semibold" style={{ color: fg }}>9:41</span>

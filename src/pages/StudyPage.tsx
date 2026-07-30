@@ -1,56 +1,54 @@
 import { useState, useMemo, useCallback, useRef, useEffect } from "react";
-import { ArrowLeft, Zap, AlertTriangle } from "lucide-react";
+import { ArrowLeft, Check, Volume2, AlertTriangle } from "lucide-react";
 import type { Page } from "../components/BottomNav";
 import { loadProgress, answerWord, getReviewCount } from "../lib/spaced-repetition";
 import { setLocal } from "../lib/store";
 import { getExample } from "../data/examples";
-import { book2Data } from "../data/book2";
+import { getWordSource } from "../lib/wordSource";
+import { playSuccess, playError } from "../lib/audio";
+import { useLongPress } from "../lib/longPress";
+import { toggleFavorite } from "../lib/favorites";
 
-interface StudyPageProps { onNavigate: (p: Page) => void; darkMode?: boolean; }
-
-const book1Words = [
-  {id:"1-1",w:"生活",r:"せいかつ",m:"生活",p:"名詞"},{id:"1-2",w:"経験",r:"けいけん",m:"经验",p:"名詞・スル"},{id:"1-3",w:"出発",r:"しゅっぱつ",m:"出发",p:"名詞・スル"},{id:"1-4",w:"到着",r:"とうちゃく",m:"到达",p:"名詞・スル"},{id:"1-5",w:"準備",r:"じゅんび",m:"准备",p:"名詞・スル"},{id:"1-6",w:"片付ける",r:"かたづける",m:"整理/收拾",p:"動詞Ⅱ"},{id:"1-7",w:"洗濯",r:"せんたく",m:"洗衣服",p:"名詞・スル"},{id:"1-8",w:"掃除",r:"そうじ",m:"打扫",p:"名詞・スル"},{id:"1-9",w:"料理",r:"りょうり",m:"烹饪",p:"名詞・スル"},{id:"1-10",w:"買い物",r:"かいもの",m:"购物",p:"名詞・スル"},{id:"1-11",w:"散歩",r:"さんぽ",m:"散步",p:"名詞・スル"},{id:"1-12",w:"通勤",r:"つうきん",m:"通勤",p:"名詞・スル"},{id:"2-1",w:"感動",r:"かんどう",m:"感动",p:"名詞・スル"},{id:"2-2",w:"緊張",r:"きんちょう",m:"紧张",p:"名詞・スル"},{id:"2-3",w:"安心",r:"あんしん",m:"放心",p:"名詞・スル"},{id:"2-4",w:"満足",r:"まんぞく",m:"满足",p:"名詞・スル"},{id:"2-5",w:"失望",r:"しつぼう",m:"失望",p:"名詞・スル"},{id:"2-6",w:"我慢",r:"がまん",m:"忍耐",p:"名詞・スル"},{id:"2-7",w:"努力",r:"どりょく",m:"努力",p:"名詞・スル"},{id:"2-8",w:"感謝",r:"かんしゃ",m:"感谢",p:"名詞・スル"},{id:"2-9",w:"尊敬",r:"そんけい",m:"尊敬",p:"名詞・スル"},{id:"2-10",w:"信頼",r:"しんらい",m:"信赖",p:"名詞・スル"},
-];
-
-const allWords = [...book1Words, ...book2Data.flatMap(ch => ch.words.map(w => ({ id:w.id, w:w.word, r:w.reading, m:w.meaning, p:w.pos })))];
+interface StudyPageProps { onNavigate: (p: Page) => void; }
 
 function genOptions(correct:string, all:string[]):string[]{const w=all.filter(m=>m!==correct);return shuffle([correct,...shuffle(w).slice(0,3)]);}
 function shuffle<T>(a:T[]):T[]{const b=[...a];for(let i=b.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[b[i],b[j]]=[b[j],b[i]]}return b}
 
 interface Q { prompt:string; correct:string; options:string[]; type:0|1|2 }
 
+const phases = ["复习巩固","新词认知","多维练习"];
+const typeLabels = ["仮名→中文","漢字→仮名","漢字→中文"];
+
+// Long-press wrapper for word → add to favorites
+function LongPressWord({ wordId, onFavorite, children }: { wordId: string; onFavorite: () => boolean; children: React.ReactNode }) {
+  const handlers = useLongPress(() => onFavorite());
+  return <div {...handlers} className="inline">{children}</div>;
+}
+
 export default function StudyPage({ onNavigate }: StudyPageProps) {
   const dailyGoal = parseInt(localStorage.getItem("dailyGoal")||"15");
   const today = new Date().toISOString().slice(0,10);
   const progress = useMemo(()=>loadProgress(),[]);
-  const allMs = useMemo(()=>allWords.map(w=>w.m),[]);
-  const allRs = useMemo(()=>allWords.map(w=>w.r),[]);
+  const selectedBook = localStorage.getItem("selectedBook") || "all";
+  const sourceWords = useMemo(() => getWordSource(), [selectedBook]);
+  const allMs = useMemo(()=>sourceWords.map(w=>w.m),[sourceWords]);
+  const allRs = useMemo(()=>sourceWords.map(w=>w.r),[sourceWords]);
 
   const { reviewWords, newWords } = useMemo(()=>{
-    const due = allWords.filter(w=>{const p=progress[w.id];return p&&p.nextReview<=today});
+    const due = sourceWords.filter(w=>{const p=progress[w.id];return p&&p.nextReview<=today});
     const done = new Set(Object.keys(progress));
-    // Filter by start chapter
-    const startCh = localStorage.getItem("startChapter") || "0";
-    let available = allWords.filter(w=>!done.has(w.id));
-    if (startCh !== "0") {
-      const startIdx = book2Data.findIndex(ch=>ch.id===startCh);
-      if (startIdx >= 0) {
-        const allowedIds = new Set(book2Data.slice(startIdx).flatMap(ch=>ch.words.map(w=>w.id)));
-        available = available.filter(w=>allowedIds.has(w.id));
-      }
-    }
+    let available = sourceWords.filter(w=>!done.has(w.id));
     const randomMode = localStorage.getItem("randomMode") !== "false";
     const news = randomMode ? shuffle(available).slice(0, dailyGoal) : available.slice(0, dailyGoal);
     return {reviewWords:due, newWords:news};
-  },[dailyGoal,progress,today]);
+  },[dailyGoal,progress,today,sourceWords]);
 
   const allIds = useMemo(()=>[...reviewWords.map(w=>w.id),...newWords.map(w=>w.id)],[reviewWords,newWords]);
   const allCount = allIds.length;
 
-  const phases = ["复习巩固","新词认知","多维练习"];
-  const typeLabels = ["假名→中文","汉字→假名","汉字→中文"];
-
   // ── State ──
+  const [loading, setLoading] = useState(true);
+  const [loadingText, setLoadingText] = useState("準備中...");
   const [phase, setPhase] = useState(()=>reviewWords.length>0?0:newWords.length>0?1:2);
   const [queue, setQueue] = useState<string[]>(()=>reviewWords.length?reviewWords.map(w=>w.id):newWords.length?newWords.map(w=>w.id):allIds);
   const [picked, setPicked] = useState<string|null>(null);
@@ -59,6 +57,7 @@ export default function StudyPage({ onNavigate }: StudyPageProps) {
   const [dueTomorrow, setDueTomorrow] = useState(0);
   const [showExit, setShowExit] = useState(false);
   const [showHint, setShowHint] = useState(false);
+  const [phaseBanner, setPhaseBanner] = useState<string | null>(null);
 
   // ── Refs ──
   const phaseCorrect = useRef(new Set<string>());
@@ -68,21 +67,13 @@ export default function StudyPage({ onNavigate }: StudyPageProps) {
   const exampleCache = useRef<Record<string,string>>({});
   const busy = useRef(false);
   const timer = useRef<any>(null);
+  const bannerTimer = useRef<any>(null);
+  const errorRound = useRef(false);
+  const errorRoundTotal = useRef(0);
+  const phase2Attempted = useRef(new Set<string>());
+  const phase2CleanupTotal = useRef(0);
   const audioCtx = useRef<AudioContext|null>(null);
 
-  const successAudio = useRef<HTMLAudioElement|null>(null);
-  const playSuccess = () => {
-    try {
-      if (!successAudio.current) successAudio.current = new Audio("/icons/success.mp3");
-      const a = successAudio.current;
-      a.currentTime = 0; a.volume = 0.6; a.play().catch(()=>{});
-    } catch {}
-  };
-  const playError = () => {
-    try {
-      playBeep(260, 0.3, "triangle");
-    } catch {}
-  };
   const playBeep = (freq: number, dur: number, type: OscillatorType) => {
     try {
       if (!audioCtx.current) audioCtx.current = new (window.AudioContext||(window as any).webkitAudioContext)();
@@ -98,6 +89,30 @@ export default function StudyPage({ onNavigate }: StudyPageProps) {
     } catch {}
   };
 
+  // ── Preload audio ──
+  useEffect(() => {
+    let loaded = 0;
+    const total = 2;
+    const onLoad = () => {
+      loaded++;
+      setLoadingText(`音声読み込み中... ${loaded}/${total}`);
+      if (loaded >= total) {
+        setLoadingText("準備完了");
+        setTimeout(() => setLoading(false), 400);
+      }
+    };
+    // Shared audio instances (from lib/audio.ts)
+    const s = new Audio("/icons/success.mp3");
+    const e = new Audio("/icons/error.wav");
+    s.addEventListener("canplaythrough", onLoad, { once: true });
+    e.addEventListener("canplaythrough", onLoad, { once: true });
+    s.load(); e.load();
+    // Pre-warm TTS
+    try { const u = new SpeechSynthesisUtterance(""); u.volume = 0; u.lang = "ja-JP"; speechSynthesis.speak(u); } catch {}
+    const t = setTimeout(() => setLoading(false), 3000);
+    return () => clearTimeout(t);
+  }, []);
+
   const ttsUnlocked = useRef(false);
   const speak = (text: string) => {
     try {
@@ -108,9 +123,8 @@ export default function StudyPage({ onNavigate }: StudyPageProps) {
     } catch {}
   };
 
-
   const currentId = queue[0]||"";
-  const cur = allWords.find(w=>w.id===currentId)||allWords[0];
+  const cur = sourceWords.find(w=>w.id===currentId)||sourceWords[0];
   const phaseWords = phase===0?reviewWords:phase===1?newWords:[...reviewWords,...newWords];
   const phaseTotal = phaseWords.length;
 
@@ -118,7 +132,7 @@ export default function StudyPage({ onNavigate }: StudyPageProps) {
 
   // ── Generate question ──
   const makeQ = (wid:string, ph:number):Q => {
-    const w = allWords.find(x=>x.id===wid)||allWords[0];
+    const w = sourceWords.find(x=>x.id===wid)||sourceWords[0];
     if (ph===0){const t=Math.random()>.5?1:0;if(t===0)return{type:0,prompt:w.r,correct:w.m,options:genOptions(w.m,allMs)};return{type:1,prompt:w.w,correct:w.r,options:genOptions(w.r,allRs)}}
     if (ph===1) return {type:2,prompt:w.w,correct:w.m,options:genOptions(w.m,allMs)};
     const t=Math.floor(Math.random()*3)as 0|1|2;
@@ -129,6 +143,9 @@ export default function StudyPage({ onNavigate }: StudyPageProps) {
 
   const [question, setQuestion] = useState<Q>(()=>makeQ(currentId, phase));
 
+  const answered = picked !== null;
+  const isCorrect = picked === question.correct;
+
   // ── Advance ──
   const advance = (rest:string[], ph:number) => {
     if (timer.current) clearTimeout(timer.current);
@@ -137,23 +154,28 @@ export default function StudyPage({ onNavigate }: StudyPageProps) {
       setQuestion(makeQ(rest[0], ph));
       setPicked(null); busy.current=false; return;
     }
-    // Phase 3 re-queue: word still in queue, just show it
     if (ph===2 && queue.length>0) {
       setQuestion(makeQ(queue[0], ph));
       setPicked(null); busy.current=false; return;
     }
-    // Queue empty — check error pool
     if (errorPool.current.length>0) {
       const pool = [...new Set(errorPool.current)]; errorPool.current=[];
       setQueue(pool); phaseCorrect.current=new Set();
+      errorRound.current = true; errorRoundTotal.current = pool.length;
       setQuestion(makeQ(pool[0], ph));
       setPicked(null); busy.current=false; return;
     }
-    // Next phase or done
     if (ph===0||ph===1) {
+      errorRound.current = false;
+      phase2Attempted.current = new Set();
+      phase2CleanupTotal.current = 0;
       const np = ph+1; setPhase(np); phaseCorrect.current=new Set();
       const nq = np===1?newWords.map(w=>w.id):allIds;
       if (nq.length===0) { settle(); return; }
+      // Show phase transition banner
+      setPhaseBanner(phases[np]);
+      if (bannerTimer.current) clearTimeout(bannerTimer.current);
+      bannerTimer.current = setTimeout(() => setPhaseBanner(null), 1500);
       setQueue(nq); setQuestion(makeQ(nq[0], np));
       setPicked(null); busy.current=false;
     } else {
@@ -171,8 +193,14 @@ export default function StudyPage({ onNavigate }: StudyPageProps) {
       else { answerWord(id, answers.current[id]??false); }
     }
     setDueTomorrow(tomorrowCount);
-    const ts = new Date().toISOString().slice(0,10);
+    const d = new Date();
+    const ts = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;
     if ((localStorage.getItem("lastStudyDate")||"")!==ts){setLocal("studyDays",String(parseInt(localStorage.getItem("studyDays")||"0")+1));setLocal("lastStudyDate",ts)}
+    // Record study date for weekly calendar
+    try {
+      const dates = JSON.parse(localStorage.getItem("studyDates")||"[]");
+      if (!dates.includes(ts)) { dates.push(ts); setLocal("studyDates", JSON.stringify(dates)); }
+    } catch {}
     setDone(true);
   };
 
@@ -189,6 +217,7 @@ export default function StudyPage({ onNavigate }: StudyPageProps) {
       playSuccess();
       setTotalRight(t=>t+1);
       phaseCorrect.current.add(cur.id);
+      if (phase===2) phase2Attempted.current.add(cur.id);
       if (phase===0) answerWord(cur.id, true);
       setQueue(rest);
       busy.current=true;
@@ -197,18 +226,17 @@ export default function StudyPage({ onNavigate }: StudyPageProps) {
       playError();
       errorCount.current[cur.id]=(errorCount.current[cur.id]||0)+1;
       if (phase===0||phase===1) {
-        // Phases 1&2: wrong → show answer → error pool
         errorPool.current.push(cur.id);
         setShowHint(true); busy.current=true;
         timer.current = setTimeout(()=>{
           setShowHint(false);
           advance(rest, phase);
-        }, phase===0?1300:2000);
+        }, phase===0?1000:2000);
       } else {
-        // Phase 3: wrong → re-queue, ≥3 errors → show hint but still pass when correct
         const pos = Math.min(2, rest.length);
         const nextQ = [...rest.slice(0,pos), cur.id, ...rest.slice(pos)];
         setQueue(nextQ); busy.current=true;
+        phase2Attempted.current.add(cur.id);
         const ec = errorCount.current[cur.id];
         if (ec >= 3) setShowHint(true);
         timer.current = setTimeout(()=>{
@@ -236,69 +264,246 @@ export default function StudyPage({ onNavigate }: StudyPageProps) {
 
   if (allCount===0){onNavigate("rest");return null;}
 
+  // ── Loading screen ──
+  if (loading) return (
+    <div className="flex min-h-0 flex-1 flex-col items-center justify-center gap-6 px-8 text-center bg-bg">
+      <div className="word-loader" />
+      <p className="text-sub text-sm font-medium">{loadingText}</p>
+      <p className="text-hint text-xs">単語と音声を準備しています</p>
+    </div>
+  );
+
+  const inErrorRound = errorRound.current;
+  const phase2InCleanup = phase === 2 && phase2Attempted.current.size >= allIds.length && queue.length > 0;
+  if (phase2InCleanup && phase2CleanupTotal.current === 0) {
+    phase2CleanupTotal.current = queue.length;
+  }
+  const totalForProgress = inErrorRound
+    ? errorRoundTotal.current
+    : phase2InCleanup ? phase2CleanupTotal.current
+    : phase === 0 ? reviewWords.length
+    : phase === 1 ? newWords.length
+    : allIds.length;
+  const currentPos = inErrorRound
+    ? (errorRoundTotal.current - queue.length)
+    : phase2InCleanup ? Math.max(0, phase2CleanupTotal.current - queue.length)
+    : phase === 0 ? (reviewWords.length - queue.length)
+    : phase === 1 ? (newWords.length - queue.length)
+    : phase2Attempted.current.size;
+  const rawPct = totalForProgress > 0 ? ((currentPos + (answered ? 1 : 0)) / totalForProgress) * 100 : 0;
+  const progressPct = Math.min(100, Math.max(0, rawPct));
+
   const showExample = phase===1 || showHint || (phase===2 && (errorCount.current[currentId]||0)>=3);
 
-  if (done) return (<>
-    <div className="flex-1 flex flex-col items-center justify-center px-8 text-center">
+  // ── Done screen ──
+  if (done) return (
+    <div className="flex min-h-0 flex-1 flex-col items-center justify-center gap-6 px-8 text-center relative">
+      {/* Confetti */}
       <div className="absolute inset-0 pointer-events-none overflow-hidden" style={{zIndex:50}}>
         {Array.from({length:12},()=>({ox:Math.random()*90+5+"%",oy:Math.random()*90+5+"%"})).flatMap(o=>Array.from({length:24},(_,i)=>{const a=Math.random()*Math.PI*2,d=30+Math.random()*90;return{ox:o.ox,oy:o.oy,x:Math.cos(a)*d,y:Math.sin(a)*d,r:(Math.random()-.5)*180,c:["#ff6584","#6c63ff","#ffd700","#3f3d56","#ff6584","#6c63ff"][i%6]}})).map((p,i)=>(<span key={i} className="absolute block" style={{left:p.ox,top:p.oy,width:5,height:2,borderRadius:1,background:p.c,opacity:.8,animation:"confetti 2.2s ease-out forwards",["--x" as any]:`${p.x}px`,["--y" as any]:`${p.y}px`,["--r" as any]:`${p.r}deg`}}/>))}
       </div>
-      <div className="relative w-48 h-48 mb-4 flex items-center justify-center"><img src="/icons/complete.svg" alt="" className="w-full h-full object-contain opacity-70"/></div>
-      <h2 className="text-xl font-bold text-main mb-1">学習完了！</h2>
-      <p className="text-sm text-sub mb-2">{allCount} 語学習しました</p>
-      <p className="text-xs text-hint">正解: {totalRight} | 明日复习: {dueTomorrow} 語</p>
-      <button onClick={()=>onNavigate("home")} className="mt-6 px-8 py-3 bg-primary text-white rounded-full text-sm font-bold active:scale-95">ホームへ戻る</button>
+      {/* Floating music notes */}
+      <div className="absolute inset-0 pointer-events-none overflow-hidden">
+        {["♪","♫","♩","🎵"].map((note, i) => (
+          <span key={i} className="absolute text-2xl opacity-20"
+            style={{
+              left: `${15 + i * 25}%`,
+              top: `${20 + (i % 3) * 25}%`,
+              animation: `float ${3 + i * 0.5}s ease-in-out infinite`,
+              animationDelay: `${i * 0.3}s`,
+            }}>{note}</span>
+        ))}
+      </div>
+      <div className="relative w-48 h-48 mb-2 flex items-center justify-center">
+        <img src="/icons/complete.svg" alt="" className="w-full h-full object-contain opacity-70" />
+      </div>
+      <p className="text-sub text-[11px] tracking-[0.32em]">COMPLETE</p>
+      <h1 className="font-serif text-3xl text-main">お疲れさまでした</h1>
+      <button
+        onClick={() => onNavigate("home")}
+        className="bg-[#1A1A1A] text-white hover:bg-[#1A1A1A]/88 mt-2 rounded-full px-10 py-3.5 text-sm font-medium tracking-wide transition-colors"
+      >
+        返回首页
+      </button>
     </div>
-  </>);
+  );
 
-  return (<>
-    <div className="flex items-center gap-3 px-4 py-2">
-      <button onClick={handleBack} className="flex items-center gap-1 text-hint text-sm font-bold active:opacity-60"><ArrowLeft size={16} stroke="var(--color-text-tertiary)" strokeWidth={2}/><span>戻る</span></button>
-      <span className="text-[15px] font-semibold text-main">単語学習 <span className="text-[10px] text-hint font-normal">· {phases[phase]}</span></span>
-      <span className="ml-auto text-sm font-bold text-sub">✓ {totalRight}</span>
-    </div>
-    <div className="flex-1 flex flex-col items-center justify-center px-4">
-      {phase===2 && <p className="text-[10px] text-hint font-bold mb-2">{typeLabels[question.type]}</p>}
-      {(phase===1||showHint) && <p className="text-sm text-primary font-bold mb-1">{cur.r}</p>}
-      <p className="text-[40px] font-extrabold text-main tracking-wider">{question.prompt}</p>
-      <p className="text-xs text-hint mt-1">{cur.p}</p>
-      {showHint && <p className="text-lg font-extrabold text-success mt-2 animate-pop-in">{question.correct}</p>}
-      {showExample && (
-        <div className="mt-4 px-5 py-3 bg-primary-subtle rounded-2xl max-w-[320px] text-center">
-          {phase===2&&(errorCount.current[currentId]||0)>=3&&<p className="text-[10px] text-danger/60 mb-0.5">已错{errorCount.current[currentId]}次</p>}
-          <p className="text-[10px] text-hint/60 mb-1">例文</p>
-          <p className="text-xs text-main leading-relaxed">
-            {(()=>{const id=currentId;if(!exampleCache.current[id])exampleCache.current[id]=getExample(cur.w,cur.p||"");return exampleCache.current[id];})().split("【").map((part,i)=>i===0?part:part.split("】").map((p,j)=>j===0?<span key={i} className="font-extrabold text-primary">{p}</span>:p))}
-          </p>
+  // ── Quiz screen ──
+  return (
+    <div className="flex min-h-0 flex-1 flex-col bg-bg relative">
+      {/* ── Top bar (sticky, glass) ── */}
+      <header className="bg-bg/90 sticky top-0 z-10 backdrop-blur">
+        <div className="flex items-center gap-3 px-5 py-4">
+          <button
+            onClick={handleBack}
+            className="text-main hover:text-sub flex items-center gap-1.5 text-sm transition-colors"
+          >
+            <ArrowLeft className="size-4" strokeWidth={1.5} />
+            戻る
+          </button>
+          <div className="ml-1 flex min-w-0 items-baseline gap-2">
+            <span className="font-serif text-base text-main">単語学習</span>
+            <span className="text-hint truncate text-[11px]">· {phases[phase]}</span>
+          </div>
+          <span className="text-sub ml-auto flex items-center gap-1.5 text-xs tabular-nums">
+            <Check className="size-4" strokeWidth={1.5} />
+            {totalRight}
+          </span>
+        </div>
+
+        {/* Progress bar */}
+        <div className="px-5 pb-3">
+          <div className="bg-border h-px w-full">
+            <div
+              className="bg-[#1A1A1A] h-px transition-all duration-500"
+              style={{ width: `${progressPct}%` }}
+            />
+          </div>
+          <div className="text-hint mt-2 flex justify-between text-[10px] tracking-[0.2em]">
+            <span>QUESTION</span>
+            <span className="tabular-nums">
+              {Math.min(currentPos + 1, totalForProgress)} / {totalForProgress}
+            </span>
+          </div>
+        </div>
+      </header>
+
+      {/* ── Question area ── */}
+      <div className="flex flex-1 flex-col relative">
+        {/* Phase transition banner — absolute overlay, doesn't shift content */}
+        {phaseBanner && (
+        <div className="absolute left-0 right-0 z-20 flex justify-center pointer-events-none" style={{top: 'env(safe-area-inset-top, 0px)'}}>
+          <div className="animate-pop-in bg-[#1A1A1A] text-white text-center py-3 px-8 mx-5 rounded-xl w-full max-w-[340px]">
+            <p className="text-[11px] tracking-[0.2em] opacity-60">NEXT PHASE</p>
+            <p className="text-sm font-semibold mt-0.5">{phaseBanner}</p>
+          </div>
+        </div>
+      )}
+      <main className="flex flex-1 flex-col items-center justify-center px-5 pt-8 pb-[6px] text-center">
+        {/* Type badge */}
+        {phase === 2 && (
+          <span className="text-hint border-border mb-6 rounded-full border px-3 py-1 text-[10px] tracking-[0.2em]">
+            {typeLabels[question.type]}
+          </span>
+        )}
+
+        {/* Reading (shown in phase 1 or when hint is revealed) */}
+        {phase === 1 && (
+          <p className="text-sub mb-2 text-sm">{cur.r}</p>
+        )}
+
+        {/* Main word */}
+        <LongPressWord wordId={currentId} onFavorite={() => toggleFavorite(currentId)}>
+          <h1 className="font-serif text-5xl leading-none tracking-wide text-main md:text-6xl">
+            {question.prompt}
+          </h1>
+        </LongPressWord>
+
+        {/* Part of speech */}
+        <p className="text-sub mt-4 text-sm">{cur.p}</p>
+
+        {/* Audio button */}
+        <button
+          type="button"
+          onClick={() => { ttsUnlocked.current = true; speak(cur.r); }}
+          className="text-sub hover:text-main border-border hover:border-[#1A1A1A]/40 mt-7 flex items-center gap-2 rounded-full border px-4 py-2 text-xs transition-colors"
+          aria-label="播放读音"
+        >
+          <Volume2 className="size-4" strokeWidth={1.5} />
+          発音
+        </button>
+
+        {/* Answer reveal (shown after picking) */}
+        <div
+          className={`mt-7 transition-all duration-300 ${
+            answered ? 'opacity-100' : 'opacity-0'
+          }`}
+          aria-live="polite"
+        >
+          {answered ? (
+            <p className="text-main text-sm">
+              <span className="font-semibold">{question.correct}</span>
+              {question.type !== 1 && cur.m !== question.correct && (
+                <span className="text-hint ml-1">— {cur.m}</span>
+              )}
+            </p>
+          ) : (
+            <p className="text-sm">　</p>
+          )}
+        </div>
+
+        {/* Example sentence — reserved space to prevent layout shift */}
+        <div className="mt-5 min-h-[80px] flex items-center justify-center">
+          {showExample ? (
+            <div className="rounded-xl bg-[#F5F5F5] px-5 py-3 max-w-[320px] text-center animate-pop-in">
+              {phase===2 && (errorCount.current[currentId]||0) >= 3 && (
+                <p className="text-danger/60 mb-0.5 text-[10px]">已错{errorCount.current[currentId]}次</p>
+              )}
+              <p className="text-hint mb-1 text-[10px]">例文</p>
+              <p className="text-main text-xs leading-relaxed">
+                {(()=>{const id=currentId;if(!exampleCache.current[id])exampleCache.current[id]=getExample(cur.w,cur.p||"");return exampleCache.current[id];})().split("【").map((part,i)=>i===0?part:part.split("】").map((p,j)=>j===0?<span key={i} className="text-[#1A1A1A] font-extrabold">{p}</span>:p))}
+              </p>
+            </div>
+          ) : (
+            <div className="rounded-xl bg-[#F5F5F5] px-5 py-3 max-w-[320px] text-center invisible">
+              <p className="text-hint mb-1 text-[10px] leading-relaxed">&nbsp;</p>
+              <p className="text-main text-xs leading-relaxed">&nbsp;</p>
+            </div>
+          )}
+        </div>
+      </main>
+
+      {/* ── Options ── */}
+      <footer className="px-5 pt-2 pb-8 flex-shrink-0 relative">
+        <div className="mx-auto grid w-full max-w-[340px] grid-cols-2 gap-3">
+          {question.options.map((option) => {
+            const isAnswer = option === question.correct;
+            const isPicked = option === picked;
+
+            let tone = 'bg-white border-border text-main hover:border-[#1A1A1A]/40';
+            if (answered && isAnswer) {
+              tone = 'bg-[#1A1A1A] border-[#1A1A1A] text-white';
+            } else if (answered && isPicked) {
+              tone = 'bg-[#F5F5F5] border-border text-sub line-through';
+            } else if (answered) {
+              tone = 'bg-white border-border text-sub/60';
+            }
+
+            return (
+              <button
+                key={option}
+                type="button"
+                onClick={() => answer(option)}
+                disabled={answered}
+                className={`rounded-xl border py-6 text-center text-[15px] font-medium transition-colors ${tone}`}
+              >
+                {option}
+              </button>
+            );
+          })}
+        </div>
+
+        {/* Bottom hint — absolute so it doesn't shift layout */}
+        <div className="absolute bottom-0 left-0 right-0 h-10 flex items-center justify-center text-[11px] tracking-[0.2em] text-hint pointer-events-none">
+          選択してください
+        </div>
+      </footer>
+      </div>
+
+      {/* ── Exit confirm modal ── */}
+      {showExit && (
+        <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/40" onClick={cancelExit}>
+          <div className="bg-white rounded-2xl p-6 mx-8 shadow-xl text-center max-w-[280px]" onClick={e=>e.stopPropagation()}>
+            <AlertTriangle className="size-8 text-sub mx-auto mb-3" strokeWidth={1.5} />
+            <h3 className="text-main text-[15px] font-semibold mb-1">学習を中断しますか？</h3>
+            <p className="text-sub text-[13px] mb-5">まだ完了していない単語の進捗は保存されません</p>
+            <div className="flex gap-3">
+              <button onClick={cancelExit} className="flex-1 py-2.5 rounded-xl bg-[#F5F5F5] text-main text-sm font-medium">続ける</button>
+              <button onClick={confirmExit} className="flex-1 py-2.5 rounded-xl bg-[#1A1A1A] text-white text-sm font-medium">中断する</button>
+            </div>
+          </div>
         </div>
       )}
     </div>
-    {showExit && (
-      <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/40" onClick={cancelExit}>
-        <div className="bg-surface rounded-2xl p-5 mx-8 shadow-xl text-center" onClick={e=>e.stopPropagation()}>
-          <AlertTriangle size={32} className="text-warning mx-auto mb-2"/>
-          <h3 className="font-bold text-main mb-1">学習を中断しますか？</h3>
-          <p className="text-xs text-sub mb-4">まだ完了していない単語の進捗は保存されません</p>
-          <div className="flex gap-2">
-            <button onClick={cancelExit} className="flex-1 py-2.5 rounded-xl bg-primary-subtle text-primary text-sm font-bold">続ける</button>
-            <button onClick={confirmExit} className="flex-1 py-2.5 rounded-xl bg-danger text-white text-sm font-bold">中断する</button>
-          </div>
-        </div>
-      </div>
-    )}
-    <div className="px-4 pb-4">
-      <div className="grid grid-cols-2 gap-3 w-full max-w-[340px] mx-auto">
-        {question.options.map((opt,i)=>{
-          const isCorrect=opt===question.correct; const isPicked=picked===opt; const show=picked!==null;
-          const highlight=show&&(isCorrect||isPicked);
-          return(<button key={i} onClick={()=>answer(opt)} className={`relative h-[76px] rounded-2xl font-bold text-[13px] flex items-center justify-center text-center px-3 transition-all active:scale-[0.97] overflow-hidden
-            ${show?(isCorrect?"bg-success-subtle border-2 border-success text-success shadow-sm":isPicked?"bg-danger-subtle border-2 border-danger text-danger shadow-sm":"bg-surface border border-border text-main opacity-30"):"bg-surface border border-border text-main hover:border-primary/30"}`}>
-            {highlight && <svg className="absolute left-0 top-0 h-full" width="8" viewBox="0 0 8 64" preserveAspectRatio="none"><path d="M5 0 Q2.5 4 5 8 T5 16 Q2.5 20 5 24 T5 32 Q2.5 36 5 40 T5 48 Q2.5 52 5 56 T5 64 L0 64 L0 0 Z" fill={isCorrect?"#22c55e":"#ef4444"}/></svg>}
-            {highlight && <span className="absolute top-0.5 right-0.5 text-xs leading-none" style={{color:isCorrect?"#22c55e":"#ef4444"}}>{isCorrect?"✓":"✗"}</span>}
-            {opt}
-          </button>);
-        })}
-      </div>
-    </div>
-  </>);
+  );
 }

@@ -1,17 +1,42 @@
 import { useState, useMemo, useEffect, useRef } from "react";
 import { ArrowLeft, Zap } from "lucide-react";
+import { playSuccess, playError } from "../lib/audio";
+import { useLongPress } from "../lib/longPress";
+import { toggleFavorite } from "../lib/favorites";
+import { getWordSource } from "../lib/wordSource";
+
+// Helper: find word ID from kanji + reading
+function findWordId(w: string, r: string): string {
+  const found = getWordSource().find(x => x.w === w && x.r === r);
+  if (found) return found.id;
+  try {
+    const wbs = JSON.parse(localStorage.getItem("wordbooks") || "[]") as any[];
+    for (const wb of wbs) for (let i = 0; i < wb.words.length; i++) {
+      if (wb.words[i].word === w && wb.words[i].reading === r) return `wb_${wb.id}_${i}`;
+    }
+  } catch {}
+  return w + r;
+}
 import type { Page } from "../components/BottomNav";
 
 interface GameWord { w: string; r: string; m: string; }
 
-interface Props { onNavigate: (p: Page) => void; onBack: () => void; onReplay?: () => void; onRetry?: () => void; darkMode?: boolean; mode: "zh2jp" | "spell" | "fillKana"; words: GameWord[]; }
+interface Props { onNavigate: (p: Page) => void; onBack: () => void; onReplay?: () => void; onRetry?: () => void; mode: "zh2jp" | "spell" | "fillKana"; words: GameWord[]; }
 
 function shuffle<T>(arr: T[]): T[] { const a = [...arr]; for (let i = a.length-1; i>0; i--) { const j = Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; } return a; }
 
-const kanaPool = "あいうえおかきくけこさしすせそたちつてとなにぬねのはひふへほまみむめもやゆよらりるれろわをんがぎぐげござじずぜぞだぢづでどばびぶべぼぱぴぷぺぽ";
-const allKana = Array.from(kanaPool);
+function LongPressWrapper({ word, reading, children }: { word: string; reading: string; children: React.ReactNode }) {
+  const handlers = useLongPress(() => toggleFavorite(findWordId(word, reading)));
+  return <div {...handlers} className="inline">{children}</div>;
+}
 
-export default function MatchGame({ onNavigate, onBack, onReplay, onRetry, darkMode, mode, words: wordPool }: Props) {
+const kanaPool = "あいうえおかきくけこさしすせそたちつてとなにぬねのはひふへほまみむめもやゆよらりるれろわをんがぎぐげござじずぜぞだぢづでどばびぶべぼぱぴぷぺぽ";
+const kataPool = "アイウエオカキクケコサシスセソタチツテトナニヌネノハヒフヘホマミムメモヤユヨラリルレロワヲンガギグゲゴザジズゼゾダヂヅデドバビブベボパピプペポ";
+const allKana = Array.from(kanaPool);
+const allKata = Array.from(kataPool);
+const isKatakana = (s: string) => /^[゠-ヿ]+$/.test(s);
+
+export default function MatchGame({ onNavigate, onBack, onReplay, onRetry, mode, words: wordPool }: Props) {
   const [idx, setIdx] = useState(0);
   const [picked, setPicked] = useState<string | null>(null);
   const [right, setRight] = useState(0);
@@ -50,37 +75,42 @@ export default function MatchGame({ onNavigate, onBack, onReplay, onRetry, darkM
 
   // spell mode: randomly show correct or wrong reading
   const isCorrectReading = useMemo(() => Math.random() > 0.5, [idx]);
+  const kanaCharPool = useMemo(() => isKatakana(cur.r) ? allKata : allKana, [cur.r]);
+
   const shownReading = useMemo(() => {
     if (isCorrectReading) return cur.r;
     const chars = Array.from(cur.r);
     if (chars.length < 2) return cur.r;
     const pos = Math.floor(Math.random() * chars.length);
-    const pool = shuffle(allKana.filter(k => k !== chars[pos]));
+    const pool = shuffle(kanaCharPool.filter(k => k !== chars[pos]));
     chars[pos] = pool[0];
     return chars.join("");
-  }, [idx, cur.r, isCorrectReading]);
+  }, [idx, cur.r, isCorrectReading, kanaCharPool]);
 
   const [options, correctAnswer, optType, isNoError] = useMemo(() => {
     if (mode === "fillKana") {
-      const wrongs = shuffle(allKana.filter(k => k !== blankChar)).slice(0, 5);
+      const wrongs = shuffle(kanaCharPool.filter(k => k !== blankChar)).slice(0, 5);
       return [shuffle([blankChar, ...wrongs]), blankChar, "kana", false] as const;
     }
     if (mode === "spell") {
+      const pool = isKatakana(cur.r) ? allKata : allKana;
       const chars = Array.from(cur.r);
       const wrongs: string[] = [];
       const used = new Set([cur.r]);
-      for (let attempt = 0; attempt < 20 && wrongs.length < 3; attempt++) {
+      for (let attempt = 0; attempt < 30 && wrongs.length < 5; attempt++) {
         const a = [...chars];
         const pos = Math.floor(Math.random() * a.length);
-        const rep = shuffle(allKana.filter(k => k !== a[pos]))[0];
+        const rep = shuffle(pool.filter(k => k !== a[pos]))[0];
         a[pos] = rep;
         const s = a.join("");
         if (!used.has(s)) { used.add(s); wrongs.push(s); }
       }
       if (isCorrectReading) {
-        return [shuffle(wrongs).concat(["读音正确"]), "读音正确", "spell", true] as const;
+        const opts = shuffle(wrongs);
+        return [[...opts, "读音正确"], "读音正确", "spell", true] as const;
       }
-      return [shuffle([cur.r, ...wrongs]).concat(["读音正确"]), cur.r, "spell", false] as const;
+      const opts = shuffle([cur.r, ...wrongs.slice(0,4)]);
+      return [[...opts, "读音正确"], cur.r, "spell", false] as const;
     }
     const useKanji = Math.random() > 0.5;
     if (useKanji) {
@@ -99,8 +129,8 @@ export default function MatchGame({ onNavigate, onBack, onReplay, onRetry, darkM
     if (picked) return;
     setPicked(opt);
     const isRight = opt === correctAnswer;
-    if (isRight) setRight(r => r + 1);
-    else setWrong(w => w + 1);
+    if (isRight) { setRight(r => r + 1); playSuccess(); }
+    else { setWrong(w => w + 1); playError(); }
     prevWord.current = { w: cur.w, r: cur.r, m: cur.m };
     prevCorrect.current = isRight;
     setTimeout(() => {
@@ -189,28 +219,103 @@ export default function MatchGame({ onNavigate, onBack, onReplay, onRetry, darkM
     </div>
   </>);
 
+  const remaining = words.length - idx - 1;
+
+  // ── Wuxia Quiz Header ──
+  if (mode === "zh2jp") return (<div className="relative flex flex-1 flex-col overflow-hidden bg-bg">
+    <header className="relative z-10 shrink-0 px-4 pt-4 pb-3">
+      <div className="flex items-center justify-between gap-3">
+        <button onClick={()=>onBack()} className="-ml-1 flex items-center gap-1 rounded-sm px-1.5 py-1 text-hint transition-colors active:text-main">
+          <ArrowLeft size={16} stroke="currentColor"/><span className="font-serif text-sm tracking-[0.2em]">戻る</span>
+        </button>
+        <h1 className="font-serif text-[17px] font-semibold tracking-[0.32em] text-main">仮名選詞</h1>
+        <div className="flex items-baseline gap-1.5">
+          <span className="font-serif text-[11px] tracking-[0.15em] text-hint">残</span>
+          <span className="font-serif text-lg leading-none font-semibold text-primary tabular-nums">{remaining}</span>
+        </div>
+      </div>
+      <div className="mt-3 flex items-center gap-2">
+        <div className="h-px flex-1 bg-gradient-to-r from-transparent via-border to-transparent"/>
+        <span className="font-serif text-[10px] tracking-[0.25em] text-hint/40">修羅 · 選詞</span>
+        <div className="h-px flex-1 bg-gradient-to-r from-transparent via-border to-transparent"/>
+      </div>
+      <div className="mt-3 flex gap-1">
+        {Array.from({length:words.length}).map((_,i)=>(<span key={i} className={`h-[3px] flex-1 rounded-full transition-colors duration-500 ${i<=idx?"bg-primary/70":"bg-border/30"}`}/>))}
+      </div>
+      <div className={`overflow-hidden transition-all duration-300 ${lastAnswer?"max-h-8 opacity-100 mt-2":"max-h-0 opacity-0"}`}>
+        {lastAnswer&&<p className="text-center leading-tight" style={{color:lastAnswer.correct?"#22c55e":"#ef4444"}}>{lastAnswer.correct?<span className="font-serif text-[11px] tracking-wider">正</span>:<span className="block text-[10px]">{lastAnswer.r}</span>}</p>}
+      </div>
+    </header>
+
+    <div className="relative z-10 flex flex-1 flex-col justify-center gap-8 pb-10">
+      <div className="flex flex-col items-center px-6 text-center">
+        <span className="seal-stamp">{optType==="kanji"?"選漢字":"選中文"}</span>
+        <div className="flex flex-col items-center gap-1 mt-6">
+          <p className="text-sm text-hint font-medium">{cur.w}</p>
+          <LongPressWrapper word={cur.w} reading={cur.r}>
+            <div className="flex items-center gap-4">
+              <span className="h-8 w-px bg-gradient-to-b from-transparent via-primary/40 to-transparent"/>
+              <h2 className="font-serif text-[40px] leading-tight font-medium tracking-[0.08em] text-main">{cur.r}</h2>
+              <span className="h-8 w-px bg-gradient-to-b from-transparent via-primary/40 to-transparent"/>
+            </div>
+          </LongPressWrapper>
+        </div>
+        <p className="mt-4 text-xs leading-relaxed tracking-[0.14em] text-hint">{optType==="kanji"?"辨其音，择其正解":"辨其音，择其释义"}</p>
+      </div>
+
+      <ul className="relative z-10 flex flex-col gap-2.5 px-4">
+        {options.map((opt,i)=>{
+          const isAnswer=opt===correctAnswer;
+          const isPicked=picked===opt;
+          const locked=picked!==null;
+          const revealCorrect=locked&&isAnswer;
+          const revealWrong=locked&&isPicked&&!isAnswer;
+          const ordinals=["壹","貳","參","肆"];
+          return(<li key={i} className="ink-rise" style={{animationDelay:`${80+i*60}ms`}}>
+            <button type="button" disabled={locked} onClick={()=>answer(opt)}
+              className={`ink-frame group flex w-full items-center gap-3 rounded-md px-4 py-3.5 text-left transition-all duration-300  ${
+                revealCorrect?"bg-primary/10 shadow-[inset_0_0_0_1px_var(--color-primary)]":
+                revealWrong?"bg-danger/10 shadow-[inset_0_0_0_1px_var(--color-danger)]":
+                locked?"bg-surface/50 opacity-45":"bg-surface border border-border/30 hover:bg-surface"}`}>
+              <span className={`flex size-6 shrink-0 items-center justify-center rounded-[2px] border font-serif text-[11px] leading-none transition-colors ${
+                revealCorrect?"border-primary/70 bg-primary/20 text-primary":
+                revealWrong?"border-danger/70 bg-danger/20 text-danger":
+                "border-border/40 bg-bg/50 text-hint"}`}>{ordinals[i]}</span>
+              <span className={`flex-1 font-sans text-[15px] tracking-[0.06em] ${revealCorrect?"text-primary":revealWrong?"text-danger":"text-main"}`}>{opt}</span>
+              {revealCorrect&&<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" className="text-primary shrink-0"><path d="M20 6L9 17l-5-5"/></svg>}
+              {revealWrong&&<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" className="text-danger shrink-0"><path d="M18 6L6 18M6 6l12 12"/></svg>}
+            </button>
+          </li>);
+        })}
+      </ul>
+    </div>
+
+    <footer className="relative z-10 shrink-0 pb-6 text-center">
+      <p className="font-serif text-[10px] tracking-[0.35em] text-hint/30">一 字 一 劍 · 日 進 其 功</p>
+    </footer>
+  </div>);
+
   return (<>
     <div className="flex items-center justify-between px-4 py-2">
-      <button onClick={()=>onBack()} className="flex items-center gap-1 text-hint text-sm font-bold active:opacity-60"><ArrowLeft size={16} stroke="var(--color-text-tertiary)" strokeWidth={2}/><span>戻る</span></button>
-      <span className="text-lg font-bold text-main">{mode==="zh2jp"?"假名选词":mode==="spell"?"単語找茬":"假名补全"}</span>
-      <span className="text-sm font-bold text-hint">残り <span className="text-primary">{words.length - idx - 1}</span></span>
+      <button onClick={()=>onBack()} className="flex items-center gap-1 text-hint text-sm font-bold active:opacity-60"><ArrowLeft size={16} stroke="var(--color-text-tertiary)" strokeWidth={2}/></button>
+      <span className="text-2xl font-semibold tracking-tight text-main">{mode==="zh2jp"?"假名选词":mode==="spell"?"単語找茬":"假名补全"}</span>
+      <span className="text-sm font-bold text-hint">残り <span className="text-primary">{remaining}</span></span>
     </div>
     {/* Answer banner */}
     <div className={`overflow-hidden transition-all duration-300 ${lastAnswer ? "max-h-9 opacity-100" : "max-h-0 opacity-0"}`}>
       {lastAnswer && (
         <div className={`flex items-center justify-center gap-2 px-4 py-1 border-b ${lastAnswer.correct ? "bg-success/5 border-success/10" : "bg-danger/5 border-danger/10"}`}>
-          <span className="text-[10px] font-bold" style={{color: lastAnswer.correct ? "#22c55e" : "#ef4444"}}>{lastAnswer.correct ? "✓" : "✗"}</span>
-          <div className="flex flex-col items-center leading-tight">
-            <span className="text-[10px] text-primary">{lastAnswer.r}</span>
-            <span className="font-serif text-sm font-bold text-main">{lastAnswer.w}</span>
+          <div className="flex flex-col items-center leading-tight" style={{color: lastAnswer.correct ? "#22c55e" : "#ef4444"}}>
+            <span className="text-[10px]">{lastAnswer.r}</span>
+            <span className="font-serif text-sm font-bold">{lastAnswer.w}</span>
           </div>
-          <span className="text-[11px] text-hint">{lastAnswer.m}</span>
         </div>
       )}
     </div>
     <div className="flex-1 flex flex-col items-center justify-center px-4">
       {mode === "fillKana" ? (
         <>
+          <span className="seal-stamp mb-4">補仮名</span>
           <div className="flex items-center gap-1 mb-3 text-2xl font-extrabold">
             {kanaChars.map((ch, i) => (
               <span key={i} className={i === blankIdx
@@ -218,107 +323,115 @@ export default function MatchGame({ onNavigate, onBack, onReplay, onRetry, darkM
                 : "text-main"}>{i === blankIdx ? (picked || "?") : ch}</span>
             ))}
           </div>
-          <p className="text-lg font-bold text-sub mb-8">{cur.w}</p>
-          <p className="text-xs text-hint mb-6">选出缺失的假名</p>
-          <div className="grid grid-cols-3 gap-2.5 w-full max-w-[300px]">
+          <p className="text-lg font-bold text-sub mb-4">{cur.w}</p>
+          <p className="text-xs text-hint mb-6 tracking-[0.14em]">择其空所，补其正音</p>
+          <ul className="grid grid-cols-3 gap-2.5 w-full max-w-[340px]">
             {options.map((opt, i) => {
-              const isCorrect = opt === correctAnswer;
+              const isAnswer = opt === correctAnswer;
               const isPicked = picked === opt;
-              const show = picked !== null;
-              const highlight = show && (isCorrect || isPicked);
+              const locked = picked !== null;
+              const revealCorrect = locked && isAnswer;
+              const revealWrong = locked && isPicked && !isAnswer;
+              const ordinals = ["壹","貳","參","肆","伍","陸"];
               return (
-                <button key={i} onClick={()=>answer(opt)}
-                  className={`relative h-[54px] rounded-2xl font-bold text-xl flex items-center justify-center transition-all duration-200 active:scale-[0.97] shadow-sm overflow-hidden
-                    ${show ? (isCorrect ? "bg-success/8 border-2 border-success text-success" : isPicked ? "bg-danger/8 border-2 border-danger text-danger" : "opacity-25 bg-surface border border-border/60 text-main") : "bg-surface border border-border/60 text-main hover:border-primary/30 hover:bg-primary-subtle/50"}`}>
-                  {highlight && (
-                    <svg className="absolute left-0 top-0 h-full" width="8" viewBox="0 0 8 54" preserveAspectRatio="none">
-                      <path d="M 5 0 Q 2.5 3.4 5 6.8 T 5 13.6 Q 2.5 17 5 20.4 T 5 27.2 Q 2.5 30.6 5 34 T 5 40.8 Q 2.5 44.2 5 47.6 T 5 54 L 0 54 L 0 0 Z" fill={isCorrect ? "#22c55e" : "#ef4444"} />
-                    </svg>
-                  )}
-                  {highlight && (
-                    <span className="absolute top-0.5 right-0.5 text-xs leading-none" style={{color: isCorrect ? "#22c55e" : "#ef4444"}}>
-                      {isCorrect ? "✓" : "✗"}
-                    </span>
-                  )}
-                  {opt}
-                </button>
+                <li key={i} className="ink-rise" style={{animationDelay:`${80+i*60}ms`}}>
+                  <button type="button" disabled={locked} onClick={()=>answer(opt)}
+                    className={`ink-frame group flex w-full items-center justify-center gap-2 rounded-md px-3 py-3.5 text-center transition-colors duration-300 ${
+                      revealCorrect?"bg-primary/10 shadow-[inset_0_0_0_1px_var(--color-primary)]":
+                      revealWrong?"bg-danger/10 shadow-[inset_0_0_0_1px_var(--color-danger)]":
+                      locked?"bg-surface/50 opacity-45":"bg-surface border border-border/30 hover:bg-surface"}`}>
+                    <span className={`flex size-5 shrink-0 items-center justify-center rounded-[2px] border font-serif text-[10px] leading-none transition-colors ${
+                      revealCorrect?"border-primary/70 bg-primary/20 text-primary":
+                      revealWrong?"border-danger/70 bg-danger/20 text-danger":
+                      "border-border/40 bg-bg/50 text-hint"}`}>{ordinals[i]}</span>
+                    <span className={`font-sans text-[15px] tracking-[0.06em] ${revealCorrect?"text-primary":revealWrong?"text-danger":"text-main"}`}>{opt}</span>
+                    {revealCorrect&&<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" className="text-primary shrink-0"><path d="M20 6L9 17l-5-5"/></svg>}
+                    {revealWrong&&<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" className="text-danger shrink-0"><path d="M18 6L6 18M6 6l12 12"/></svg>}
+                  </button>
+                </li>
               );
             })}
-          </div>
+          </ul>
         </>
       ) : mode === "zh2jp" ? (
-        <>
-          <p className="text-2xl font-extrabold text-main mb-8">{cur.r}</p>
-          <div className="flex items-center gap-2 mb-2">
-            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full" style={{backgroundColor: optType==="kanji"?"#EFF6FF":"#FFF7ED", color: optType==="kanji"?"#3B82F6":"#F97316"}}>
-              {optType === "kanji" ? "选汉字" : "选中文"}
-            </span>
-          </div>
-          <p className="text-xs text-hint mb-6">{optType==="kanji"?"选出正确日语汉字":"选出正确中文释义"}</p>
-          <div className="w-full max-w-[320px] space-y-2.5">
-            <div className="grid grid-cols-3 gap-2.5">
-              {options.map((opt, i) => {
-                const isCorrect = opt === correctAnswer;
-                const isPicked = picked === opt;
-                const show = picked !== null;
-                const highlight = show && (isCorrect || isPicked);
-                return (
-                  <button key={i} onClick={()=>answer(opt)}
-                    className={`relative h-[64px] rounded-2xl font-bold text-[15px] flex items-center justify-center px-2 transition-all duration-200 active:scale-[0.97] shadow-sm overflow-hidden
-                      ${show ? (isCorrect ? "bg-success/8 border-2 border-success text-success" : isPicked ? "bg-danger/8 border-2 border-danger text-danger" : "opacity-25 bg-surface border border-border/60 text-main") : "bg-surface border border-border/60 text-main hover:border-primary/30 hover:bg-primary-subtle/50"}`}>
-                    {/* Wave edge */}
-                    {highlight && (
-                      <svg className="absolute left-0 top-0 h-full" width="8" viewBox="0 0 8 64" preserveAspectRatio="none">
-                        <path d="M 5 0 Q 2.5 4 5 8 T 5 16 Q 2.5 20 5 24 T 5 32 Q 2.5 36 5 40 T 5 48 Q 2.5 52 5 56 T 5 64 L 0 64 L 0 0 Z" fill={isCorrect ? "#22c55e" : "#ef4444"} />
-                      </svg>
-                    )}
-                    {/* Check / X icon */}
-                    {highlight && (
-                      <span className="absolute top-0.5 right-0.5 text-xs leading-none" style={{color: isCorrect ? "#22c55e" : "#ef4444"}}>
-                        {isCorrect ? "✓" : "✗"}
-                      </span>
-                    )}
-                    {opt}
-                  </button>
-                );
-              })}
+        <div className="flex flex-col items-center flex-1">
+          {/* Kana Prompt */}
+          <div className="flex-1 flex flex-col items-center justify-center px-6 w-full">
+            <span className="seal-stamp">{optType==="kanji"?"選漢字":"選中文"}</span>
+            <div className="flex items-center gap-4 mt-6">
+              <span className="h-8 w-px bg-gradient-to-b from-transparent via-primary/40 to-transparent"/>
+              <h2 className="font-serif text-[40px] leading-tight font-medium tracking-[0.08em] text-main">{cur.r}</h2>
+              <span className="h-8 w-px bg-gradient-to-b from-transparent via-primary/40 to-transparent"/>
             </div>
+            <p className="mt-4 text-xs leading-relaxed tracking-[0.14em] text-hint">{optType==="kanji"?"辨其音，择其正解":"辨其音，择其释义"}</p>
           </div>
-        </>
+
+          {/* Answer Options */}
+          <ul className="w-full max-w-[320px] flex flex-col gap-2.5 px-4 pb-8">
+            {options.map((opt, i) => {
+              const isAnswer = opt === correctAnswer;
+              const isPicked = picked === opt;
+              const locked = picked !== null;
+              const revealCorrect = locked && isAnswer;
+              const revealWrong = locked && isPicked && !isAnswer;
+              const ordinals = ["壹","貳","參","肆"];
+              return (
+                <li key={i} className="ink-rise" style={{animationDelay:`${80+i*60}ms`}}>
+                  <button type="button" disabled={locked} onClick={()=>answer(opt)}
+                    className={`ink-frame group flex w-full items-center gap-3 rounded-md px-4 py-3.5 text-left transition-all duration-300  ${
+                      revealCorrect ? "bg-primary/14 shadow-[inset_0_0_0_1px_var(--color-primary)]" :
+                      revealWrong ? "bg-danger/14 shadow-[inset_0_0_0_1px_var(--color-danger)]" :
+                      locked ? "bg-surface/50 opacity-45" : "bg-surface border border-border/40 hover:bg-surface"}`}>
+                    <span className={`flex size-6 shrink-0 items-center justify-center rounded-[2px] border font-serif text-[11px] leading-none transition-colors ${
+                      revealCorrect ? "border-primary/70 bg-primary/20 text-primary" :
+                      revealWrong ? "border-danger/70 bg-danger/20 text-danger" :
+                      "border-border/30 bg-bg/50 text-hint"}`}>{ordinals[i]}</span>
+                    <span className={`flex-1 font-sans text-[15px] tracking-[0.06em] ${
+                      revealCorrect ? "text-primary" : revealWrong ? "text-danger" : "text-main"}`}>{opt}</span>
+                    {revealCorrect && <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" className="text-primary shrink-0"><path d="M20 6L9 17l-5-5"/></svg>}
+                    {revealWrong && <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" className="text-danger shrink-0"><path d="M18 6L6 18M6 6l12 12"/></svg>}
+                  </button>
+                </li>
+              );
+            })}
+          </ul>
+
+          {/* Footer */}
+          <p className="text-center font-serif text-[10px] tracking-[0.15em] text-hint/40 pb-4">一字一劍 · 日進其功</p>
+        </div>
       ) : (
         <>
-          <p className="text-2xl font-extrabold text-main mb-2">{shownReading}</p>
-          <p className="text-lg font-bold text-sub mb-6">{cur.w}</p>
-          <p className="text-xs text-hint mb-6">判断读音是否正确，选出正确答案</p>
-          <div className="w-full max-w-[320px] space-y-2.5">
-            <div className="grid grid-cols-3 gap-2.5">
-              {options.map((opt, i) => {
-                const isCorrect = opt === correctAnswer;
-                const isPicked = picked === opt;
-                const show = picked !== null;
-                const highlight = show && (isCorrect || isPicked);
-                return (
-                  <button key={i} onClick={()=>answer(opt)}
-                    className={`relative h-[64px] rounded-2xl font-bold text-[15px] flex items-center justify-center px-2 transition-all duration-200 active:scale-[0.97] shadow-sm overflow-hidden
-                      ${show ? (isCorrect ? "bg-success/8 border-2 border-success text-success" : isPicked ? "bg-danger/8 border-2 border-danger text-danger" : "opacity-25 bg-surface border border-border/60 text-main") : "bg-surface border border-border/60 text-main hover:border-primary/30 hover:bg-primary-subtle/50"}`}>
-                    {/* Wave edge */}
-                    {highlight && (
-                      <svg className="absolute left-0 top-0 h-full" width="8" viewBox="0 0 8 64" preserveAspectRatio="none">
-                        <path d="M 5 0 Q 2.5 4 5 8 T 5 16 Q 2.5 20 5 24 T 5 32 Q 2.5 36 5 40 T 5 48 Q 2.5 52 5 56 T 5 64 L 0 64 L 0 0 Z" fill={isCorrect ? "#22c55e" : "#ef4444"} />
-                      </svg>
-                    )}
-                    {/* Check / X icon */}
-                    {highlight && (
-                      <span className="absolute top-0.5 right-0.5 text-xs leading-none" style={{color: isCorrect ? "#22c55e" : "#ef4444"}}>
-                        {isCorrect ? "✓" : "✗"}
-                      </span>
-                    )}
-                    {opt}
+          <span className="seal-stamp mb-4">找茬</span>
+          <p className="text-2xl font-extrabold text-main mb-3 tracking-wider">{shownReading}</p>
+          <p className="text-lg font-bold text-sub mb-4">{cur.w}</p>
+          <p className="text-xs text-hint mb-6 tracking-[0.14em]">辨其真假，择其正音</p>
+          <ul className="grid grid-cols-2 gap-2.5 w-full max-w-[340px]">
+            {options.map((opt, i) => {
+              const isAnswer = opt === correctAnswer;
+              const isPicked = picked === opt;
+              const locked = picked !== null;
+              const revealCorrect = locked && isAnswer;
+              const revealWrong = locked && isPicked && !isAnswer;
+              const ordinals = ["壹","貳","參","肆","伍","陸"];
+              return (
+                <li key={i} className="ink-rise" style={{animationDelay:`${80+i*60}ms`}}>
+                  <button type="button" disabled={locked} onClick={()=>answer(opt)}
+                    className={`ink-frame group flex w-full items-center justify-center gap-2 rounded-md px-3 py-3.5 text-center transition-colors duration-300 ${
+                      revealCorrect?"bg-primary/10 shadow-[inset_0_0_0_1px_var(--color-primary)]":
+                      revealWrong?"bg-danger/10 shadow-[inset_0_0_0_1px_var(--color-danger)]":
+                      locked?"bg-surface/50 opacity-45":"bg-surface border border-border/30 hover:bg-surface"}`}>
+                    <span className={`flex size-5 shrink-0 items-center justify-center rounded-[2px] border font-serif text-[10px] leading-none transition-colors ${
+                      revealCorrect?"border-primary/70 bg-primary/20 text-primary":
+                      revealWrong?"border-danger/70 bg-danger/20 text-danger":
+                      "border-border/40 bg-bg/50 text-hint"}`}>{ordinals[i]}</span>
+                    <span className={`font-sans text-[15px] tracking-[0.06em] ${revealCorrect?"text-primary":revealWrong?"text-danger":"text-main"}`}>{opt}</span>
+                    {revealCorrect&&<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" className="text-primary shrink-0"><path d="M20 6L9 17l-5-5"/></svg>}
+                    {revealWrong&&<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" className="text-danger shrink-0"><path d="M18 6L6 18M6 6l12 12"/></svg>}
                   </button>
-                );
-              })}
-            </div>
-          </div>
+                </li>
+              );
+            })}
+          </ul>
         </>
       )}
     </div>

@@ -2,39 +2,22 @@ import { useState, useMemo, useRef, useEffect } from "react";
 import { ArrowLeft } from "lucide-react";
 import type { Page } from "../components/BottomNav";
 import { loadProgress } from "../lib/spaced-repetition";
+import { getWordSource } from "../lib/wordSource";
+import { addRemembered, addForgotten } from "../lib/wordRecord";
 
-interface Props { onNavigate: (p: Page) => void; darkMode?: boolean; }
+interface Props { onNavigate: (p: Page) => void; }
 
-const fakeWords = [
-  {w:"挑戦",r:"ちょうせん",m:"挑战"},{w:"努力",r:"どりょく",m:"努力"},{w:"経験",r:"けいけん",m:"经验"},{w:"確認",r:"かくにん",m:"确认"},{w:"準備",r:"じゅんび",m:"准备"},{w:"安心",r:"あんしん",m:"安心"},{w:"感動",r:"かんどう",m:"感动"},{w:"緊張",r:"きんちょう",m:"紧张"},
-];
-
-export default function CardMatch({ onNavigate, darkMode }: Props) {
+export default function CardMatch({ onNavigate }: Props) {
   const [idx, setIdx] = useState(0);
   const [swiping, setSwiping] = useState<"left"|"right"|null>(null);
   const [remembered, setRemembered] = useState(0);
   const [forgot, setForgot] = useState(0);
   const [tilt, setTilt] = useState(0);
-  const [tiltAllowed, setTiltAllowed] = useState(true); // iOS permission disabled for now
   const tiltTimer = useRef<ReturnType<typeof setTimeout>>();
   const tiltRef = useRef(0);
 
-  const requestTilt = () => {
-    const D = DeviceOrientationEvent as any;
-    if (typeof D.requestPermission === "function") {
-      D.requestPermission().then((p: string) => {
-        if (p === "granted") setTiltAllowed(true);
-      }).catch(() => {
-        setTiltAllowed(true); // fallback for older iOS
-      });
-    } else {
-      setTiltAllowed(true);
-    }
-  };
-
   // Device tilt detection
   useEffect(() => {
-    if (!tiltAllowed) return;
     const handler = (e: DeviceOrientationEvent) => {
       const gamma = e.gamma || 0;
       tiltRef.current = gamma;
@@ -50,25 +33,80 @@ export default function CardMatch({ onNavigate, darkMode }: Props) {
     };
     window.addEventListener("deviceorientation", handler);
     return () => window.removeEventListener("deviceorientation", handler);
-  }, [swiping, tiltAllowed]);
+  }, [swiping]);
 
   const words = useMemo(() => {
     const progress = loadProgress();
     const studiedIds = new Set(Object.keys(progress).filter(id => progress[id].lastReview));
-    let pool = fakeWords.filter(w => !studiedIds.size || studiedIds.has(w.w));
-    if (pool.length < 4) pool = fakeWords;
+    const source = getWordSource();
+    const pool = source.filter(w => studiedIds.has(w.id)).map(w => ({ w: w.w, r: w.r, m: w.m }));
+    // Fisher-Yates shuffle
+    for (let i = pool.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [pool[i], pool[j]] = [pool[j], pool[i]];
+    }
     return pool;
   }, []);
 
-  const current = words[idx % words.length];
-  const next1 = words[(idx + 1) % words.length];
-  const next2 = words[(idx + 2) % words.length];
+  const finished = idx >= words.length;
+  const current = finished ? words[words.length - 1] : words[idx];
+  const next1 = finished ? undefined : words[(idx + 1) % words.length];
+  const next2 = finished ? undefined : words[(idx + 2) % words.length];
+
+  if (words.length === 0) {
+    return (<>
+      <div className="flex items-center justify-between px-4 py-3">
+        <button onClick={()=>onNavigate("home")} className="flex items-center gap-1.5 text-hint text-xs font-bold active:opacity-60">
+          <ArrowLeft size={18} stroke="var(--color-text-tertiary)" strokeWidth={2.5}/>
+        </button>
+        <span className="text-2xl font-semibold tracking-tight text-main">记忆卡片</span>
+      </div>
+      <div className="flex-1 flex flex-col items-center justify-center px-6 pb-6 gap-4">
+        <div className="w-24 h-24 rounded-full bg-primary/10 flex items-center justify-center">
+          <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="var(--color-primary)" strokeWidth="1.5" strokeLinecap="round">
+            <path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 013 3L7 19l-4 1 1-4L16.5 3.5z"/>
+          </svg>
+        </div>
+        <p className="text-sm font-bold text-main">还没有学习过的单词</p>
+        <p className="text-xs text-hint">先去学习，积累的单词会出现在这里</p>
+        <button onClick={()=>onNavigate("study")} className="mt-2 px-6 py-2.5 bg-primary text-white text-sm font-bold rounded-full active:scale-95 transition-transform">
+          开始学习
+        </button>
+      </div>
+    </>);
+  }
+
+  if (finished) {
+    return (<>
+      <div className="flex items-center justify-between px-4 py-3">
+        <button onClick={()=>onNavigate("home")} className="flex items-center gap-1.5 text-hint text-xs font-bold active:opacity-60">
+          <ArrowLeft size={18} stroke="var(--color-text-tertiary)" strokeWidth={2.5}/>
+        </button>
+        <span className="text-2xl font-semibold tracking-tight text-main">记忆卡片</span>
+      </div>
+      <div className="flex-1 flex flex-col items-center justify-center px-6 pb-6 gap-4">
+        <div className="w-24 h-24 rounded-full bg-green-100 flex items-center justify-center">
+          <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#16A34A" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <polyline points="20 6 9 17 4 12"/>
+          </svg>
+        </div>
+        <p className="text-sm font-bold text-main">一轮完成</p>
+        <div className="flex gap-6 text-xs font-bold">
+          <span className="text-amber-600">记住了 {remembered}</span>
+          <span className="text-red-500">忘记了 {forgot}</span>
+        </div>
+        <button onClick={()=>onNavigate("home")} className="mt-2 px-6 py-2.5 bg-primary text-white text-sm font-bold rounded-full active:scale-95 transition-transform">
+          返回首页
+        </button>
+      </div>
+    </>);
+  }
 
   const doSwipe = (dir: "left"|"right") => {
     if (swiping) return;
     setSwiping(dir);
-    if (dir === "left") setRemembered(r => r + 1);
-    else setForgot(f => f + 1);
+    if (dir === "left") { setRemembered(r => r + 1); addRemembered({ w: current.w, r: current.r, m: current.m }); }
+    else { setForgot(f => f + 1); addForgotten({ w: current.w, r: current.r, m: current.m }); }
     setTimeout(() => {
       setIdx(i => i + 1);
       setSwiping(null);
@@ -78,9 +116,9 @@ export default function CardMatch({ onNavigate, darkMode }: Props) {
   return (<>
     <div className="flex items-center justify-between px-4 py-3">
       <button onClick={()=>onNavigate("home")} className="flex items-center gap-1.5 text-hint text-xs font-bold active:opacity-60">
-        <ArrowLeft size={18} stroke="var(--color-text-tertiary)" strokeWidth={2.5}/><span>戻る</span>
+        <ArrowLeft size={18} stroke="var(--color-text-tertiary)" strokeWidth={2.5}/>
       </button>
-      <span className="text-lg font-extrabold text-main">记忆卡片</span>
+      <span className="text-2xl font-semibold tracking-tight text-main">记忆卡片</span>
     </div>
 
     <div className="flex-1 flex flex-col items-center justify-center px-6 pb-6 relative overflow-hidden">

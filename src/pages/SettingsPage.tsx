@@ -1,32 +1,42 @@
-import { useState } from "react";
-import { ArrowLeft, BookOpen, ChevronDown } from "lucide-react";
+import { useState, useMemo } from "react";
+import { ArrowLeft, BookOpen, ChevronDown, Library, Plus } from "lucide-react";
 import type { Page } from "../components/BottomNav";
 import { setLocal } from "../lib/store";
-import { book2Data } from "../data/book2";
+import { getBook1WordCount, getBook2WordCount, getTextbookChapters } from "../lib/wordSource";
+
+const textBooks = [
+  { id: "vol1", name: "第一册", desc: "全 " + getBook1WordCount() + " 語", count: getBook1WordCount() },
+  { id: "vol2", name: "第二册", desc: "全 16 課 · ~" + getBook2WordCount() + " 語", count: getBook2WordCount() },
+  { id: "all", name: "全部词书", desc: "第一册 + 第二册", count: getBook1WordCount() + getBook2WordCount() },
+];
 
 interface SettingsPageProps {
   onNavigate: (page: Page) => void;
-  darkMode?: boolean;
 }
 
-const wordBooks = [
-  { id: "vol1", name: "第一册", desc: "日常・生活 · 感情・状態", count: 22 },
-  { id: "vol2", name: "第二册", desc: "全 16 課 · ~1100 語", count: 1106 },
-  { id: "all", name: "全部词书", desc: "第一册 + 第二册", count: 1128 },
-];
-
-export default function SettingsPage({ onNavigate, darkMode }: SettingsPageProps) {
+export default function SettingsPage({ onNavigate }: SettingsPageProps) {
   const origGoal = parseInt(localStorage.getItem("dailyGoal") || "15");
   const origBook = localStorage.getItem("selectedBook") || "all";
   const [dailyGoal, setDailyGoal] = useState(origGoal);
-  const origStart = localStorage.getItem("startChapter") || "0";
   const origRandom = localStorage.getItem("randomMode") || "true";
   const [selectedBook, setSelectedBook] = useState(origBook);
-  const [startChapter, setStartChapter] = useState(origStart);
   const [randomMode, setRandomMode] = useState(origRandom === "true");
+  const origStart = localStorage.getItem("startChapter") || "0";
+  const [startChapter, setStartChapter] = useState(origStart);
+  const [wbOpen, setWbOpen] = useState(false);
   const [chapOpen, setChapOpen] = useState(false);
   const [showUnsaved, setShowUnsaved] = useState(false);
   const [saved, setSaved] = useState(false);
+
+  const textbookChapters = useMemo(() => getTextbookChapters(), []);
+  const selectedBookChapters = textbookChapters.find(b => b.id === selectedBook)?.chapters || [];
+
+  const customBooks = useMemo(() => {
+    try { return JSON.parse(localStorage.getItem("wordbooks") || "[]") as {id:string;name:string;words:any[]}[]; }
+    catch { return []; }
+  }, [wbOpen]);
+  const isTextbook = ["vol1","vol2","all"].includes(selectedBook);
+  const selectedCustomName = !isTextbook && selectedBook ? customBooks.find(b => b.id === selectedBook)?.name : null;
 
   const isDirty = dailyGoal !== origGoal || selectedBook !== origBook || startChapter !== origStart || randomMode !== (origRandom==="true");
   const handleBack = () => { if (isDirty) { setShowUnsaved(true); return; } onNavigate("home"); };
@@ -45,16 +55,16 @@ export default function SettingsPage({ onNavigate, darkMode }: SettingsPageProps
       <button onClick={handleBack}
         className="absolute left-4 z-10 flex items-center gap-1 text-hint text-sm font-bold active:opacity-60 transition-opacity">
         <ArrowLeft size={16} stroke="var(--color-text-secondary)" strokeWidth={2} />
-        <span>戻る</span>
+        
       </button>
-      <span className="text-lg font-extrabold text-main dark:text-main w-full text-center">学習設定</span>
+      <span className="text-2xl font-semibold tracking-tight text-main w-full text-center">学習設定</span>
     </div>
 
     <div className="flex-1 overflow-y-auto scroll-area px-4 pb-4 space-y-5">
 
       {/* Daily Goal — scroll picker */}
       <div>
-        <h3 className="text-sm font-bold text-sub dark:text-hint mb-2">每日新学单词数</h3>
+        <h3 className="text-sm font-bold text-sub mb-2">每日新学单词数</h3>
         <div className="bg-surface rounded-2xl shadow-sm border border-border p-4">
           <div className="flex items-center gap-2">
             <button onClick={() => setDailyGoal(Math.max(5, dailyGoal - 5))} className="w-10 h-10 rounded-full bg-primary-subtle flex items-center justify-center text-primary text-xl font-bold active:scale-90 transition-transform shrink-0" style={{willChange:"transform"}}>−</button>
@@ -80,75 +90,132 @@ export default function SettingsPage({ onNavigate, darkMode }: SettingsPageProps
 
       {/* Word Book */}
       <div>
-        <h3 className="text-sm font-bold text-sub dark:text-hint mb-2">选择词书</h3>
+        <h3 className="text-sm font-bold text-sub mb-2">选择词书</h3>
         <div className="space-y-2">
-          {wordBooks.map(b => (
+          {textBooks.map(b => (
             <button key={b.id} onClick={() => setSelectedBook(b.id)}
               className={`w-full flex items-center gap-3 p-4 rounded-xl transition-all active:scale-[0.98] ${
-                selectedBook === b.id
-                  ? "bg-[#FFE66D] shadow-sm"
-                  : "bg-white dark:bg-surface"
+                selectedBook === b.id ? "bg-[#FFE66D] shadow-sm" : "bg-white"
               }`}>
               <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${
-                selectedBook === b.id ? "bg-white/40" : "bg-primary-subtle dark:bg-primary-subtle"
+                selectedBook === b.id ? "bg-white/40" : "bg-primary-subtle"
               }`}>
-                <BookOpen size={18} stroke={selectedBook === b.id ? "#0F1419" : "#0F64B5"} />
+                <BookOpen size={18} stroke={selectedBook === b.id ? "#0F1419" : "#1A1A1A"} />
               </div>
               <div className="flex-1 text-left">
-                <p className={`text-sm font-bold ${selectedBook === b.id ? "text-main" : "text-main dark:text-main"}`}>{b.name}</p>
-                <p className={`text-xs ${selectedBook === b.id ? "text-sub" : "text-sub dark:text-hint"}`}>{b.desc}</p>
+                <p className="text-sm font-bold text-main">{b.name}</p>
+                <p className="text-xs text-sub">{b.desc}</p>
               </div>
-              <span className={`text-xs font-bold ${selectedBook === b.id ? "text-sub" : "text-hint"}`}>{b.count} 語</span>
+              <span className="text-xs font-bold text-hint">{b.count} 語</span>
             </button>
           ))}
+
+          {/* Custom wordbook option */}
+          <button onClick={() => setWbOpen(true)}
+            className={`w-full flex items-center gap-3 p-4 rounded-xl transition-all active:scale-[0.98] ${
+              !isTextbook && selectedBook ? "bg-[#FFE66D] shadow-sm" : "bg-white"
+            }`}>
+            <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${
+              !isTextbook && selectedBook ? "bg-white/40" : "bg-primary-subtle"
+            }`}>
+              <Library size={18} stroke={!isTextbook && selectedBook ? "#0F1419" : "#1A1A1A"} />
+            </div>
+            <div className="flex-1 text-left">
+              <p className="text-sm font-bold text-main">
+                {!isTextbook && selectedCustomName ? selectedCustomName : "单词本"}
+              </p>
+              <p className="text-xs text-sub">
+                {!isTextbook && selectedBook ? "自定义词库" : "使用自建单词本学习"}
+              </p>
+            </div>
+            <ChevronDown size={16} className="text-hint" />
+          </button>
         </div>
       </div>
 
-      {/* Start Chapter — only for vol2 */}
-      {selectedBook === "vol2" && (
+      {/* Start Chapter — for vol1 / vol2 */}
+      {(selectedBook === "vol1" || selectedBook === "vol2") && (
         <div>
-          <h3 className="text-sm font-bold text-sub dark:text-hint mb-2">从第几课开始</h3>
-          <button onClick={()=>setChapOpen(true)} className="w-full flex items-center justify-between p-4 rounded-xl bg-white dark:bg-surface border border-border">
-            <span className="text-sm font-bold text-main">{startChapter === "0" ? "第1課" : `第${startChapter}課から`}</span>
+          <h3 className="text-sm font-bold text-sub mb-2">从第几课开始</h3>
+          <button onClick={()=>setChapOpen(true)} className="w-full flex items-center justify-between p-4 rounded-xl bg-white border border-border">
+            <span className="text-sm font-bold text-main">
+              {startChapter === "0" || !selectedBookChapters.find(c => c.id === startChapter)
+                ? (selectedBookChapters[0]?.name || "第1課")
+                : selectedBookChapters.find(c => c.id === startChapter)?.name}
+            </span>
             <ChevronDown size={16} className="text-hint"/>
           </button>
-          {/* Random mode toggle */}
-          <div className="flex items-center justify-between mt-3 px-1">
-            <div>
-              <span className="text-xs font-bold text-sub">随机抽取单词</span>
-              <p className="text-[10px] text-hint mt-0.5">关闭后按顺序学习</p>
-            </div>
-            <button onClick={()=>setRandomMode(!randomMode)}
-              className={`w-12 h-6 rounded-full transition-colors relative shrink-0 ${randomMode?"bg-primary":"bg-border"}`}>
-              <div className={`w-5 h-5 rounded-full bg-white shadow absolute top-0.5 transition-all ${randomMode?"left-6":"left-0.5"}`}/>
-            </button>
-          </div>
         </div>
       )}
 
       {/* Chapter picker modal */}
-      {chapOpen && (
-        <div className="absolute inset-0 z-50 flex items-end bg-black/40" onClick={()=>setChapOpen(false)}>
-          <div className="bg-surface rounded-t-2xl w-full max-h-[60%] overflow-y-auto shadow-xl" onClick={e=>e.stopPropagation()}>
-            <div className="sticky top-0 bg-surface px-4 pt-4 pb-2 border-b border-border">
-              <h3 className="text-sm font-extrabold text-main">选择起始课次</h3>
-            </div>
-            <div className="p-2">
-              {book2Data.map((ch,i) => (
-                <button key={ch.id} onClick={()=>{setStartChapter(ch.id);setChapOpen(false)}}
-                  className={`w-full text-left px-4 py-3 rounded-xl text-sm font-bold ${startChapter===ch.id?"bg-primary-subtle text-primary":"text-main"}`}>
-                  第{i+1}課 · {ch.name}（{ch.words.length}词）
-                </button>
-              ))}
-              <div className="h-4"/>
-            </div>
+      <div className={`absolute inset-0 z-50 flex items-end bg-black/40 transition-opacity duration-300 ${chapOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'}`} onClick={()=>setChapOpen(false)}>
+        <div className={`bg-white rounded-t-2xl w-full max-h-[60%] overflow-y-auto shadow-xl transition-transform duration-300 ease-out ${chapOpen ? 'translate-y-0' : 'translate-y-full'}`} onClick={e=>e.stopPropagation()}>
+          <div className="sticky top-0 bg-white px-4 pt-4 pb-2 border-b border-border">
+            <h3 className="text-sm font-extrabold text-main">选择起始课次</h3>
+          </div>
+          <div className="p-2">
+            {selectedBookChapters.map((ch, i) => (
+              <button key={ch.id} onClick={()=>{setStartChapter(ch.id);setChapOpen(false)}}
+                className={`w-full text-left px-4 py-3 rounded-xl text-sm font-bold flex items-center justify-between ${startChapter===ch.id?"bg-primary-subtle text-primary":"text-main"}`}>
+                <span>{ch.name}</span>
+                <span className="text-xs text-hint font-normal">{ch.words.length} 词</span>
+              </button>
+            ))}
+            <div className="h-4"/>
           </div>
         </div>
-      )}
+      </div>
+
+      {/* Random mode toggle */}
+      <div className="flex items-center justify-between px-1">
+        <div>
+          <span className="text-xs font-bold text-sub">随机抽取单词</span>
+          <p className="text-[10px] text-hint mt-0.5">关闭后按顺序学习</p>
+        </div>
+        <button onClick={()=>setRandomMode(!randomMode)}
+          className={`w-12 h-6 rounded-full transition-colors relative shrink-0 ${randomMode?"bg-primary":"bg-border"}`}>
+          <div className={`w-5 h-5 rounded-full bg-white shadow absolute top-0.5 transition-all ${randomMode?"left-6":"left-0.5"}`}/>
+        </button>
+      </div>
+
+      {/* Wordbook picker modal */}
+      <div className={`absolute inset-0 z-50 flex items-end bg-black/40 transition-opacity duration-300 ${wbOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'}`} onClick={()=>setWbOpen(false)}>
+        <div className={`bg-white rounded-t-2xl w-full max-h-[60%] overflow-y-auto shadow-xl transition-transform duration-300 ease-out ${wbOpen ? 'translate-y-0' : 'translate-y-full'}`} onClick={e=>e.stopPropagation()}>
+          <div className="sticky top-0 bg-white px-4 pt-4 pb-2 border-b border-border">
+            <h3 className="text-sm font-extrabold text-main">选择单词本</h3>
+          </div>
+          <div className="p-2">
+            {customBooks.length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-12 px-4 text-center">
+                <Library size={40} className="text-hint/40 mb-3" strokeWidth={1.5} />
+                <p className="text-sm font-bold text-sub mb-1">还没有单词本</p>
+                <p className="text-xs text-hint mb-4">先去个人页面自定义单词本吧</p>
+                <button onClick={() => { setWbOpen(false); onNavigate("wordbooks"); }}
+                  className="inline-flex items-center gap-1.5 px-5 py-2.5 rounded-lg bg-[#1A1A1A] text-white text-sm font-medium active:scale-95">
+                  <Plus size={16} />新建单词本
+                </button>
+              </div>
+            ) : (
+              customBooks.map((b) => (
+                <button key={b.id} onClick={() => { setSelectedBook(b.id); setWbOpen(false); }}
+                  className={`w-full text-left px-4 py-3 rounded-xl text-sm font-bold flex items-center justify-between ${
+                    selectedBook === b.id ? "bg-primary-subtle text-primary" : "text-main"
+                  }`}>
+                  <span>{b.name}</span>
+                  <span className="text-xs text-hint font-normal">{b.words?.length || 0} 词</span>
+                </button>
+              ))
+            )}
+            <div className="h-4"/>
+          </div>
+        </div>
+      </div>
+
     </div>
 
     {/* Save */}
-    <div className="px-4 py-3 bg-white dark:bg-surface border-t border-primary-subtle dark:border-primary-subtle">
+    <div className="px-4 py-3 bg-white border-t border-primary-subtle">
       <button onClick={save} className="pushable w-full">
         <span className="shadow-3d"></span>
         <span className="edge-3d"></span>

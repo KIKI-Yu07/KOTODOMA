@@ -1,4 +1,3 @@
-import { saveProgress as apiSave } from "./api";
 import { getItem, setItem } from "./store";
 
 // SM-2 Spaced Repetition Algorithm
@@ -34,7 +33,6 @@ function saveProgress(p: Record<string, WordProgress>) {
   const raw = JSON.stringify(p);
   localStorage.setItem(STORAGE_KEY, raw);
   setItem(STORAGE_KEY, raw).catch(() => {});
-  apiSave(p).catch(() => {});
 }
 
 export function initWord(wordId: string): WordProgress {

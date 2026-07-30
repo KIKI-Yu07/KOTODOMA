@@ -3,9 +3,9 @@ import { ArrowLeft, ChevronRight } from "lucide-react";
 import type { Page } from "../components/BottomNav";
 import { loadProfile, saveProfile } from "../lib/userStore";
 
-interface ProfileEditProps { onNavigate: (p: Page) => void; darkMode?: boolean; }
+interface ProfileEditProps { onNavigate: (p: Page) => void; }
 
-export default function ProfileEdit({ onNavigate, darkMode }: ProfileEditProps) {
+export default function ProfileEdit({ onNavigate }: ProfileEditProps) {
   const profile = loadProfile();
   const origNick = profile.nickname || "小明";
   const origGender = profile.gender || "保密";
@@ -67,7 +67,7 @@ export default function ProfileEdit({ onNavigate, darkMode }: ProfileEditProps) 
     <div className="flex items-center gap-3 px-4 py-2">
       <button onClick={handleBack} className="flex items-center gap-1 text-hint text-sm font-bold active:opacity-60">
         <ArrowLeft size={16} stroke="var(--color-text-tertiary)" strokeWidth={2} />
-        <span>戻る</span>
+        
       </button>
       <span className="text-[15px] font-semibold text-main">個人資料</span>
     </div>
@@ -94,7 +94,20 @@ export default function ProfileEdit({ onNavigate, darkMode }: ProfileEditProps) 
           <ChevronRight size={16} className="text-hint ml-2" />
         </div>
         <div className="flex items-center px-4 py-3.5">
-          <p className="text-sm text-main flex-1">年级</p><span className="text-sm text-sub">N3 学習中</span>
+          <p className="text-sm text-main flex-1">词书</p>
+          <span className="text-sm text-sub">
+            {(() => {
+              const sel = localStorage.getItem("selectedBook") || "all";
+              const m: Record<string,string> = { vol1:"第一册", vol2:"第二册", all:"全部词书" };
+              if (m[sel]) return m[sel] + " 学習中";
+              try {
+                const wbs = JSON.parse(localStorage.getItem("wordbooks") || "[]") as any[];
+                const wb = wbs.find((b:any) => b.id === sel);
+                if (wb) return wb.name + " 学習中";
+              } catch {}
+              return "未設定";
+            })()}
+          </span>
         </div>
       </div>
 
@@ -121,7 +134,7 @@ export default function ProfileEdit({ onNavigate, darkMode }: ProfileEditProps) 
               ))}
             </div>
           ) : (
-            <input autoFocus value={tempVal} onChange={e=>setTempVal(e.target.value)} className="w-full px-4 py-3 rounded-xl bg-primary-subtle text-main outline-none text-sm mb-4" placeholder="输入昵称" />
+            <input value={tempVal} onChange={e=>setTempVal(e.target.value)} className="w-full px-4 py-3 rounded-xl bg-primary-subtle text-main outline-none text-sm mb-4" placeholder="输入昵称" />
           )}
           <div className="flex gap-2">
             <button onClick={()=>setEditing(null)} className="flex-1 py-3 rounded-xl bg-primary-subtle text-main text-sm font-bold">取消</button>

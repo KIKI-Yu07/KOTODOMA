@@ -2,22 +2,32 @@ import { useState, useMemo } from "react";
 import { ArrowLeft, Heart } from "lucide-react";
 import type { Page } from "../components/BottomNav";
 import { getFavorites, toggleFavorite } from "../lib/favorites";
-import { book2Data } from "../data/book2";
+import { getAllTextbookWords } from "../lib/wordSource";
 
-interface Props { onNavigate: (p: Page) => void; darkMode?: boolean; }
+interface Props { onNavigate: (p: Page) => void; }
 
-const book1Words = [
-  {id:"1-1",word:"生活",reading:"せいかつ",meaning:"生活"},{id:"1-2",word:"経験",reading:"けいけん",meaning:"经验"},{id:"1-3",word:"出発",reading:"しゅっぱつ",meaning:"出发"},{id:"1-4",word:"到着",reading:"とうちゃく",meaning:"到达"},{id:"1-5",word:"準備",reading:"じゅんび",meaning:"准备"},{id:"1-6",word:"片付ける",reading:"かたづける",meaning:"整理"},{id:"1-7",word:"洗濯",reading:"せんたく",meaning:"洗衣服"},{id:"1-8",word:"掃除",reading:"そうじ",meaning:"打扫"},{id:"1-9",word:"料理",reading:"りょうり",meaning:"烹饪"},{id:"1-10",word:"買い物",reading:"かいもの",meaning:"购物"},{id:"1-11",word:"散歩",reading:"さんぽ",meaning:"散步"},{id:"1-12",word:"通勤",reading:"つうきん",meaning:"通勤"},{id:"2-1",word:"感動",reading:"かんどう",meaning:"感动"},{id:"2-2",word:"緊張",reading:"きんちょう",meaning:"紧张"},{id:"2-3",word:"安心",reading:"あんしん",meaning:"放心"},{id:"2-4",word:"満足",reading:"まんぞく",meaning:"满足"},{id:"2-5",word:"失望",reading:"しつぼう",meaning:"失望"},{id:"2-6",word:"我慢",reading:"がまん",meaning:"忍耐"},{id:"2-7",word:"努力",reading:"どりょく",meaning:"努力"},{id:"2-8",word:"感謝",reading:"かんしゃ",meaning:"感谢"},{id:"2-9",word:"尊敬",reading:"そんけい",meaning:"尊敬"},{id:"2-10",word:"信頼",reading:"しんらい",meaning:"信赖"},
-];
+function buildAllWords() {
+  const map = new Map<string, {w:string;r:string;m:string}>();
+  // Search all textbooks
+  getAllTextbookWords().forEach(w => map.set(w.id, {w:w.w,r:w.r,m:w.m}));
+  // Search all custom wordbooks
+  try {
+    const wbs = JSON.parse(localStorage.getItem("wordbooks") || "[]") as any[];
+    for (const wb of wbs) {
+      for (let i = 0; i < wb.words.length; i++) {
+        const w = wb.words[i];
+        map.set(`wb_${wb.id}_${i}`, { w: w.word, r: w.reading, m: w.meaning });
+      }
+    }
+  } catch {}
+  return map;
+}
 
-const allWords = new Map<string, {w:string;r:string;m:string}>();
-book1Words.forEach(w => allWords.set(w.id, {w:w.word,r:w.reading,m:w.meaning}));
-book2Data.forEach(ch => ch.words.forEach(w => allWords.set(w.id, {w:w.word,r:w.reading,m:w.meaning})));
-
-export default function FavoritesPage({ onNavigate, darkMode }: Props) {
+export default function FavoritesPage({ onNavigate }: Props) {
   const [favs, setFavs] = useState(getFavorites());
+  const wordMap = useMemo(() => buildAllWords(), []);
 
-  const list = useMemo(() => favs.map(id => ({ id, ...allWords.get(id) })).filter(w => w.w), [favs]);
+  const list = useMemo(() => favs.map(id => ({ id, ...wordMap.get(id) })).filter(w => w.w), [favs, wordMap]);
 
   const remove = (id: string) => {
     toggleFavorite(id);
@@ -27,16 +37,15 @@ export default function FavoritesPage({ onNavigate, darkMode }: Props) {
   return (<>
     <div className="flex items-center justify-between px-4 py-3">
       <button onClick={()=>onNavigate("vocab")} className="flex items-center gap-1.5 text-hint text-xs font-bold active:opacity-60">
-        <ArrowLeft size={18} stroke="var(--color-text-tertiary)" strokeWidth={2.5}/><span>戻る</span>
+        <ArrowLeft size={18} stroke="var(--color-text-tertiary)" strokeWidth={2.5}/>
       </button>
-      <span className="text-sm font-extrabold text-main">お気に入り</span>
-      <div className="w-10"/>
+      <span className="text-2xl font-semibold tracking-tight text-main">收藏的单词</span>
     </div>
     <div className="flex-1 overflow-y-auto scroll-area px-4 pb-4">
       {list.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-20 text-center">
           <Heart size={40} className="text-hint/30 mb-4" />
-          <p className="text-sm font-bold text-hint mb-1">还没有收藏单词</p>
+          <p className="text-sm font-bold text-hint mb-1">长按题目试试</p>
         </div>
       ) : (
         <div className="flex flex-col gap-2">
