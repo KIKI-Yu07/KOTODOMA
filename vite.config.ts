@@ -3,6 +3,9 @@ import react from "@vitejs/plugin-react";
 import path from "path";
 import fs from "fs";
 
+// GitHub Pages uses /KOTODOMA/, APK uses /
+const BASE = process.env.BASE_PATH || "/KOTODOMA/";
+
 // Inject __BUILD_TIME__ into sw.js so each deploy gets a fresh cache key
 function swVersion(): import("vite").Plugin {
   let buildTime = "";
@@ -18,7 +21,6 @@ function swVersion(): import("vite").Plugin {
       },
     },
     closeBundle() {
-      const base = "/KOTODOMA/";
       // Patch sw.js — replace build time
       const swPath = path.resolve(__dirname, "dist/sw.js");
       if (fs.existsSync(swPath)) {
@@ -30,8 +32,8 @@ function swVersion(): import("vite").Plugin {
       const mfPath = path.resolve(__dirname, "dist/manifest.json");
       if (fs.existsSync(mfPath)) {
         let content = fs.readFileSync(mfPath, "utf-8");
-        content = content.replace(/"start_url":\s*"\/"/, `"start_url": "${base}"`);
-        content = content.replace(/"src":\s*"\/icons\//g, `"src": "${base}icons/`);
+        content = content.replace(/"start_url":\s*"\/"/, `"start_url": "${BASE}"`);
+        content = content.replace(/"src":\s*"\/icons\//g, `"src": "${BASE}icons/`);
         fs.writeFileSync(mfPath, content);
       }
     },
@@ -39,7 +41,7 @@ function swVersion(): import("vite").Plugin {
 }
 
 export default defineConfig({
-  base: "/KOTODOMA/",
+  base: BASE,
   plugins: [react(), swVersion()],
   resolve: {
     alias: {

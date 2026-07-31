@@ -32,6 +32,8 @@ jobs:
 
       - name: Build web app
         run: npm run build
+        env:
+          BASE_PATH: /
 
       - name: Sync Capacitor
         run: npx cap sync android
