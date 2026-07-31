@@ -1,7 +1,7 @@
 {
   "id": "kotodama-app",
   "name": "言霊 - ことだま",
-  "short_name": "言霊",
+  "short_name": "言霊学习",
   "description": "ことだま — 日语单词背诵学习App，基于间隔重复算法",
   "start_url": "/",
   "scope": "/",

@@ -106,10 +106,9 @@ export default function App() {
 
   const onSplashDone = useCallback(() => setStage("transitioning"), []);
   const onTransitionDone = useCallback(() => {
-    // Skip landing if already installed as PWA or previously entered
+    // Skip landing only if already installed as PWA
     const isStandalone = window.matchMedia("(display-mode: standalone)").matches;
-    const hasEntered = localStorage.getItem("landingEntered") === "1";
-    if (isStandalone || hasEntered) {
+    if (isStandalone) {
       setStage("page");
       setTimeout(() => setEntered(true), 60);
     } else {
@@ -117,7 +116,6 @@ export default function App() {
     }
   }, []);
   const onLandingEnter = useCallback(() => {
-    localStorage.setItem("landingEntered", "1");
     setStage("page");
     setTimeout(() => setEntered(true), 60);
   }, []);

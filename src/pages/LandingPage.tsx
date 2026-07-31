@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from "react";
-import { Download, Monitor, ChevronRight, Copy, Check, Chrome, Compass, Smartphone } from "lucide-react";
+import { Download, ChevronRight, Copy, Check, Chrome, Compass, Smartphone } from "lucide-react";
 
-const APK_DOWNLOAD_URL = "https://github.com/KIKI-Yu07/KOTODOMA/releases/latest";
+const APK_DOWNLOAD_URL = import.meta.env.BASE_URL + "kotodama.apk";
 
 interface Props {
   onEnter: () => void;
@@ -222,25 +222,15 @@ export default function LandingPage({ onEnter }: Props) {
             </button>
           ) : null}
 
-          {/* Enter web version */}
-          <button
-            onClick={onEnter}
-            className="w-full bg-surface border border-border rounded-2xl py-3.5 text-main font-medium text-sm
-              active:scale-[0.98] transition-all flex items-center justify-center gap-2"
-          >
-            <Monitor size={18} strokeWidth={1.5} />
-            直接使用网页版
-            <ChevronRight size={16} strokeWidth={1.5} className="text-hint" />
-          </button>
         </div>
 
         {/* Platform info */}
         <p className="mt-5 text-center text-[10px] text-hint/50">
           {isAndroid
-            ? "下载 APK 安装后即可离线使用 · 网页版无需安装也可使用"
+            ? "下载 APK 安装后即可离线使用"
             : isIOS
             ? "iOS 需要通过 Safari 添加到主屏幕"
-            : "网页版所有功能均可正常使用"}
+            : "支持 PWA 安装到桌面"}
         </p>
       </section>
 

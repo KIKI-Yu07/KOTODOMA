@@ -7,7 +7,7 @@ on:
 
 jobs:
   release:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-latest
     permissions:
       contents: write
     steps:
@@ -25,10 +25,7 @@ jobs:
       - name: Setup Android SDK
         uses: android-actions/setup-android@v3
         with:
-          packages: "platforms;android-36 build-tools;36.0.0"
-
-      - name: Grant gradlew execute permission
-        run: chmod +x android/gradlew
+          packages: "platforms;android-35 build-tools;35.0.0"
 
       - name: Install dependencies
         run: npm ci
@@ -38,7 +35,7 @@ jobs:
         env:
           BASE_PATH: /
 
-      - name: Copy web assets to Android
+      - name: Copy web assets
         run: |
           rm -rf android/app/src/main/assets/public
           mkdir -p android/app/src/main/assets/public
@@ -47,11 +44,32 @@ jobs:
 
       - name: Build APK
         working-directory: android
-        run: ./gradlew assembleDebug
+        run: |
+          echo "sdk.dir=$ANDROID_HOME" > local.properties
+          sed -i 's/\r$//' gradlew
+          chmod +x gradlew
+          ./gradlew assembleDebug
+
+      - name: Sign APK
+        run: |
+          keytool -genkey -v \
+            -keystore debug.keystore \
+            -alias kotodama \
+            -keyalg RSA -keysize 2048 -validity 10000 \
+            -storepass android -keypass android \
+            -dname "CN=Kotodama, OU=Dev, O=Kotodama, L=Tokyo, S=Tokyo, C=JP" \
+            2>/dev/null
+          $ANDROID_HOME/build-tools/35.0.0/apksigner sign \
+            --ks debug.keystore \
+            --ks-key-alias kotodama \
+            --ks-pass pass:android \
+            --key-pass pass:android \
+            --out kotodama.apk \
+            android/app/build/outputs/apk/debug/app-debug.apk
 
       - name: Upload to Release
         uses: softprops/action-gh-release@v2
         with:
-          files: android/app/build/outputs/apk/debug/app-debug.apk
+          files: kotodama.apk
           name: "言霊 ${{ github.ref_name }}"
-          body: "📱 直接下载安装即可使用"
+          body: "📱 已签名，直接下载安装即可使用"

@@ -77,12 +77,13 @@ export default function SplashScreen({ onDone }: Props) {
   return (
     <div
       style={{
-        minHeight: "100vh",
+        position: "fixed",
+        inset: 0,
+        height: "100dvh",
         background: "#fff",
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
-        position: "relative",
         overflow: "hidden",
       }}
     >
@@ -103,7 +104,7 @@ export default function SplashScreen({ onDone }: Props) {
       />
 
       {/* ── Text + pen ── */}
-      <div style={{ position: "relative", marginTop: -20 }}>
+      <div style={{ position: "relative" }}>
         {/* ghost */}
         <p
           ref={ghostRef}
