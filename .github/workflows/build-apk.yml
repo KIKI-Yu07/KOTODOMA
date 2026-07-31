@@ -1,13 +1,11 @@
 name: Build Native APK
 
 on:
-  push:
-    branches: [master]
   workflow_dispatch:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v4
 
@@ -22,16 +20,15 @@ jobs:
 
       - name: Setup Android SDK
         run: |
-          ANDROID_SDK_ROOT=$HOME/android-sdk
+          ANDROID_SDK_ROOT=/usr/local/lib/android/sdk
           echo "ANDROID_SDK_ROOT=$ANDROID_SDK_ROOT" >> $GITHUB_ENV
           echo "ANDROID_HOME=$ANDROID_SDK_ROOT" >> $GITHUB_ENV
-          mkdir -p $ANDROID_SDK_ROOT/cmdline-tools
-          cd $ANDROID_SDK_ROOT/cmdline-tools
-          curl -sSLO https://dl.google.com/android/repository/commandlinetools-linux-11076708_latest.zip
-          unzip -q commandlinetools-linux-11076708_latest.zip
-          mv cmdline-tools latest
-          yes | $ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager --licenses
-          $ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager "platforms;android-35" "build-tools;35.0.0" "platform-tools"
+          # Install SDK 35 if not present
+          yes | $ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager --licenses 2>/dev/null || true
+          $ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager "platforms;android-35" "build-tools;35.0.0" 2>/dev/null || true
+          # Verify SDK exists
+          ls $ANDROID_SDK_ROOT/platforms/ || echo "No platforms"
+          ls $ANDROID_SDK_ROOT/build-tools/ || echo "No build-tools"
 
       - name: Install dependencies
         run: npm ci
@@ -41,29 +38,34 @@ jobs:
         env:
           BASE_PATH: /
 
-      - name: Regenerate Android project on Linux
+      - name: Copy web assets
         run: |
-          rm -rf android
-          npx cap add android
+          rm -rf android/app/src/main/assets/public
+          mkdir -p android/app/src/main/assets/public
+          cp -r dist/* android/app/src/main/assets/public/
+          echo '{"appId":"com.kotodama.app","appName":"言霊","webDir":"public"}' > android/app/src/main/assets/capacitor.config.json
 
       - name: Build APK
         working-directory: android
         run: |
           echo "sdk.dir=$ANDROID_HOME" > local.properties
-          ./gradlew assembleDebug --no-daemon
+          sed -i 's/\r$//' gradlew 2>/dev/null || true
+          chmod +x gradlew
+          # Check if Gradle wrapper exists
+          file gradlew
+          ./gradlew assembleDebug --no-daemon --stacktrace 2>&1 | tail -50
 
       - name: Sign APK
         run: |
-          keytool -genkey -v \
-            -keystore debug.keystore \
-            -alias kotodama -keyalg RSA -keysize 2048 -validity 10000 \
-            -storepass android -keypass android \
-            -dname "CN=Kotodama" 2>/dev/null
+          APK="android/app/build/outputs/apk/debug/app-debug.apk"
+          ls -la $APK || { echo "APK not found"; exit 1; }
+          keytool -genkey -v -keystore debug.keystore -alias kotodama \
+            -keyalg RSA -keysize 2048 -validity 10000 \
+            -storepass android -keypass android -dname "CN=Kotodama" 2>/dev/null
           $ANDROID_HOME/build-tools/35.0.0/apksigner sign \
             --ks debug.keystore --ks-key-alias kotodama \
             --ks-pass pass:android --key-pass pass:android \
-            --out kotodama.apk \
-            android/app/build/outputs/apk/debug/app-debug.apk
+            --out kotodama.apk $APK
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
