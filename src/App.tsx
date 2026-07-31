@@ -2,6 +2,7 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { setToastHandler } from "./lib/toast";
 import BottomNav, { type Page } from "./components/BottomNav";
 import SplashScreen from "./components/SplashScreen";
+import LandingPage from "./pages/LandingPage";
 import Home from "./pages/Home";
 import WordDetail from "./pages/WordDetail";
 import WordList from "./pages/WordList";
@@ -99,26 +100,48 @@ function InkTransition({ onDone }: { onDone: () => void }) {
 export default function App() {
   const [page, setPage] = useState<Page>("home");
   const [toast, setToast] = useState<string | null>(null);
-  const [stage, setStage] = useState<"splash" | "transitioning" | "page">("splash");
+  const [stage, setStage] = useState<"splash" | "transitioning" | "landing" | "page">("splash");
   const [entered, setEntered] = useState(false);
   setToastHandler(setToast);
 
   const onSplashDone = useCallback(() => setStage("transitioning"), []);
   const onTransitionDone = useCallback(() => {
+    // Skip landing if already installed as PWA or previously entered
+    const isStandalone = window.matchMedia("(display-mode: standalone)").matches;
+    const hasEntered = localStorage.getItem("landingEntered") === "1";
+    if (isStandalone || hasEntered) {
+      setStage("page");
+      setTimeout(() => setEntered(true), 60);
+    } else {
+      setStage("landing");
+    }
+  }, []);
+  const onLandingEnter = useCallback(() => {
+    localStorage.setItem("landingEntered", "1");
     setStage("page");
     setTimeout(() => setEntered(true), 60);
   }, []);
 
   /* splash + ink transition */
-  if (stage !== "page") {
+  if (stage === "splash" || stage === "transitioning") {
     return (
       <>
-        {/* Splash stays mounted during transition */}
         <div style={{ position: "fixed", inset: 0, zIndex: 10 }}>
           <SplashScreen onDone={onSplashDone} />
         </div>
         {stage === "transitioning" && <InkTransition onDone={onTransitionDone} />}
       </>
+    );
+  }
+
+  /* landing / download page */
+  if (stage === "landing") {
+    return (
+      <div className="flex justify-center items-center min-h-dvh bg-bg">
+        <div className="phone flex flex-col relative">
+          <LandingPage onEnter={onLandingEnter} />
+        </div>
+      </div>
     );
   }
 
