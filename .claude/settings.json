@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "Read(//c/Users/yuzho/Desktop/zip \\\\\\(3\\\\\\)/components/**)",
+      "Read(//c/Users/yuzho/Desktop/kiki/**)",
+      "Read(//c/Users/yuzho/Desktop/**)",
+      "Bash(find \"C:/Users/yuzho/Desktop/kiki \\(1\\)\" -name \"*.tsx\" -o -name \"*.ts\" | head -20)",
+      "Read(//c/Users/yuzho/Desktop/kiki \\\\\\(1\\\\\\)/**)"
+    ]
+  }
+}

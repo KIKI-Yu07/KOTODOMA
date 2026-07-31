@@ -9,12 +9,12 @@ export function audioReady(): Promise<void> {
     successAudio = new Audio("/icons/success.mp3");
     errorAudio = new Audio("/icons/error.wav");
     let loaded = 0;
-    const onLoad = () => { loaded++; if (loaded >= 2) resolve(); };
+    const onLoad = () => { loaded++; if (loaded >= 2) { (window as any).__audioReady = true; resolve(); } };
     successAudio.addEventListener("canplaythrough", onLoad, { once: true });
     errorAudio.addEventListener("canplaythrough", onLoad, { once: true });
     successAudio.load();
     errorAudio.load();
-    setTimeout(() => resolve(), 3000);
+    setTimeout(() => { (window as any).__audioReady = true; resolve(); }, 3000);
   });
   return _readyPromise;
 }
@@ -22,13 +22,21 @@ export function audioReady(): Promise<void> {
 export function playSuccess() {
   try {
     const a = successAudio;
-    if (a) { a.currentTime = 0; a.volume = 0.6; a.play().catch(() => {}); }
+    if (!a) return;
+    // Clone to avoid playback conflicts on rapid fire
+    const clone = a.cloneNode() as HTMLAudioElement;
+    clone.volume = 0.6;
+    clone.play().catch(() => {});
   } catch {}
 }
 
 export function playError() {
   try {
     const a = errorAudio;
-    if (a) { a.currentTime = 0; a.volume = 0.5; a.play().catch(() => {}); }
+    if (!a) return;
+    // Clone to avoid playback conflicts on rapid fire
+    const clone = a.cloneNode() as HTMLAudioElement;
+    clone.volume = 0.5;
+    clone.play().catch(() => {});
   } catch {}
 }

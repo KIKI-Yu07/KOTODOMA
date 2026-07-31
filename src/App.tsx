@@ -1,6 +1,7 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { setToastHandler } from "./lib/toast";
 import BottomNav, { type Page } from "./components/BottomNav";
+import SplashScreen from "./components/SplashScreen";
 import Home from "./pages/Home";
 import WordDetail from "./pages/WordDetail";
 import WordList from "./pages/WordList";
@@ -50,14 +51,90 @@ function SlideIn({ show, children }: { show: boolean; children: React.ReactNode 
   return <div className="animate-slide-in-right flex flex-col flex-1 overflow-hidden">{children}</div>;
 }
 
+/* ─── Ink-blot transition ─── */
+function easeInOutCubic(t: number) {
+  return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+}
+
+function InkTransition({ onDone }: { onDone: () => void }) {
+  const rafRef = useRef(0);
+  const startRef = useRef(0);
+  const [progress, setProgress] = useState(0);
+  const notified = useRef(false);
+  const ENTERING_DURATION = 1200;
+
+  useEffect(() => {
+    startRef.current = 0;
+    const tick = (now: number) => {
+      if (!startRef.current) startRef.current = now;
+      const raw = Math.min((now - startRef.current) / ENTERING_DURATION, 1);
+      setProgress(easeInOutCubic(raw));
+      if (raw < 1) {
+        rafRef.current = requestAnimationFrame(tick);
+      } else if (!notified.current) {
+        notified.current = true;
+        onDone();
+      }
+    };
+    rafRef.current = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(rafRef.current);
+  }, [onDone]);
+
+  const pct = Math.round(progress * 160);
+
+  return (
+    <div
+      style={{
+        position: "fixed",
+        inset: 0,
+        zIndex: 50,
+        clipPath: `circle(${pct}% at 50% 50%)`,
+        background: "#0a0b14",
+        pointerEvents: "none",
+      }}
+    />
+  );
+}
+
 export default function App() {
   const [page, setPage] = useState<Page>("home");
   const [toast, setToast] = useState<string | null>(null);
+  const [stage, setStage] = useState<"splash" | "transitioning" | "page">("splash");
+  const [entered, setEntered] = useState(false);
   setToastHandler(setToast);
+
+  const onSplashDone = useCallback(() => setStage("transitioning"), []);
+  const onTransitionDone = useCallback(() => {
+    setStage("page");
+    setTimeout(() => setEntered(true), 60);
+  }, []);
+
+  /* splash + ink transition */
+  if (stage !== "page") {
+    return (
+      <>
+        {/* Splash stays mounted during transition */}
+        <div style={{ position: "fixed", inset: 0, zIndex: 10 }}>
+          <SplashScreen onDone={onSplashDone} />
+        </div>
+        {stage === "transitioning" && <InkTransition onDone={onTransitionDone} />}
+      </>
+    );
+  }
 
   return (
     <div className="flex justify-center items-center sm:min-h-screen sm:bg-bg transition-colors">
-      <div className="phone flex flex-col relative" style={{paddingTop:"env(safe-area-inset-top, 20px)"}}>
+      <div
+        className="phone flex flex-col relative"
+        style={{
+          paddingTop: "env(safe-area-inset-top, 20px)",
+          opacity: entered ? 1 : 0,
+          transform: entered ? "translateY(0)" : "translateY(28px)",
+          transition: entered
+            ? "opacity 0.7s ease, transform 0.7s ease"
+            : "none",
+        }}
+      >
         {toast && (
           <div className="absolute top-20 left-1/2 -translate-x-1/2 z-[999] bg-[#1A1A1A] text-white px-5 py-2.5 rounded-full text-sm font-medium shadow-lg animate-pop-in pointer-events-none">
             {toast}

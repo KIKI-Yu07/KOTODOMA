@@ -90,10 +90,15 @@ export default function VocabularyGrid({ onNavigate }: VocabGridProps) {
 
   const percent = totalWords > 0 ? Math.min(100, (totalLearned / totalWords) * 100) : 0;
 
+  const grammarCleared = (() => {
+    try { return JSON.parse(localStorage.getItem("grammar_completed") || "[]").length; }
+    catch { return 0; }
+  })();
+
   const stats = [
     { value: studyDays, label: "学習日数" },
     { value: favoriteCount, label: "お気に入り" },
-    { value: totalWords, label: "收录" },
+    { value: grammarCleared, label: "语法通关" },
   ];
 
   const mainItems: MenuItem[] = [
@@ -261,7 +266,7 @@ export default function VocabularyGrid({ onNavigate }: VocabGridProps) {
 
       {/* ── Footer ── */}
       <p className="px-4 pt-8 pb-12 text-center font-mono text-[11px] tracking-wide text-sub/70">
-        単語 · 每天进步一点点
+        言霊 · ことだま
       </p>
     </div>
   );

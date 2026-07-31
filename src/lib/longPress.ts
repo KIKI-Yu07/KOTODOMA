@@ -2,7 +2,7 @@ import { useRef, useCallback } from "react";
 import { showToast } from "./toast";
 
 export function useLongPress(onLongPress: () => boolean | void, delay = 600) {
-  const timer = useRef<ReturnType<typeof setTimeout>>();
+  const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const moved = useRef(false);
 
   const onTouchStart = useCallback(() => {
@@ -18,7 +18,7 @@ export function useLongPress(onLongPress: () => boolean | void, delay = 600) {
 
   const onTouchMove = useCallback(() => { moved.current = true; }, []);
 
-  const onTouchEnd = useCallback(() => { clearTimeout(timer.current); }, []);
+  const onTouchEnd = useCallback(() => { clearTimeout(timer.current ?? undefined); }, []);
 
   return { onTouchStart, onTouchMove, onTouchEnd };
 }

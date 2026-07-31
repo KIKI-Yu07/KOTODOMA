@@ -236,7 +236,7 @@ export default function MatchGame({ onNavigate, onBack, onReplay, onRetry, mode,
       </div>
       <div className="mt-3 flex items-center gap-2">
         <div className="h-px flex-1 bg-gradient-to-r from-transparent via-border to-transparent"/>
-        <span className="font-serif text-[10px] tracking-[0.25em] text-hint/40">修羅 · 選詞</span>
+        <span className="font-serif text-[10px] tracking-[0.25em] text-hint/40">修罗 · 選詞</span>
         <div className="h-px flex-1 bg-gradient-to-r from-transparent via-border to-transparent"/>
       </div>
       <div className="mt-3 flex gap-1">
@@ -298,7 +298,7 @@ export default function MatchGame({ onNavigate, onBack, onReplay, onRetry, mode,
   return (<>
     <div className="flex items-center justify-between px-4 py-2">
       <button onClick={()=>onBack()} className="flex items-center gap-1 text-hint text-sm font-bold active:opacity-60"><ArrowLeft size={16} stroke="var(--color-text-tertiary)" strokeWidth={2}/></button>
-      <span className="text-2xl font-semibold tracking-tight text-main">{mode==="zh2jp"?"假名选词":mode==="spell"?"単語找茬":"假名补全"}</span>
+      <span className="text-2xl font-semibold tracking-tight text-main">{({ zh2jp: "假名选词", spell: "単語找茬", fillKana: "假名补全" } as const)[mode]}</span>
       <span className="text-sm font-bold text-hint">残り <span className="text-primary">{remaining}</span></span>
     </div>
     {/* Answer banner */}
@@ -313,7 +313,7 @@ export default function MatchGame({ onNavigate, onBack, onReplay, onRetry, mode,
       )}
     </div>
     <div className="flex-1 flex flex-col items-center justify-center px-4">
-      {mode === "fillKana" ? (
+      {mode === "fillKana" && (
         <>
           <span className="seal-stamp mb-4">補仮名</span>
           <div className="flex items-center gap-1 mb-3 text-2xl font-extrabold">
@@ -353,53 +353,8 @@ export default function MatchGame({ onNavigate, onBack, onReplay, onRetry, mode,
             })}
           </ul>
         </>
-      ) : mode === "zh2jp" ? (
-        <div className="flex flex-col items-center flex-1">
-          {/* Kana Prompt */}
-          <div className="flex-1 flex flex-col items-center justify-center px-6 w-full">
-            <span className="seal-stamp">{optType==="kanji"?"選漢字":"選中文"}</span>
-            <div className="flex items-center gap-4 mt-6">
-              <span className="h-8 w-px bg-gradient-to-b from-transparent via-primary/40 to-transparent"/>
-              <h2 className="font-serif text-[40px] leading-tight font-medium tracking-[0.08em] text-main break-all">{cur.r}</h2>
-              <span className="h-8 w-px bg-gradient-to-b from-transparent via-primary/40 to-transparent"/>
-            </div>
-            <p className="mt-4 text-xs leading-relaxed tracking-[0.14em] text-hint">{optType==="kanji"?"辨其音，择其正解":"辨其音，择其释义"}</p>
-          </div>
-
-          {/* Answer Options */}
-          <ul className="w-full max-w-[320px] flex flex-col gap-2.5 px-4 pb-8">
-            {options.map((opt, i) => {
-              const isAnswer = opt === correctAnswer;
-              const isPicked = picked === opt;
-              const locked = picked !== null;
-              const revealCorrect = locked && isAnswer;
-              const revealWrong = locked && isPicked && !isAnswer;
-              const ordinals = ["壹","貳","參","肆"];
-              return (
-                <li key={i} className="ink-rise" style={{animationDelay:`${80+i*60}ms`}}>
-                  <button type="button" disabled={locked} onClick={()=>answer(opt)}
-                    className={`ink-frame group flex w-full items-center gap-3 rounded-md px-4 py-3.5 text-left transition-all duration-300  ${
-                      revealCorrect ? "bg-primary/14 shadow-[inset_0_0_0_1px_var(--color-primary)]" :
-                      revealWrong ? "bg-danger/14 shadow-[inset_0_0_0_1px_var(--color-danger)]" :
-                      locked ? "bg-surface/50 opacity-45" : "bg-surface border border-border/40 hover:bg-surface"}`}>
-                    <span className={`flex size-6 shrink-0 items-center justify-center rounded-[2px] border font-serif text-[11px] leading-none transition-colors ${
-                      revealCorrect ? "border-primary/70 bg-primary/20 text-primary" :
-                      revealWrong ? "border-danger/70 bg-danger/20 text-danger" :
-                      "border-border/30 bg-bg/50 text-hint"}`}>{ordinals[i]}</span>
-                    <span className={`flex-1 font-sans text-[15px] tracking-[0.06em] ${
-                      revealCorrect ? "text-primary" : revealWrong ? "text-danger" : "text-main"}`}>{opt}</span>
-                    {revealCorrect && <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" className="text-primary shrink-0"><path d="M20 6L9 17l-5-5"/></svg>}
-                    {revealWrong && <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" className="text-danger shrink-0"><path d="M18 6L6 18M6 6l12 12"/></svg>}
-                  </button>
-                </li>
-              );
-            })}
-          </ul>
-
-          {/* Footer */}
-          <p className="text-center font-serif text-[10px] tracking-[0.15em] text-hint/40" style={{paddingBottom:"env(safe-area-inset-bottom, 0px)"}}>一字一劍 · 日進其功</p>
-        </div>
-      ) : (
+      )}
+      {mode === "spell" && (
         <>
           <span className="seal-stamp mb-4">找茬</span>
           <p className="text-2xl font-extrabold text-main mb-3 tracking-wider break-all">{shownReading}</p>

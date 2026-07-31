@@ -13,7 +13,7 @@ export default function CardMatch({ onNavigate }: Props) {
   const [remembered, setRemembered] = useState(0);
   const [forgot, setForgot] = useState(0);
   const [tilt, setTilt] = useState(0);
-  const tiltTimer = useRef<ReturnType<typeof setTimeout>>();
+  const tiltTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const tiltRef = useRef(0);
 
   // Device tilt detection
@@ -157,11 +157,13 @@ export default function CardMatch({ onNavigate }: Props) {
         {/* Card 2 */}
         <div className="absolute inset-x-0 top-2 scale-[0.90] translate-y-2 opacity-50">
           <div className="bg-white rounded-3xl shadow-xl h-[340px] overflow-hidden">
+            {next1 && (
             <div className="p-6 flex flex-col items-center justify-center h-full">
               <span className="text-sm text-primary">{next1.r}</span>
               <span className="text-3xl font-extrabold text-main mt-4">{next1.w}</span>
               <span className="text-xs text-hint mt-2">{next1.m}</span>
             </div>
+            )}
           </div>
         </div>
 
@@ -198,7 +200,7 @@ export default function CardMatch({ onNavigate }: Props) {
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#D97706" strokeWidth="2.5" strokeLinecap="round"><path d="M9 18l6-6-6-6"/></svg>
         </button>
       </div>
-      <p className="text-[10px] text-hint/30 text-center mt-3">← 左倾记住 · 右倾忘记 →</p>
+      <p className="text-[10px] text-hint/30 text-center mt-3">← 左倾手机记住 · 右倾手机忘记 →</p>
     </div>
   </>);
 }

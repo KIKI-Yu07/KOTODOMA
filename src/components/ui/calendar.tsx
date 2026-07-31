@@ -119,9 +119,9 @@ export function Calendar({
         formatMonthDropdown: (date: Date) =>
           date.toLocaleString("ja-JP", { month: "short" }),
       }}
-      mode={mode}
       showOutsideDays={showOutsideDays}
-      {...props}
+      {...(props as any)}
+      mode={mode}
     />
   );
 }

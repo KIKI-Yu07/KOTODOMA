@@ -147,6 +147,50 @@ const kanouUkemiQuestions: Question[] = [
   {id:"h4q6",kind:"transform",prompt:"使役形に変形してください",subject:"行く",reading:"いく",options:["行かせる","行ける","行かれる","行くさせる"],answerIndex:0,rule:"Ⅰ類使役形",explanation:"一类使役：「く」→「かせる」。「行かせる」=让某人去。"},
   {id:"h4q7",kind:"transform",prompt:"可能形に変形してください",subject:"来る",reading:"くる",options:["こられる","くられる","きられる","くるられる"],answerIndex:0,rule:"不規則可能",explanation:"不規則：「来る」→「来られる（こられる）」。"},
   {id:"h4q8",kind:"transform",prompt:"使役受身形に変形してください",subject:"食べる",reading:"たべる",options:["食べさせられる","食べさせる","食べられる","食べさせれる"],answerIndex:0,rule:"使役受身",explanation:"最难：使役+受身双重叠加，二类去る加「させられる」=被迫吃。"},
+  {id:"h4q9",kind:"transform",prompt:"可能形に変形してください",subject:"泳ぐ",reading:"およぐ",options:["泳げる","泳がれる","泳がせる","泳ぐことができる"],answerIndex:0,rule:"Ⅰ類ぐ→げる",explanation:"「ぐ」→「げる」。「泳げる」=能游泳。注意浊音保留。"},
+  {id:"h4q10",kind:"transform",prompt:"使役受身形に変形してください",subject:"書く",reading:"かく",options:["書かされる","書ける","書かれる","書かせる"],answerIndex:0,rule:"Ⅰ類使役受身",explanation:"一类使役受身（缩约形）：「書かせられる」→「書かされる」=被迫写。"},
+];
+
+// ── h6: 意向形（推量形）──
+const ikouQuestions: Question[] = [
+  {id:"h6q1",kind:"transform",prompt:"意向形に変形してください",subject:"食べる",reading:"たべる",options:["食べろう","食べよう","食べるう","食べおう"],answerIndex:1,rule:"Ⅱ類→よう",explanation:"二类动词最简单：去「る」加「よう」→「食べよう」。"},
+  {id:"h6q2",kind:"transform",prompt:"意向形に変形してください",subject:"見る",reading:"みる",options:["見ろう","見よう","見るう","見おう"],answerIndex:1,rule:"Ⅱ類→よう",explanation:"二类动词去る加よう→「見よう」。「〜よう」表示意志或劝诱。"},
+  {id:"h6q3",kind:"transform",prompt:"意向形に変形してください",subject:"書く",reading:"かく",options:["書けう","書こう","書くう","書かう"],answerIndex:1,rule:"Ⅰ類く→こう",explanation:"一类动词：「く」→「こう」（う段→お段+う）。"},
+  {id:"h6q4",kind:"transform",prompt:"意向形に変形してください",subject:"話す",reading:"はなす",options:["話せう","話すう","話そう","話さう"],answerIndex:2,rule:"Ⅰ類す→そう",explanation:"一类动词：「す」→「そう」。「話そう」=聊吧/说吧。"},
+  {id:"h6q5",kind:"transform",prompt:"意向形に変形してください",subject:"読む",reading:"よむ",options:["読めう","読もう","読むう","読も"],answerIndex:1,rule:"Ⅰ類む→もう",explanation:"一类动词：「む」→「もう」。「読もう」=读吧。"},
+  {id:"h6q6",kind:"transform",prompt:"意向形に変形してください",subject:"買う",reading:"かう",options:["買うう","買いよう","買おう","買えう"],answerIndex:2,rule:"Ⅰ類う→おう",explanation:"「う」结尾的一类动词变「おう」→「買おう」。注意不是「買いよう」。"},
+  {id:"h6q7",kind:"transform",prompt:"意向形に変形してください",subject:"する",options:["すろう","しよう","するう","せよう"],answerIndex:1,rule:"不規則",explanation:"不規則：「する」→「しよう」。完全替换。"},
+  {id:"h6q8",kind:"transform",prompt:"意向形に変形してください",subject:"来る",reading:"くる",options:["くよう","きよう","こよう","くるう"],answerIndex:2,rule:"不規則",explanation:"最难：「来る」→「来よう（こよう）」。读音和汉字完全不规则。"},
+  {id:"h6q9",kind:"transform",prompt:"意向形に変形してください",subject:"死ぬ",reading:"しぬ",options:["死のう","死ねう","死ぬう","死によう"],answerIndex:0,rule:"Ⅰ類ぬ→のう",explanation:"「ぬ」结尾的唯一动词→「死のう」。注意「ぬ」→「のう」的变化。"},
+  {id:"h6q10",kind:"transform",prompt:"意向形に変形してください",subject:"走る",reading:"はしる",options:["走ろう","走れう","走るう","走よう"],answerIndex:0,rule:"Ⅰ類る→ろう",explanation:"一类动词（る结尾但要小心区分）：「走る」是一类→「走ろう」。不是二类「走よう」。"},
+];
+
+// ── h7: 未然形 ──
+const mizenQuestions: Question[] = [
+  {id:"h7q1",kind:"transform",prompt:"未然形（ない形の語幹）に変形してください",subject:"書く",reading:"かく",options:["書き","書く","書か","書け"],answerIndex:2,rule:"Ⅰ類く→か",explanation:"一类动词：「く」→「か」段（あ段）。「書かない」的基础形。"},
+  {id:"h7q2",kind:"transform",prompt:"未然形に変形してください",subject:"食べる",reading:"たべる",options:["食べ","食べら","食べる","食べれ"],answerIndex:0,rule:"Ⅱ類→語幹",explanation:"二类动词最简单：去掉「る」即可→「食べ」。"},
+  {id:"h7q3",kind:"transform",prompt:"未然形に変形してください",subject:"読む",reading:"よむ",options:["読み","読む","読め","読ま"],answerIndex:3,rule:"Ⅰ類む→ま",explanation:"一类动词：「む」→「ま」段。「読まない」的基础形。"},
+  {id:"h7q4",kind:"transform",prompt:"未然形に変形してください",subject:"話す",reading:"はなす",options:["話し","話す","話せ","話さ"],answerIndex:3,rule:"Ⅰ類す→さ",explanation:"一类动词：「す」→「さ」段。「話さない」的基础形。"},
+  {id:"h7q5",kind:"transform",prompt:"未然形に変形してください",subject:"待つ",reading:"まつ",options:["待ち","待つ","待て","待た"],answerIndex:3,rule:"Ⅰ類つ→た",explanation:"一类动词：「つ」→「た」段。「待たない」的基础形。"},
+  {id:"h7q6",kind:"transform",prompt:"未然形に変形してください",subject:"泳ぐ",reading:"およぐ",options:["泳ぎ","泳ぐ","泳げ","泳が"],answerIndex:3,rule:"Ⅰ類ぐ→が",explanation:"一类动词：「ぐ」→「が」段。注意浊音保留。"},
+  {id:"h7q7",kind:"transform",prompt:"未然形に変形してください",subject:"する",options:["す","し","せ","さ"],answerIndex:1,rule:"不規則",explanation:"不規則：「する」→「し」。「しない」的基础形。"},
+  {id:"h7q8",kind:"transform",prompt:"未然形に変形してください",subject:"来る",reading:"くる",options:["く","き","こ","け"],answerIndex:2,rule:"不規則",explanation:"最难：「来る」→「来（こ）」。「来ない（こない）」的基础形，完全无规律。"},
+  {id:"h7q9",kind:"transform",prompt:"未然形に変形してください",subject:"死ぬ",reading:"しぬ",options:["死に","死な","死ね","死ぬ"],answerIndex:1,rule:"Ⅰ類ぬ→な",explanation:"「ぬ」→「な」段。「死なない」的基础形。唯一ぬ结尾动词。"},
+  {id:"h7q10",kind:"transform",prompt:"未然形に変形してください",subject:"起きる",reading:"おきる",options:["起き","起か","起きら","起きれ"],answerIndex:0,rule:"Ⅱ類→語幹",explanation:"二类动词陷阱题：「起きる」是二类，去掉「る」即可→「起き」。"},
+];
+
+// ── h8: 可能形（詳解）──
+const kanouDetailQuestions: Question[] = [
+  {id:"h8q1",kind:"transform",prompt:"可能形に変形してください",subject:"食べる",reading:"たべる",options:["食べられる","食べれる","食べさせる","食べることができる"],answerIndex:0,rule:"Ⅱ類可能形",explanation:"二类动词最基础：去「る」加「られる」→「食べられる」。"},
+  {id:"h8q2",kind:"transform",prompt:"可能形に変形してください",subject:"見る",reading:"みる",options:["見れる","見られる","見える","見させる"],answerIndex:1,rule:"Ⅱ類可能形",explanation:"二类动词：「見る」→「見られる」。注意「見える」是另一个词（自然看得见）。"},
+  {id:"h8q3",kind:"transform",prompt:"可能形に変形してください",subject:"書く",reading:"かく",options:["書ける","書かれる","書かせる","書くことができる"],answerIndex:0,rule:"Ⅰ類く→ける",explanation:"一类可能形：「く」变「け」段+る→「書ける」。"},
+  {id:"h8q4",kind:"transform",prompt:"可能形に変形してください",subject:"読む",reading:"よむ",options:["読める","読まれる","読ませる","読むことができる"],answerIndex:0,rule:"Ⅰ類む→める",explanation:"「む」→「める」。「読める」=能读。"},
+  {id:"h8q5",kind:"transform",prompt:"可能形に変形してください",subject:"話す",reading:"はなす",options:["話せる","話される","話させる","話すことができる"],answerIndex:0,rule:"Ⅰ類す→せる",explanation:"「す」→「せる」。「話せる」=会说（某种语言）。"},
+  {id:"h8q6",kind:"transform",prompt:"可能形に変形してください",subject:"買う",reading:"かう",options:["買える","買われる","買わせる","買うことができる"],answerIndex:0,rule:"Ⅰ類う→える",explanation:"「う」→「える」。「買える」=买得起/能买。"},
+  {id:"h8q7",kind:"transform",prompt:"可能形に変形してください",subject:"待つ",reading:"まつ",options:["待てる","待たれる","待たせる","待つことができる"],answerIndex:0,rule:"Ⅰ類つ→てる",explanation:"「つ」→「てる」。「待てる」=能等。"},
+  {id:"h8q8",kind:"transform",prompt:"可能形に変形してください",subject:"泳ぐ",reading:"およぐ",options:["泳げる","泳がれる","泳がせる","泳ぐことができる"],answerIndex:0,rule:"Ⅰ類ぐ→げる",explanation:"「ぐ」→「げる」。注意浊音保留。"},
+  {id:"h8q9",kind:"transform",prompt:"可能形に変形してください",subject:"する",options:["できる","すれる","しれる","せれる"],answerIndex:0,rule:"不規則可能",explanation:"不規則：「する」→「できる」。完全替换，最常用的可能动词。"},
+  {id:"h8q10",kind:"transform",prompt:"可能形に変形してください",subject:"来る",reading:"くる",options:["こられる","くられる","きられる","こることができる"],answerIndex:0,rule:"不規則可能",explanation:"最难：「来る」→「来られる（こられる）」。注意区分可能和尊敬。"},
 ];
 
 // ── h5: 変形総合 ──
@@ -167,6 +211,14 @@ const henkeiSougouQuestions: Question[] = [
   {id:"h5q14",kind:"transform",prompt:"て形に変形してください",subject:"来る",reading:"くる",options:["来て","来いて","来って","来んで"],answerIndex:0,rule:"不規則",explanation:"不規則：「来る」→「来て（きて）」。"},
   {id:"h5q15",kind:"transform",prompt:"た形に変形してください",subject:"死ぬ",reading:"しぬ",options:["死んだ","死いた","死った","死んで"],answerIndex:0,rule:"ぬ→んだ",explanation:"拨音便：「ぬ」→「んだ」。「死ぬ」是唯一以ぬ结尾的动词。"},
   {id:"h5q16",kind:"transform",prompt:"使役受身形に変形してください",subject:"行く",reading:"いく",options:["行かされる","行ける","行かれる","行くされる"],answerIndex:0,rule:"使役受身",explanation:"最难：一类使役+受身缩约→「行かされる」。「行かせられる」的口语缩约。"},
+  {id:"h5q17",kind:"transform",prompt:"意向形に変形してください",subject:"食べる",reading:"たべる",options:["食べろう","食べよう","食べるう","食べおう"],answerIndex:1,rule:"Ⅱ類→よう",explanation:"二类动词意向形：去「る」加「よう」→「食べよう」。"},
+  {id:"h5q18",kind:"transform",prompt:"意向形に変形してください",subject:"書く",reading:"かく",options:["書けう","書こう","書くう","書かう"],answerIndex:1,rule:"Ⅰ類く→こう",explanation:"一类意向形：「く」→「こう」→「書こう」。"},
+  {id:"h5q19",kind:"transform",prompt:"意向形に変形してください",subject:"する",options:["すろう","しよう","するう","せよう"],answerIndex:1,rule:"不規則",explanation:"「する」→「しよう」。"},
+  {id:"h5q20",kind:"transform",prompt:"未然形に変形してください",subject:"書く",reading:"かく",options:["書き","書く","書か","書け"],answerIndex:2,rule:"Ⅰ類く→か",explanation:"未然形：「く」→「か」段。"},
+  {id:"h5q21",kind:"transform",prompt:"未然形に変形してください",subject:"する",options:["す","し","せ","さ"],answerIndex:1,rule:"不規則",explanation:"「する」→「し」（未然形）。"},
+  {id:"h5q22",kind:"transform",prompt:"可能形に変形してください",subject:"買う",reading:"かう",options:["買える","買われる","買わせる","買うことができる"],answerIndex:0,rule:"Ⅰ類う→える",explanation:"「う」→「える」→「買える」=能买。"},
+  {id:"h5q23",kind:"transform",prompt:"可能形に変形してください",subject:"話す",reading:"はなす",options:["話せる","話される","話させる","話すことができる"],answerIndex:0,rule:"Ⅰ類す→せる",explanation:"「す」→「せる」→「話せる」=会说。"},
+  {id:"h5q24",kind:"transform",prompt:"使役受身形に変形してください",subject:"書く",reading:"かく",options:["書かされる","書ける","書かれる","書かせる"],answerIndex:0,rule:"Ⅰ類使役受身",explanation:"最难：使役受身缩约「書かされる」=被迫写。综合应用所有变形知识。"},
 ];
 
 // ── b1: 〜ながら / 〜たり ──
@@ -239,7 +291,7 @@ const bunkeiSougouQuestions: Question[] = [
 
 const questionBank: Record<string, Question[]> = {
   j1:waGaQuestions, j2:niDeQuestions, j3:oGaQuestions, j4:moToYaQuestions, j5:karaMadeYoriQuestions, j6:joshiSougouQuestions,
-  h1:jishoQuestions, h2:teFormQuestions, h3:taNaiQuestions, h4:kanouUkemiQuestions, h5:henkeiSougouQuestions,
+  h1:jishoQuestions, h2:teFormQuestions, h3:taNaiQuestions, h4:kanouUkemiQuestions, h5:henkeiSougouQuestions, h6:ikouQuestions, h7:mizenQuestions, h8:kanouDetailQuestions,
   b1:doujiQuestions, b2:jokenQuestions, b3:souYouQuestions, b4:keigoQuestions, b5:bunkeiSougouQuestions
 };
 
@@ -272,8 +324,11 @@ export const categories: Category[] = [
     {id:"h1",title:"ます形→辞書形",subtitle:"基本の活用",questions:8,status:"current"},
     {id:"h2",title:"て形",subtitle:"音便の規則",questions:8,status:"locked"},
     {id:"h3",title:"た形・ない形",subtitle:"過去と否定",questions:8,status:"locked"},
-    {id:"h4",title:"可能・受身・使役",subtitle:"応用活用",questions:8,status:"locked"},
-    {id:"h5",title:"総合テスト",subtitle:"活用のまとめ問題",questions:16,status:"locked"},
+    {id:"h4",title:"可能・受身・使役",subtitle:"応用活用",questions:10,status:"locked"},
+    {id:"h8",title:"可能形（詳解）",subtitle:"可能表現を徹底攻略",questions:10,status:"locked"},
+    {id:"h6",title:"意向形（推量形）",subtitle:"意志・勧誘の表現",questions:10,status:"locked"},
+    {id:"h7",title:"未然形",subtitle:"ない形の語幹",questions:10,status:"locked"},
+    {id:"h5",title:"総合テスト",subtitle:"活用のまとめ問題",questions:24,status:"locked"},
   ]},
   {id:"bunkei",label:"文型",caption:"頻出文型を実例で身につける",stages:[
     {id:"b1",title:"〜ながら / 〜たり",subtitle:"同時・並列の文型",questions:8,status:"current"},

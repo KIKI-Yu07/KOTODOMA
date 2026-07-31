@@ -28,7 +28,7 @@ const srcBtns: { key:Source; label:string; hint:string }[] = [
 ];
 
 export default function PracticePage({ onNavigate }: Props) {
-  const [loading, setLoading] = useState(true);
+  const [preGameLoading, setPreGameLoading] = useState(false);
   const [step, setStep] = useState<Step>("menu");
   const [gameMode, setGameMode] = useState<GameMode>("zh2jp");
   const [gameWords, setGameWords] = useState<{w:string;r:string;m:string}[]>([]);
@@ -42,12 +42,6 @@ export default function PracticePage({ onNavigate }: Props) {
 
   useEffect(() => { if (step === "wordbooks") setWordBooks(loadBooksSync()); }, [step]);
 
-  useEffect(() => {
-    audioReady().then(() => setTimeout(() => setLoading(false), 400));
-    const t = setTimeout(() => setLoading(false), 3000);
-    return () => clearTimeout(t);
-  }, []);
-
   const sourceWords = useMemo(() => getWordSource(), []);
   const reviewCount = useMemo(() => Object.values(loadProgress()).filter(p => p.lastReview).length, []);
 
@@ -56,10 +50,11 @@ export default function PracticePage({ onNavigate }: Props) {
   const vol2Chs = textbookChapters.find(b => b.id === "vol2")?.chapters ?? [];
   const chapters = textbook==="vol1"?vol1Chs:vol2Chs;
 
-  const startReview = () => {
+  const startReview = async () => {
+    setPreGameLoading(true);
+    await audioReady();
     const progress = loadProgress();
     const studied = shuffle(Object.entries(progress).filter(([,p])=>p.lastReview).map(([id])=>id)).slice(0,CHAPTER_PICK);
-    // Search ALL sources (textbooks + wordbooks) for studied word IDs
     const allSources = [...getAllTextbookWords()];
     try {
       const wbs = JSON.parse(localStorage.getItem("wordbooks") || "[]") as any[];
@@ -70,19 +65,26 @@ export default function PracticePage({ onNavigate }: Props) {
     const pool = allSources.filter(w => studied.includes(w.id)).map(w => ({ w: w.w, r: w.r, m: w.m }));
     const final = pool.length >= 4 ? pool : shuffle(sourceWords.map(w => ({ w: w.w, r: w.r, m: w.m }))).slice(0, CHAPTER_PICK);
     setPlaySource("review"); setGameKey(k=>k+1); setGameWords(shuffle(final)); setStep("play");
+    setPreGameLoading(false);
   };
 
-  const startChapters = () => {
+  const startChapters = async () => {
+    setPreGameLoading(true);
+    await audioReady();
     const pool: {w:string;r:string;m:string}[] = [];
     for (const ch of chapters) if (selChapters.has(ch.id)) for (const w of ch.words) pool.push({ w: w.w, r: w.r, m: w.m });
     setPlaySource("textbook"); setGameKey(k=>k+1); setGameWords(shuffle(pool).slice(0, CHAPTER_PICK)); setStep("play");
+    setPreGameLoading(false);
   };
 
-  const startWordBook = (book:any) => {
+  const startWordBook = async (book:any) => {
     const pool: {w:string;r:string;m:string}[] = book.words.map((w:any)=>({ w:w.word||w.w, r:w.reading||w.r, m:w.meaning||w.m }));
     if (pool.length < 15) { setHint("单词本单词不足 15 个，请先添加更多单词"); return; }
+    setPreGameLoading(true);
+    await audioReady();
     setPlaySource("wordbook"); setCurrentWB(book);
     const s = shuffle(pool); setGameKey(k=>k+1); setGameWords(s.length>CHAPTER_PICK?s.slice(0,CHAPTER_PICK):s); setStep("play");
+    setPreGameLoading(false);
   };
 
   const pick = (mode:GameMode, src:Source) => {
@@ -104,12 +106,12 @@ export default function PracticePage({ onNavigate }: Props) {
 
   if (step==="play") return <MatchGame key={gameKey} onNavigate={onNavigate} onBack={()=>{setStep("menu");setSelChapters(new Set())}} onReplay={replay} onRetry={retry} mode={gameMode} words={gameWords} />;
 
-  if (loading) return (
+  if (preGameLoading) return (
     <div className="flex flex-col flex-1 min-h-0 items-center justify-center gap-6 px-8 text-center relative" style={{background:"#F5F0E8"}}>
       <div className="absolute inset-0 pointer-events-none" style={{backgroundImage:"url(/icons/bg-arena.jpg)", backgroundSize:"cover", backgroundPosition:"center", opacity:0.08}} />
       <div className="relative z-10 word-loader" />
       <p className="relative z-10 text-sub text-sm font-medium">音声読み込み中...</p>
-      <p className="relative z-10 text-hint text-xs">修羅場の準備をしています</p>
+      <p className="relative z-10 text-hint text-xs">单词修罗の準備をしています</p>
     </div>
   );
 
@@ -121,7 +123,7 @@ export default function PracticePage({ onNavigate }: Props) {
       </button>
       <div/>
       <span className="text-2xl font-semibold tracking-tight text-main">
-        {step==="chapters"?"選択課本":step==="wordbooks"?"選択単語帳":"単語修羅"}
+        {step==="chapters"?"選択課本":step==="wordbooks"?"選択単語帳":"单词修罗"}
       </span>
     </div>
 

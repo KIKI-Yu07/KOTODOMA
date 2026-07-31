@@ -97,7 +97,13 @@ export default function Home({ onNavigate }: HomeProps) {
 
   return (<div className="flex-1 min-h-0 overflow-y-auto scroll-area bg-bg">
     {/* ── Hero Panel (ink background) ── */}
-    <header className="bg-primary text-white flex flex-col rounded-b-[2rem] px-6 pt-6 pb-9">
+    <header className="bg-primary text-white flex flex-col rounded-b-[2rem] px-6 pt-6 pb-9 relative">
+      <span
+        className="absolute top-3 right-5 text-white select-none pointer-events-none"
+        style={{ fontFamily: "Sacramento, cursive", fontSize: 28 }}
+      >
+        kotodama
+      </span>
       <div>
         <p className="text-white/30 text-[11px] tracking-[0.32em]">DAILY TARGET</p>
         <h1 className="mt-3 font-serif text-[2rem] leading-tight">今日の学習目標</h1>
@@ -148,7 +154,7 @@ export default function Home({ onNavigate }: HomeProps) {
         {[
           {icon:BookOpen,title:"列表学习",sub:"单词列表",meta:"自主",a:"wordlist"as Page},
           {icon:Layers,title:"记忆卡片",sub:"滑动记忆",meta:"翻卡",a:"cardmatch"as Page},
-          {icon:Swords,title:"单词修罗",sub:"游戏挑战",meta:"修身",a:"practice"as Page},
+          {icon:Swords,title:"单词修罗",sub:"游戏挑战",meta:"修炼",a:"practice"as Page},
         ].map(({icon:Icon,title,sub,meta,a})=>(
           <li key={title} className="border-border border-b last:border-b-0">
             <button onClick={()=>onNavigate(a)} className="hover:bg-surface/60 -mx-2 flex w-[calc(100%+1rem)] items-center gap-4 rounded-lg px-2 py-4 text-left transition-colors">

@@ -80,9 +80,11 @@ export default function SettingsPage({ onNavigate }: SettingsPageProps) {
           <div className="flex justify-between mt-3 px-2">
             {[5,10,15,20,25,30,35,40,45,50].map(n => (
               <button key={n} onClick={() => setDailyGoal(n)}
-                className={`min-h-[44px] w-8 rounded-full text-[10px] font-bold transition-colors duration-150 ${
+                className={`text-[10px] font-bold transition-colors duration-150 flex items-center justify-center ${
                   dailyGoal === n ? "bg-primary text-white" : "text-hint hover:text-sub"
-                }`}>{n}</button>
+                }`}
+                style={{ width: 32, height: 32, borderRadius: "50%" }}
+              >{n}</button>
             ))}
           </div>
         </div>
