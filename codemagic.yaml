@@ -11,8 +11,9 @@ workflows:
       - name: Setup Java 21
         script: |
           brew install openjdk@21 2>/dev/null || true
-          export JAVA_HOME=$(brew --prefix openjdk@21 2>/dev/null || echo /opt/homebrew/opt/openjdk@21)
-          echo "JAVA_HOME=$JAVA_HOME" >> $CM_ENV
+          JAVA21=$(brew --prefix openjdk@21 2>/dev/null || echo /opt/homebrew/opt/openjdk@21)
+          echo "JAVA_HOME=$JAVA21" >> $CM_ENV
+          sudo ln -sfn $JAVA21 /Library/Java/JavaVirtualMachines/openjdk-21.jdk 2>/dev/null || true
       - name: Install Android SDK 36
         script: |
           yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager "platforms;android-36" "build-tools;36.0.0" 2>/dev/null
@@ -25,7 +26,8 @@ workflows:
       - name: Build APK
         working_directory: android
         script: |
-          echo "JAVA_HOME=$JAVA_HOME"
+          JAVA21=$(brew --prefix openjdk@21 2>/dev/null || echo /opt/homebrew/opt/openjdk@21)
+          echo "org.gradle.java.home=$JAVA21" >> gradle.properties
           echo "sdk.dir=$ANDROID_HOME" > local.properties
           chmod +x gradlew
           ./gradlew assembleDebug --no-daemon
