@@ -75,33 +75,23 @@ jobs:
       - name: Sign APK
         run: |
           APK="android/app/build/outputs/apk/debug/app-debug.apk"
-          echo "=== APK ==="
           ls -la $APK || { echo "APK not found"; exit 1; }
-          echo "=== SDK env ==="
-          echo "ANDROID_HOME=$ANDROID_HOME"
-          echo "ANDROID_SDK_ROOT=$ANDROID_SDK_ROOT"
-          echo "=== Build tools ==="
-          ls -la $ANDROID_HOME/build-tools/ 2>/dev/null || echo "No build-tools dir"
-          echo "=== Find apksigner ==="
-          find $ANDROID_HOME -name "apksigner" -type f 2>/dev/null || echo "apksigner not found"
-          echo "=== Java keytool ==="
-          which keytool && keytool -help 2>&1 | head -2 || echo "keytool not found"
-          echo "=== Generate keystore ==="
+          # Generate keystore
           keytool -genkey -v -keystore debug.keystore -alias kotodama \
             -keyalg RSA -keysize 2048 -validity 10000 \
-            -storepass android -keypass android -dname "CN=Kotodama" 2>&1
-          echo "=== Sign ==="
-          APKSIGNER=$(find $ANDROID_HOME -name apksigner -type f 2>/dev/null | head -1)
-          if [ -z "$APKSIGNER" ]; then
-            echo "Trying to install build-tools..."
-            yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager "build-tools;34.0.0" 2>&1
-            APKSIGNER=$(find $ANDROID_HOME -name apksigner -type f 2>/dev/null | head -1)
-          fi
-          echo "Using apksigner: $APKSIGNER"
-          $APKSIGNER sign \
-            --ks debug.keystore --ks-key-alias kotodama \
-            --ks-pass pass:android --key-pass pass:android \
-            --out kotodama.apk $APK 2>&1
+            -storepass android -keypass android -dname "CN=Kotodama" 2>/dev/null
+          # Download uber-apk-signer (standalone JAR, no SDK needed)
+          curl -sSLO https://github.com/patrickfav/uber-apk-signer/releases/download/v1.3.0/uber-apk-signer-1.3.0.jar
+          # Sign
+          java -jar uber-apk-signer-1.3.0.jar \
+            --apks $APK \
+            --ks debug.keystore \
+            --ksAlias kotodama \
+            --ksPass android \
+            --keyPass android \
+            --out signed
+          # Rename and verify
+          cp signed/*.apk kotodama.apk 2>/dev/null || cp signed/*.apk kotodama.apk
           ls -la kotodama.apk
 
       - name: Upload APK
