@@ -76,13 +76,19 @@ jobs:
         run: |
           APK="android/app/build/outputs/apk/debug/app-debug.apk"
           ls -la $APK || { echo "APK not found"; exit 1; }
+          # Find apksigner
+          APKSIGNER=$(find $ANDROID_HOME/build-tools -name apksigner -type f | head -1)
+          echo "Found apksigner: $APKSIGNER"
+          # Generate keystore
           keytool -genkey -v -keystore debug.keystore -alias kotodama \
             -keyalg RSA -keysize 2048 -validity 10000 \
             -storepass android -keypass android -dname "CN=Kotodama" 2>/dev/null
-          $ANDROID_HOME/build-tools/34.0.0/apksigner sign \
+          # Sign
+          $APKSIGNER sign \
             --ks debug.keystore --ks-key-alias kotodama \
             --ks-pass pass:android --key-pass pass:android \
             --out kotodama.apk $APK
+          ls -la kotodama.apk
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
