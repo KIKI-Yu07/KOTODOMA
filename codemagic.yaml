@@ -8,8 +8,10 @@ workflows:
         BASE_PATH: "/"
         ANDROID_HOME: "/Users/builder/Library/Android/sdk"
     scripts:
-      - name: Install Android SDK 35
+      - name: Install Java 21 & Android SDK 35
         script: |
+          brew install openjdk@21 2>/dev/null || true
+          sudo ln -sfn /opt/homebrew/opt/openjdk@21 /Library/Java/JavaVirtualMachines/openjdk-21.jdk 2>/dev/null || true
           yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager "platforms;android-35" "build-tools;35.0.0" 2>/dev/null
       - name: Install dependencies
         script: npm ci
@@ -20,6 +22,16 @@ workflows:
       - name: Build APK
         working_directory: android
         script: |
+          # Use Java 21 (required by Capacitor)
+          JAVA21=$(/usr/libexec/java_home -v 21 2>/dev/null || find /opt/homebrew -name "openjdk@21" -maxdepth 3 2>/dev/null | head -1)
+          if [ -n "$JAVA21" ]; then
+            export JAVA_HOME=$JAVA21
+          elif [ -d /opt/homebrew/opt/openjdk@21 ]; then
+            export JAVA_HOME=/opt/homebrew/opt/openjdk@21
+          fi
+          echo "JAVA_HOME=$JAVA_HOME"
+          java -version 2>&1
+          echo "org.gradle.java.home=$JAVA_HOME" >> gradle.properties
           echo "sdk.dir=$ANDROID_HOME" > local.properties
           chmod +x gradlew
           ./gradlew assembleDebug --no-daemon
