@@ -38,7 +38,11 @@ jobs:
           BASE_PATH: /
 
       - name: Copy web assets to Android
-        run: npx cap copy android
+        run: |
+          rm -rf android/app/src/main/assets/public
+          mkdir -p android/app/src/main/assets/public
+          cp -r dist/* android/app/src/main/assets/public/
+          echo '{"appId":"com.kotodama.app","appName":"言霊","webDir":"public","server":{"androidScheme":"https","hostname":"kotodama.app"}}' > android/app/src/main/assets/capacitor.config.json
 
       - name: Build APK
         working-directory: android
