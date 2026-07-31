@@ -23,7 +23,7 @@ export default function RestPage({ onNavigate }: Props) {
   return (<>
     <div className="flex-1 flex flex-col items-center justify-center px-8 text-center">
       <img
-        src="/icons/rest-day.svg" alt=""
+        src={`${import.meta.env.BASE_URL}icons/rest-day.svg`} alt=""
         className="w-64 h-64 mb-6"
         style={itemStyle(visible, 0)}
       />

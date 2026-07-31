@@ -123,7 +123,7 @@ export default function App() {
   }
 
   return (
-    <div className="flex justify-center items-center sm:min-h-screen sm:bg-bg transition-colors">
+    <div className="flex justify-center items-center min-h-dvh bg-bg transition-colors">
       <div
         className="phone flex flex-col relative"
         style={{

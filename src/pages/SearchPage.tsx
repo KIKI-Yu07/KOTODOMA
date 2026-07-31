@@ -55,7 +55,7 @@ export default function SearchPage({ onNavigate }: SearchPageProps) {
         <div className="text-center py-12 text-hint text-sm">該当する単語がありません</div>
       ) : !query ? (
         <div className="flex flex-col items-center justify-center py-16 px-8">
-          <img src="/icons/search-empty.svg" alt="" className="w-40 h-40 opacity-30 mb-4" />
+          <img src={`${import.meta.env.BASE_URL}icons/search-empty.svg`} alt="" className="w-40 h-40 opacity-30 mb-4" />
           <p className="text-hint text-sm">単語を検索してみましょう</p>
         </div>
       ) : (

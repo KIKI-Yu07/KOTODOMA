@@ -18,19 +18,28 @@ function swVersion(): import("vite").Plugin {
       },
     },
     closeBundle() {
-      // sw.js is copied from public/ — patch it after build
+      const base = "/KOTODOMA/";
+      // Patch sw.js — replace build time
       const swPath = path.resolve(__dirname, "dist/sw.js");
       if (fs.existsSync(swPath)) {
         let content = fs.readFileSync(swPath, "utf-8");
         content = content.replace(/__BUILD_TIME__/g, buildTime);
         fs.writeFileSync(swPath, content);
       }
+      // Patch manifest.json — inject base path for PWA
+      const mfPath = path.resolve(__dirname, "dist/manifest.json");
+      if (fs.existsSync(mfPath)) {
+        let content = fs.readFileSync(mfPath, "utf-8");
+        content = content.replace(/"start_url":\s*"\/"/, `"start_url": "${base}"`);
+        content = content.replace(/"src":\s*"\/icons\//g, `"src": "${base}icons/`);
+        fs.writeFileSync(mfPath, content);
+      }
     },
   };
 }
 
 export default defineConfig({
-  base: "/",
+  base: "/KOTODOMA/",
   plugins: [react(), swVersion()],
   resolve: {
     alias: {

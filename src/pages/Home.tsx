@@ -106,7 +106,7 @@ export default function Home({ onNavigate }: HomeProps) {
       </span>
       <div>
         <p className="text-white/30 text-[11px] tracking-[0.32em]">DAILY TARGET</p>
-        <h1 className="mt-3 font-serif text-[2rem] leading-tight">今日の学習目標</h1>
+        <h1 className="mt-3 font-serif leading-tight" style={{fontSize:"clamp(1.4rem, 5vw, 2rem)"}}>今日の学習目標</h1>
       </div>
 
       <dl className="mt-8 flex items-end gap-10">
@@ -114,7 +114,7 @@ export default function Home({ onNavigate }: HomeProps) {
           <div key={s.label}>
             <dt className="text-white/30 text-[10px] tracking-[0.24em]">{s.label}</dt>
             <dd className="mt-1 flex items-baseline gap-1.5">
-              <span className={`font-serif text-[2.5rem] leading-none ${s.dim && !(s as any).lastColor ? "text-white/30" : "text-white"}`}>
+              <span className={`font-serif leading-none ${s.dim && !(s as any).lastColor ? "text-white/30" : "text-white"}`} style={{fontSize:"clamp(1.6rem, 7vw, 2.5rem)"}}>
                 {(s as any).lastColor
                   ? <>{String(s.v).slice(0, -1)}<span style={{color:"var(--color-gold)"}}>{String(s.v).slice(-1)}</span></>
                   : s.v}
@@ -143,7 +143,7 @@ export default function Home({ onNavigate }: HomeProps) {
           <p className="text-main mt-1.5 font-serif text-2xl leading-snug text-balance">{todayWord.jp}</p>
           <p className="text-hint mt-3 text-xs">{todayWord.zh}</p>
         </div>
-        <img src={`/icons/d${new Date().getDay()}.svg`} alt="" className="h-14 w-[72px] object-contain shrink-0"/>
+        <img src={`${import.meta.env.BASE_URL}icons/d${new Date().getDay()}.svg`} alt="" className="h-14 w-[72px] object-contain shrink-0"/>
       </div>
     </section>
 

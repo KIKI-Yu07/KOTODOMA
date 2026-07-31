@@ -121,7 +121,7 @@ export default function CardMatch({ onNavigate }: Props) {
       <span className="text-2xl font-semibold tracking-tight text-main">记忆卡片</span>
     </div>
 
-    <div className="flex-1 flex flex-col items-center justify-center px-6 pb-6 relative overflow-hidden">
+    <div className="flex-1 flex flex-col items-center justify-center px-6 relative overflow-hidden" style={{paddingBottom:"calc(1.5rem + env(safe-area-inset-bottom, 0px))"}}>
 
       {/* Tilt permission prompt (iOS) — disabled for now */}
       {/* {!tiltAllowed && ( ... )} */}
@@ -149,14 +149,14 @@ export default function CardMatch({ onNavigate }: Props) {
       </div>
 
       {/* Card stack */}
-      <div className="relative w-full max-w-[300px]" style={{height:380}}>
+      <div className="relative w-full max-w-[300px] mx-auto" style={{height:"min(380px, 55dvh)"}}>
         {/* Card 3 */}
         <div className="absolute inset-x-0 top-4 scale-[0.82] translate-y-4 opacity-25">
-          <div className="bg-white rounded-3xl shadow-lg h-[340px]" />
+          <div className="bg-white rounded-3xl shadow-lg" style={{height:"min(340px, 50dvh)"}} />
         </div>
         {/* Card 2 */}
         <div className="absolute inset-x-0 top-2 scale-[0.90] translate-y-2 opacity-50">
-          <div className="bg-white rounded-3xl shadow-xl h-[340px] overflow-hidden">
+          <div className="bg-white rounded-3xl shadow-xl overflow-hidden" style={{height:"min(340px, 50dvh)"}}>
             {next1 && (
             <div className="p-6 flex flex-col items-center justify-center h-full">
               <span className="text-sm text-primary">{next1.r}</span>
@@ -173,7 +173,7 @@ export default function CardMatch({ onNavigate }: Props) {
             swiping==="right" ? "translate-x-[140%] rotate-[20deg] opacity-0 scale-90" :
             ""}`}
 >
-          <div className="bg-white rounded-3xl shadow-2xl h-[340px] overflow-hidden">
+          <div className="bg-white rounded-3xl shadow-2xl overflow-hidden" style={{height:"min(340px, 50dvh)"}}>
             <div className="absolute top-4 left-4 bg-primary/10 text-primary text-[10px] font-bold px-2 py-0.5 rounded-full">漢字</div>
             <div className="absolute top-4 right-4 text-[10px] font-bold text-hint/40">{idx + 1}/{words.length}</div>
             <div className="p-6 flex flex-col items-center justify-center h-full">

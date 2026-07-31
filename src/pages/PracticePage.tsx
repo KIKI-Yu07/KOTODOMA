@@ -108,7 +108,7 @@ export default function PracticePage({ onNavigate }: Props) {
 
   if (preGameLoading) return (
     <div className="flex flex-col flex-1 min-h-0 items-center justify-center gap-6 px-8 text-center relative" style={{background:"#F5F0E8"}}>
-      <div className="absolute inset-0 pointer-events-none" style={{backgroundImage:"url(/icons/bg-arena.jpg)", backgroundSize:"cover", backgroundPosition:"center", opacity:0.08}} />
+      <div className="absolute inset-0 pointer-events-none" style={{backgroundImage:`url(${import.meta.env.BASE_URL}icons/bg-arena.jpg)`, backgroundSize:"cover", backgroundPosition:"center", opacity:0.08}} />
       <div className="relative z-10 word-loader" />
       <p className="relative z-10 text-sub text-sm font-medium">音声読み込み中...</p>
       <p className="relative z-10 text-hint text-xs">单词修罗の準備をしています</p>
@@ -116,7 +116,7 @@ export default function PracticePage({ onNavigate }: Props) {
   );
 
   return (<div className="flex flex-col flex-1 min-h-0 relative" style={{background:"#F5F0E8"}}>
-    <div className="absolute inset-0 pointer-events-none" style={{backgroundImage:"url(/icons/bg-arena.jpg)", backgroundSize:"cover", backgroundPosition:"center", opacity:0.12}} />
+    <div className="absolute inset-0 pointer-events-none" style={{backgroundImage:`url(${import.meta.env.BASE_URL}icons/bg-arena.jpg)`, backgroundSize:"cover", backgroundPosition:"center", opacity:0.12}} />
     <div className="relative z-10 flex items-center justify-between px-5 py-3">
       <button onClick={goBack} className="flex items-center gap-1.5 text-hint text-xs font-bold active:opacity-60">
         <ArrowLeft size={18} stroke="var(--color-text-tertiary)" strokeWidth={2.5}/>
@@ -144,7 +144,7 @@ export default function PracticePage({ onNavigate }: Props) {
               {/* Rice paper texture */}
               <div className="absolute inset-0 opacity-[0.02]" style={{backgroundImage:"repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(255,255,255,0.1) 2px, rgba(255,255,255,0.1) 3px)"}} />
               {/* Main image on right */}
-              <img src={`/icons/${g.img}.jpg`} alt="" className="absolute right-0 bottom-0 w-[48%] h-full object-cover object-left" />
+              <img src={`${import.meta.env.BASE_URL}icons/${g.img}.jpg`} alt="" className="absolute right-0 bottom-0 w-[48%] h-full object-cover object-left" />
               {/* Left gradient fade into image */}
               <div className="absolute right-0 top-0 bottom-0 w-[48%] bg-gradient-to-l from-transparent to-[#2C2420]" />
               {/* Content */}
@@ -228,7 +228,7 @@ export default function PracticePage({ onNavigate }: Props) {
         {wordBooks.length>0 && <p className="text-[11px] text-hint font-bold px-1 mb-2.5">選択単語帳</p>}
         {wordBooks.length===0?(
           <div className="flex flex-col items-center justify-center py-12 text-center">
-            <img src="/icons/empty-book.svg" alt="" className="w-48 h-32 object-contain mb-4 opacity-60" />
+            <img src={`${import.meta.env.BASE_URL}icons/empty-book.svg`} alt="" className="w-48 h-32 object-contain mb-4 opacity-60" />
             <p className="text-sm font-bold text-hint mb-1">还没有单词本</p>
             <p className="text-xs text-hint/50">先去个人页面自定义单词本吧</p>
           </div>

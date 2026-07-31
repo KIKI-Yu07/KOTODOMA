@@ -304,7 +304,7 @@ export default function StudyPage({ onNavigate }: StudyPageProps) {
         ))}
       </div>
       <div className="relative w-48 h-48 mb-2 flex items-center justify-center">
-        <img src="/icons/complete.svg" alt="" className="w-full h-full object-contain opacity-70" />
+        <img src={`${import.meta.env.BASE_URL}icons/complete.svg`} alt="" className="w-full h-full object-contain opacity-70" />
       </div>
       <p className="text-sub text-[11px] tracking-[0.32em]">COMPLETE</p>
       <h1 className="font-serif text-3xl text-main">お疲れさまでした</h1>

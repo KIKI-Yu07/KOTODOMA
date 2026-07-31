@@ -6,8 +6,8 @@ let _readyPromise: Promise<void> | null = null;
 export function audioReady(): Promise<void> {
   if (_readyPromise) return _readyPromise;
   _readyPromise = new Promise<void>((resolve) => {
-    successAudio = new Audio("/icons/success.mp3");
-    errorAudio = new Audio("/icons/error.wav");
+    successAudio = new Audio(`${import.meta.env.BASE_URL}icons/success.mp3`);
+    errorAudio = new Audio(`${import.meta.env.BASE_URL}icons/error.wav`);
     let loaded = 0;
     const onLoad = () => { loaded++; if (loaded >= 2) { (window as any).__audioReady = true; resolve(); } };
     successAudio.addEventListener("canplaythrough", onLoad, { once: true });

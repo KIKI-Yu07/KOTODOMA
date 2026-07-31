@@ -70,7 +70,7 @@ export default function SettingsPage({ onNavigate }: SettingsPageProps) {
             <button onClick={() => setDailyGoal(Math.max(5, dailyGoal - 5))} className="min-h-[44px] min-w-[44px] rounded-full bg-primary-subtle flex items-center justify-center text-primary text-xl font-bold active:scale-90 transition-transform shrink-0" style={{willChange:"transform"}}>−</button>
             <div className="flex-1 flex items-center justify-between min-w-0">
               <div className="flex items-baseline gap-1 shrink-0">
-                <span className="text-[48px] font-extrabold text-primary leading-none tabular-nums w-[60px] text-right">{dailyGoal}</span>
+                <span className="font-extrabold text-primary leading-none tabular-nums w-[60px] text-right" style={{fontSize:"clamp(32px, 12vw, 48px)"}}>{dailyGoal}</span>
                 <span className="text-sm text-sub font-bold">词/日</span>
               </div>
               <p className="text-xs text-hint italic w-[130px] text-right shrink-0">{dailyGoal <= 5 ? "何时能上岸" : dailyGoal <= 10 ? "老年人起步" : dailyGoal <= 15 ? "还行，不算太懒" : dailyGoal <= 20 ? "突然认真起来了？" : dailyGoal <= 25 ? "别装学霸，不用假努力" : dailyGoal <= 30 ? "别明天就放弃啊" : dailyGoal <= 35 ? "梦里啥都有" : dailyGoal <= 40 ? "词典你写的啊" : dailyGoal <= 45 ? "别这样，对身体不好" : "你知道50什么概念吗"}</p>

@@ -34,7 +34,8 @@
     --color-success-bright: #22C55E;
   }
   * { font-family: "Noto Sans JP", "Noto Sans SC", system-ui, sans-serif; }
-  body { background: var(--color-bg); color: var(--color-text); -webkit-font-smoothing: antialiased; }
+  body { background: var(--color-bg); color: var(--color-text); -webkit-font-smoothing: antialiased; -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
+  html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
   h1, h2, h3 { font-family: "Noto Serif JP", "Noto Sans JP", serif; }
 }
 
@@ -42,10 +43,19 @@
 .scroll-area { scrollbar-width: none; -ms-overflow-style: none; }
 .scroll-area::-webkit-scrollbar { display: none; }
 
-/* Phone frame */
-.phone { width: 100%; height: 100dvh; background: var(--color-bg); overflow: hidden; }
+/* Phone frame — always full screen on mobile, centered on wide screens */
+.phone {
+  width: 100%;
+  max-width: 430px;
+  height: 100dvh;
+  background: var(--color-bg);
+  overflow: hidden;
+  margin: 0 auto;
+}
 @media (min-width: 640px) {
-  .phone { width: 375px; height: 812px; border-radius: 40px; box-shadow: 0 20px 60px rgba(0,0,0,0.15); }
+  .phone {
+    box-shadow: 0 0 0 100vmax rgba(0,0,0,0.3);
+  }
 }
 
 /* Cards */

@@ -255,7 +255,7 @@ export default function MatchGame({ onNavigate, onBack, onReplay, onRetry, mode,
           <LongPressWrapper word={cur.w} reading={cur.r}>
             <div className="flex items-center gap-4">
               <span className="h-8 w-px bg-gradient-to-b from-transparent via-primary/40 to-transparent"/>
-              <h2 className="font-serif text-[40px] leading-tight font-medium tracking-[0.08em] text-main break-all">{cur.r}</h2>
+              <h2 className="font-serif leading-tight font-medium tracking-[0.08em] text-main break-all" style={{fontSize:"clamp(28px, 10vw, 40px)"}}>{cur.r}</h2>
               <span className="h-8 w-px bg-gradient-to-b from-transparent via-primary/40 to-transparent"/>
             </div>
           </LongPressWrapper>
