@@ -2,14 +2,14 @@
   "name": "言霊 - ことだま",
   "short_name": "言霊",
   "description": "ことだま — 日语单词背诵学习App",
-  "start_url": "/",
+  "start_url": "/KOTODOMA/",
   "display": "standalone",
   "orientation": "portrait",
   "background_color": "#F5F5F5",
   "theme_color": "#1A1A1A",
   "icons": [
     {
-      "src": "/icons/app-icon.png",
+      "src": "/KOTODOMA/icons/app-icon.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any maskable"
