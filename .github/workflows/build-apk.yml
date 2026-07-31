@@ -7,7 +7,7 @@ on:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v4
 
@@ -21,11 +21,12 @@ jobs:
           java-version: "17"
 
       - name: Setup Android SDK
-        run: |
-          echo "ANDROID_HOME=/usr/local/lib/android/sdk" >> $GITHUB_ENV
-          echo "ANDROID_SDK_ROOT=/usr/local/lib/android/sdk" >> $GITHUB_ENV
-          yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager "platforms;android-35" "build-tools;35.0.0" 2>/dev/null || true
-          echo "sdk.dir=/usr/local/lib/android/sdk" > android/local.properties
+        uses: android-actions/setup-android@v3
+        with:
+          packages: "platforms;android-36 build-tools;36.0.0"
+
+      - name: Grant gradlew execute permission
+        run: chmod +x android/gradlew
 
       - name: Install dependencies
         run: npm ci
@@ -40,14 +41,11 @@ jobs:
           rm -rf android/app/src/main/assets/public
           mkdir -p android/app/src/main/assets/public
           cp -r dist/* android/app/src/main/assets/public/
-          # Generate capacitor.config.json for the native runtime
           echo '{"appId":"com.kotodama.app","appName":"言霊","webDir":"public","server":{"androidScheme":"https","hostname":"kotodama.app"}}' > android/app/src/main/assets/capacitor.config.json
 
       - name: Build APK
         working-directory: android
-        run: |
-          chmod +x gradlew
-          ./gradlew assembleDebug
+        run: ./gradlew assembleDebug
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
