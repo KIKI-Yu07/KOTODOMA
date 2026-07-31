@@ -8,26 +8,18 @@ workflows:
         BASE_PATH: "/"
         ANDROID_HOME: "/Users/builder/Library/Android/sdk"
     scripts:
-      - name: Setup Java 21
+      - name: Install Android SDK 35
         script: |
-          brew install openjdk@21 2>/dev/null || true
-          JAVA21=$(brew --prefix openjdk@21 2>/dev/null || echo /opt/homebrew/opt/openjdk@21)
-          echo "JAVA_HOME=$JAVA21" >> $CM_ENV
-          sudo ln -sfn $JAVA21 /Library/Java/JavaVirtualMachines/openjdk-21.jdk 2>/dev/null || true
-      - name: Install Android SDK 36
-        script: |
-          yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager "platforms;android-36" "build-tools;36.0.0" 2>/dev/null
+          yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager "platforms;android-35" "build-tools;35.0.0" 2>/dev/null
       - name: Install dependencies
         script: npm ci
       - name: Build web app
         script: npm run build
-      - name: Sync Capacitor Android
+      - name: Sync Capacitor
         script: npx cap sync android
       - name: Build APK
         working_directory: android
         script: |
-          JAVA21=$(brew --prefix openjdk@21 2>/dev/null || echo /opt/homebrew/opt/openjdk@21)
-          echo "org.gradle.java.home=$JAVA21" >> gradle.properties
           echo "sdk.dir=$ANDROID_HOME" > local.properties
           chmod +x gradlew
           ./gradlew assembleDebug --no-daemon
