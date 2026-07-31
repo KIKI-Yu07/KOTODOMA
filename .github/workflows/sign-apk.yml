@@ -1,0 +1,51 @@
+name: Sign APK
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - "public/kotodama-unsigned.apk"
+
+jobs:
+  sign:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: "temurin"
+          java-version: "17"
+
+      - name: Download Android SDK tools
+        run: |
+          mkdir -p $HOME/android-sdk
+          cd $HOME/android-sdk
+          curl -sSLO https://dl.google.com/android/repository/commandlinetools-linux-11076708_latest.zip
+          unzip -q commandlinetools-linux-11076708_latest.zip
+          yes | ./cmdline-tools/bin/sdkmanager --sdk_root=$HOME/android-sdk --licenses
+          ./cmdline-tools/bin/sdkmanager --sdk_root=$HOME/android-sdk "build-tools;35.0.0"
+
+      - name: Sign APK
+        run: |
+          # Generate keystore
+          keytool -genkey -v \
+            -keystore debug.keystore \
+            -alias kotodama -keyalg RSA -keysize 2048 -validity 10000 \
+            -storepass android -keypass android \
+            -dname "CN=Kotodama" 2>/dev/null
+          # Sign
+          $HOME/android-sdk/build-tools/35.0.0/apksigner sign \
+            --ks debug.keystore --ks-key-alias kotodama \
+            --ks-pass pass:android --key-pass pass:android \
+            --out kotodama-signed.apk \
+            public/kotodama-unsigned.apk
+          echo "Signed successfully"
+          ls -la kotodama-signed.apk
+
+      - name: Upload Signed APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: kotodama-signed
+          path: kotodama-signed.apk
+          retention-days: 90
