@@ -67,9 +67,10 @@ jobs:
         working-directory: android
         run: |
           echo "sdk.dir=$ANDROID_HOME" > local.properties
-          sed -i 's/\r$//' gradlew 2>/dev/null || true
+          # Fix all CRLF line endings from Windows
+          find . -type f \( -name "*.gradle" -o -name "*.properties" -o -name "gradlew" \) -exec sed -i 's/\r$//' {} \; 2>/dev/null || true
           chmod +x gradlew
-          ./gradlew assembleDebug --no-daemon --stacktrace 2>&1 | tail -80
+          ./gradlew assembleDebug --no-daemon --stacktrace 2>&1 | tail -100
 
       - name: Sign APK
         run: |
