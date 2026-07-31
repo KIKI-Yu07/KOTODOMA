@@ -20,17 +20,33 @@ jobs:
           distribution: "temurin"
           java-version: "17"
 
-      - name: Setup Android SDK
+      - name: Debug Android environment
         run: |
-          ANDROID_SDK_ROOT=/usr/local/lib/android/sdk
-          echo "ANDROID_SDK_ROOT=$ANDROID_SDK_ROOT" >> $GITHUB_ENV
-          echo "ANDROID_HOME=$ANDROID_SDK_ROOT" >> $GITHUB_ENV
-          # Install SDK 35 if not present
-          yes | $ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager --licenses 2>/dev/null || true
-          $ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager "platforms;android-35" "build-tools;35.0.0" 2>/dev/null || true
-          # Verify SDK exists
-          ls $ANDROID_SDK_ROOT/platforms/ || echo "No platforms"
-          ls $ANDROID_SDK_ROOT/build-tools/ || echo "No build-tools"
+          echo "=== Find Android SDK ==="
+          find / -name "sdkmanager" 2>/dev/null | head -5
+          echo "=== /usr/local/lib/android ==="
+          ls /usr/local/lib/android/ 2>/dev/null || echo "not found"
+          ls /usr/local/lib/android/sdk/ 2>/dev/null || echo "no sdk"
+          echo "=== ANDROID_HOME ==="
+          echo "ANDROID_HOME=$ANDROID_HOME"
+          echo "ANDROID_SDK_ROOT=$ANDROID_SDK_ROOT"
+          echo "=== Java ==="
+          java -version 2>&1
+          echo "=== Gradle ==="
+          which gradle 2>/dev/null || echo "no gradle"
+          gradle --version 2>/dev/null || true
+
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+        with:
+          packages: "platforms;android-34 build-tools;34.0.0"
+
+      - name: Verify SDK after setup
+        run: |
+          echo "ANDROID_HOME=$ANDROID_HOME"
+          echo "ANDROID_SDK_ROOT=$ANDROID_SDK_ROOT"
+          ls $ANDROID_HOME/platforms/ 2>/dev/null || echo "no platforms"
+          ls $ANDROID_HOME/build-tools/ 2>/dev/null || echo "no build-tools"
 
       - name: Install dependencies
         run: npm ci
@@ -53,9 +69,7 @@ jobs:
           echo "sdk.dir=$ANDROID_HOME" > local.properties
           sed -i 's/\r$//' gradlew 2>/dev/null || true
           chmod +x gradlew
-          # Check if Gradle wrapper exists
-          file gradlew
-          ./gradlew assembleDebug --no-daemon --stacktrace 2>&1 | tail -50
+          ./gradlew assembleDebug --no-daemon --stacktrace 2>&1 | tail -80
 
       - name: Sign APK
         run: |
@@ -64,7 +78,7 @@ jobs:
           keytool -genkey -v -keystore debug.keystore -alias kotodama \
             -keyalg RSA -keysize 2048 -validity 10000 \
             -storepass android -keypass android -dname "CN=Kotodama" 2>/dev/null
-          $ANDROID_HOME/build-tools/35.0.0/apksigner sign \
+          $ANDROID_HOME/build-tools/34.0.0/apksigner sign \
             --ks debug.keystore --ks-key-alias kotodama \
             --ks-pass pass:android --key-pass pass:android \
             --out kotodama.apk $APK
