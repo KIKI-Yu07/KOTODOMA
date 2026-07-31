@@ -72,26 +72,21 @@ jobs:
           chmod +x gradlew
           ./gradlew assembleDebug --no-daemon --stacktrace 2>&1 | tail -100
 
-      - name: Sign APK
+      - name: Sign APK (jarsigner)
         run: |
           APK="android/app/build/outputs/apk/debug/app-debug.apk"
-          ls -la $APK || { echo "APK not found"; exit 1; }
+          ls -la $APK || exit 1
           # Generate keystore
           keytool -genkey -v -keystore debug.keystore -alias kotodama \
             -keyalg RSA -keysize 2048 -validity 10000 \
             -storepass android -keypass android -dname "CN=Kotodama" 2>/dev/null
-          # Download uber-apk-signer (standalone JAR, no SDK needed)
-          curl -sSLO https://github.com/patrickfav/uber-apk-signer/releases/download/v1.3.0/uber-apk-signer-1.3.0.jar
-          # Sign
-          java -jar uber-apk-signer-1.3.0.jar \
-            --apks $APK \
-            --ks debug.keystore \
-            --ksAlias kotodama \
-            --ksPass android \
-            --keyPass android \
-            --out signed
-          # Rename and verify
-          cp signed/*.apk kotodama.apk 2>/dev/null || cp signed/*.apk kotodama.apk
+          # Sign with jarsigner (included with JDK, no Android SDK needed)
+          jarsigner -verbose -sigalg SHA1withRSA -digestalg SHA1 \
+            -keystore debug.keystore -storepass android -keypass android \
+            $APK kotodama
+          # Verify
+          jarsigner -verify -verbose -certs $APK 2>&1 | tail -5
+          cp $APK kotodama.apk
           ls -la kotodama.apk
 
       - name: Upload APK
