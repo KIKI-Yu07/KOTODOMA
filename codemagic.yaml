@@ -8,22 +8,16 @@ workflows:
         BASE_PATH: "/"
         ANDROID_HOME: "/Users/builder/Library/Android/sdk"
     scripts:
-      - name: Install Android SDK 35
+      - name: Install Android SDK 34
         script: |
-          yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager "platforms;android-35" "build-tools;35.0.0" 2>/dev/null
+          yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager "platforms;android-34" "build-tools;34.0.0" 2>/dev/null
       - name: Install dependencies
         script: npm ci
       - name: Build web app
         script: npm run build
-      - name: Sync & Patch & Build
+      - name: Sync & Build
         script: |
           npx cap sync android
-          # Patch Java version from 21 to 17
-          cat android/app/capacitor.build.gradle
-          sed -i.bak 's/VERSION_21/VERSION_17/g' android/app/capacitor.build.gradle
-          echo "=== After patch ==="
-          cat android/app/capacitor.build.gradle
-          # Build
           cd android
           echo "sdk.dir=$ANDROID_HOME" > local.properties
           chmod +x gradlew
