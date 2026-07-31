@@ -23,7 +23,13 @@ jobs:
       - name: Setup Android SDK
         uses: android-actions/setup-android@v3
         with:
-          packages: "platforms;android-35 build-tools;35.0.0"
+          packages: "platforms;android-34 build-tools;34.0.0"
+
+      - name: Verify SDK
+        run: |
+          echo "ANDROID_HOME=$ANDROID_HOME"
+          ls $ANDROID_HOME/platforms/
+          ls $ANDROID_HOME/build-tools/
 
       - name: Install dependencies
         run: npm ci
@@ -44,39 +50,21 @@ jobs:
         working-directory: android
         run: |
           echo "sdk.dir=$ANDROID_HOME" > local.properties
-          find . -type f \( -name "*.gradle" -o -name "*.properties" -o -name "gradlew" \) -exec sed -i 's/\r$//' {} \; 2>/dev/null || true
+          sed -i 's/\r$//' gradlew
           chmod +x gradlew
           ./gradlew assembleDebug --no-daemon
-
-      - name: Locate apksigner
-        run: |
-          echo "Looking for apksigner..."
-          find / -name "apksigner" -type f 2>/dev/null | head -5
-          echo "---"
-          echo "ANDROID_HOME=$ANDROID_HOME"
-          ls $ANDROID_HOME/build-tools/ 2>/dev/null || echo "No build-tools dir"
 
       - name: Sign APK
         run: |
           APK="android/app/build/outputs/apk/debug/app-debug.apk"
-          ls -la $APK || exit 1
-          # Generate keystore (jarsigner is part of JDK)
+          ls -la $APK
           keytool -genkey -v -keystore debug.keystore -alias kotodama \
             -keyalg RSA -keysize 2048 -validity 10000 \
             -storepass android -keypass android -dname "CN=Kotodama" 2>/dev/null
-          # Try apksigner first, fallback to jarsigner
-          APKSIGNER=$(find / -name "apksigner" -type f 2>/dev/null | head -1)
-          if [ -n "$APKSIGNER" ]; then
-            echo "Using apksigner: $APKSIGNER"
-            $APKSIGNER sign --ks debug.keystore --ks-key-alias kotodama \
-              --ks-pass pass:android --key-pass pass:android --out kotodama.apk $APK
-          else
-            echo "apksigner not found, using jarsigner"
-            jarsigner -verbose -sigalg SHA1withRSA -digestalg SHA1 \
-              -keystore debug.keystore -storepass android -keypass android \
-              $APK kotodama
-            cp $APK kotodama.apk
-          fi
+          jarsigner -verbose -sigalg SHA1withRSA -digestalg SHA1 \
+            -keystore debug.keystore -storepass android -keypass android \
+            $APK kotodama 2>&1 | tail -5
+          cp $APK kotodama.apk
           ls -la kotodama.apk
 
       - name: Upload APK
