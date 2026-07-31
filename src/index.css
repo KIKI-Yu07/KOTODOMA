@@ -61,7 +61,7 @@
 /* Cards */
 .card { @apply bg-white rounded-[18px]; box-shadow: 0 1px 3px rgba(0,0,0,0.04), 0 1px 2px rgba(0,0,0,0.06); }
 
-.card-glass { @apply bg-white/70 backdrop-blur-xl rounded-[18px]; border: 1px solid rgba(255,255,255,0.5); box-shadow: 0 4px 24px rgba(139,92,246,0.06) /* accent */; }
+.card-glass { @apply bg-white/90 rounded-[18px]; border: 1px solid rgba(255,255,255,0.5); box-shadow: 0 4px 24px rgba(139,92,246,0.06) /* accent */; }
 .card-interactive { @apply transition-all duration-150; }
 .card-interactive:active { transform: scale(0.98); }
 .card-lift { @apply transition-all duration-200; }
@@ -125,19 +125,16 @@
   position: absolute; inset: 0; z-index: 1; pointer-events: none;
   background-image: radial-gradient(#ffffff11 1px, transparent 1px), radial-gradient(#00ffe033 1px, transparent 1px);
   background-size: 4px 4px;
-  animation: twinkle 4s infinite alternate ease-in-out;
 }
 .cosmic-bg .wind-wave {
   position: absolute; inset: 0; z-index: 1; pointer-events: none;
   background: repeating-linear-gradient(45deg, rgba(255,255,255,0.015) 0px, rgba(0,255,255,0.03) 1px, transparent 3px);
   background-size: 300% 300%;
-  animation: windShift 10s ease-in-out infinite;
 }
 .cosmic-bg .ice-crystal {
   position: absolute; inset: 0; z-index: 1; pointer-events: none;
   background-image: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='100' height='100'><line x1='0' y1='0' x2='100' y2='100' stroke='%2300ffff' stroke-opacity='0.05'/><line x1='100' y1='0' x2='0' y2='100' stroke='%2300ffff' stroke-opacity='0.05'/></svg>");
   background-size: 80px 80px;
-  animation: iceDrift 15s linear infinite;
   mix-blend-mode: screen; opacity: 0.05;
 }
 @keyframes twinkle { 0%{opacity:0.05} 100%{opacity:0.1} }

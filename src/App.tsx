@@ -53,44 +53,20 @@ function SlideIn({ show, children }: { show: boolean; children: React.ReactNode 
   return <div className="animate-slide-in-right flex flex-col flex-1 overflow-hidden">{children}</div>;
 }
 
-/* ─── Ink-blot transition ─── */
-function easeInOutCubic(t: number) {
-  return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
-}
-
+/* ─── CSS-only fade transition ─── */
 function InkTransition({ onDone }: { onDone: () => void }) {
-  const rafRef = useRef(0);
-  const startRef = useRef(0);
-  const [progress, setProgress] = useState(0);
-  const notified = useRef(false);
-  const ENTERING_DURATION = 1200;
-
   useEffect(() => {
-    startRef.current = 0;
-    const tick = (now: number) => {
-      if (!startRef.current) startRef.current = now;
-      const raw = Math.min((now - startRef.current) / ENTERING_DURATION, 1);
-      setProgress(easeInOutCubic(raw));
-      if (raw < 1) {
-        rafRef.current = requestAnimationFrame(tick);
-      } else if (!notified.current) {
-        notified.current = true;
-        onDone();
-      }
-    };
-    rafRef.current = requestAnimationFrame(tick);
-    return () => cancelAnimationFrame(rafRef.current);
+    const t = setTimeout(onDone, 600);
+    return () => clearTimeout(t);
   }, [onDone]);
-
-  const pct = Math.round(progress * 160);
 
   return (
     <div
+      className="animate-fade-in"
       style={{
         position: "fixed",
         inset: 0,
         zIndex: 50,
-        clipPath: `circle(${pct}% at 50% 50%)`,
         background: "#0a0b14",
         pointerEvents: "none",
       }}
@@ -163,12 +139,12 @@ export default function App() {
           </div>
         )}
         <div className="flex flex-col flex-1 overflow-hidden">
-          {/* Keep mounted — scroll preservation */}
+          {/* Keep mounted — only Home for scroll preservation */}
           <Keep show={page === "home"}><Home onNavigate={setPage} /></Keep>
-          <Keep show={page === "word"}><WordDetail /></Keep>
-          <Keep show={page === "vocab"}><VocabularyGrid onNavigate={setPage} /></Keep>
 
           {/* Unmount when inactive — saves memory */}
+          <SlideIn show={page === "word"}><WordDetail /></SlideIn>
+          <SlideIn show={page === "vocab"}><VocabularyGrid onNavigate={setPage} /></SlideIn>
           <SlideIn show={page === "wordlist"}><WordList onNavigate={setPage} /></SlideIn>
           <SlideIn show={page === "settings"}><SettingsPage onNavigate={setPage} /></SlideIn>
           <Show show={page === "study"}><StudyPage onNavigate={setPage} /></Show>
