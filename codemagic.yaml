@@ -15,14 +15,16 @@ workflows:
         script: npm ci
       - name: Build web app
         script: npm run build
-      - name: Sync Capacitor
-        script: npx cap sync android
-      - name: Patch Java version in Cap config
+      - name: Sync & Patch & Build
         script: |
-          sed -i '' 's/VERSION_21/VERSION_17/g' android/app/capacitor.build.gradle
-      - name: Build APK
-        working_directory: android
-        script: |
+          npx cap sync android
+          # Patch Java version from 21 to 17
+          cat android/app/capacitor.build.gradle
+          sed -i.bak 's/VERSION_21/VERSION_17/g' android/app/capacitor.build.gradle
+          echo "=== After patch ==="
+          cat android/app/capacitor.build.gradle
+          # Build
+          cd android
           echo "sdk.dir=$ANDROID_HOME" > local.properties
           chmod +x gradlew
           ./gradlew assembleDebug --no-daemon
