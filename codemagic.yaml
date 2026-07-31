@@ -12,17 +12,13 @@ workflows:
         script: npm ci
       - name: Build web app
         script: npm run build
-      - name: Copy web assets
-        script: |
-          rm -rf android/app/src/main/assets/public
-          mkdir -p android/app/src/main/assets/public
-          cp -r dist/* android/app/src/main/assets/public/
-          echo '{"appId":"com.kotodama.app","appName":"言霊","webDir":"public","server":{"androidScheme":"https"}}' > android/app/src/main/assets/capacitor.config.json
+      - name: Sync Capacitor Android
+        script: npx cap sync android
       - name: Build APK
         working_directory: android
         script: |
           echo "sdk.dir=$ANDROID_HOME" > local.properties
           chmod +x gradlew
-          ./gradlew assembleDebug --no-daemon --stacktrace --warning-mode all
+          ./gradlew assembleDebug --no-daemon
     artifacts:
       - android/app/build/outputs/apk/debug/app-debug.apk
