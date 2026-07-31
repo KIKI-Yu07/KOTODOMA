@@ -8,6 +8,9 @@ workflows:
         BASE_PATH: "/"
         ANDROID_HOME: "/Users/builder/Library/Android/sdk"
     scripts:
+      - name: Install Android SDK 36
+        script: |
+          yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager "platforms;android-36" "build-tools;36.0.0" 2>/dev/null
       - name: Install dependencies
         script: npm ci
       - name: Build web app
