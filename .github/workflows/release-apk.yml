@@ -23,9 +23,11 @@ jobs:
           java-version: "17"
 
       - name: Setup Android SDK
-        uses: android-actions/setup-android@v3
-        with:
-          packages: "platforms;android-35 build-tools;35.0.0"
+        run: |
+          echo "ANDROID_HOME=/usr/local/lib/android/sdk" >> $GITHUB_ENV
+          echo "ANDROID_SDK_ROOT=/usr/local/lib/android/sdk" >> $GITHUB_ENV
+          yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager "platforms;android-35" "build-tools;35.0.0" 2>/dev/null || true
+          echo "sdk.dir=/usr/local/lib/android/sdk" > android/local.properties
 
       - name: Install dependencies
         run: npm ci
@@ -35,8 +37,8 @@ jobs:
         env:
           BASE_PATH: /
 
-      - name: Sync Capacitor
-        run: npx cap sync android
+      - name: Copy web assets to Android
+        run: npx cap copy android
 
       - name: Build APK
         working-directory: android
@@ -50,13 +52,3 @@ jobs:
           files: android/app/build/outputs/apk/debug/app-debug.apk
           name: "言霊 ${{ github.ref_name }}"
           body: "📱 直接下载安装即可使用"
-
-      - name: Upload to Pages (mirror)
-        run: |
-          mkdir -p gh-pages-assets
-          cp android/app/build/outputs/apk/debug/app-debug.apk gh-pages-assets/kotodama.apk
-      - uses: peaceiris/actions-gh-pages@v4
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: gh-pages-assets
-          keep_files: true
