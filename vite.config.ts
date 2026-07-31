@@ -32,7 +32,10 @@ function swVersion(): import("vite").Plugin {
       const mfPath = path.resolve(__dirname, "dist/manifest.json");
       if (fs.existsSync(mfPath)) {
         let content = fs.readFileSync(mfPath, "utf-8");
+        // Replace start_url and scope
         content = content.replace(/"start_url":\s*"\/"/, `"start_url": "${BASE}"`);
+        content = content.replace(/"scope":\s*"\/"/, `"scope": "${BASE}"`);
+        // Replace all icon and screenshot src paths
         content = content.replace(/"src":\s*"\/icons\//g, `"src": "${BASE}icons/`);
         fs.writeFileSync(mfPath, content);
       }

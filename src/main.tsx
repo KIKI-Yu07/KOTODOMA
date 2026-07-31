@@ -5,7 +5,7 @@ import "./index.css";
 
 // Register Service Worker for PWA
 if ("serviceWorker" in navigator) {
-  navigator.serviceWorker.register("/sw.js").then((reg) => {
+  navigator.serviceWorker.register(import.meta.env.BASE_URL + "sw.js").then((reg) => {
     reg.addEventListener("updatefound", () => {
       const worker = reg.installing;
       if (!worker) return;
