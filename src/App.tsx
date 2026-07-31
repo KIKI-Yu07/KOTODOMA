@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from "react";
+import { Capacitor } from "@capacitor/core";
 import { setToastHandler } from "./lib/toast";
 import BottomNav, { type Page } from "./components/BottomNav";
 import SplashScreen from "./components/SplashScreen";
@@ -106,8 +107,8 @@ export default function App() {
 
   const onSplashDone = useCallback(() => setStage("transitioning"), []);
   const onTransitionDone = useCallback(() => {
-    // Skip landing only if already installed as PWA
-    const isStandalone = window.matchMedia("(display-mode: standalone)").matches;
+    // Skip landing if installed as PWA or running in Capacitor native app
+    const isStandalone = window.matchMedia("(display-mode: standalone)").matches || Capacitor.isNativePlatform();
     if (isStandalone) {
       setStage("page");
       setTimeout(() => setEntered(true), 60);
