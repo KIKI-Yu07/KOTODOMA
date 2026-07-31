@@ -4,3 +4,12 @@ dist
 .env
 server/conversations
 server/data
+
+# Android build outputs
+android/app/build
+android/.gradle
+android/build
+android/local.properties
+android/capacitor-cordova-android-plugins
+*.jks
+*.keystore
