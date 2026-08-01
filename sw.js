@@ -1,6 +1,6 @@
 // Service Worker — PWA offline support & auto-update
-// 1785577220599 is replaced by the sw-version Vite plugin at build time
-const CACHE = `nihongo-1785577220599`;
+// 1785587679181 is replaced by the sw-version Vite plugin at build time
+const CACHE = `nihongo-1785587679181`;
 
 // Root-level files to pre-cache for offline
 const PRECACHE = [
