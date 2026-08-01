@@ -12,7 +12,7 @@ workflows:
         script: |
           yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager "platforms;android-34" "build-tools;34.0.0" 2>/dev/null
       - name: Install dependencies
-        script: npm ci
+        script: npm ci --legacy-peer-deps
       - name: Build web app
         script: npm run build
       - name: Sync & Build
