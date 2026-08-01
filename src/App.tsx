@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { Capacitor } from "@capacitor/core";
+import { App as CapApp } from "@capacitor/app";
 import { setToastHandler } from "./lib/toast";
 import BottomNav, { type Page } from "./components/BottomNav";
 import SplashScreen from "./components/SplashScreen";
@@ -97,8 +98,21 @@ export default function App() {
     }
   }, [stage]);
 
-  // Listen for system back button — use history stack
+  // System back button — Capacitor native for Android, popstate for web/iOS
   useEffect(() => {
+    // Capacitor native back button (Android)
+    if (Capacitor.isNativePlatform()) {
+      let handler: any;
+      CapApp.addListener("backButton", ({ canGoBack }) => {
+        if (pageRef.current !== "home") {
+          window.history.back();
+        } else {
+          CapApp.exitApp();
+        }
+      }).then(h => { handler = h; });
+      return () => { if (handler) handler.remove(); };
+    }
+    // Web/iOS: use browser popstate
     const onPop = (e: PopStateEvent) => {
       const target = (e.state && e.state.page) || "home";
       pageRef.current = target;
