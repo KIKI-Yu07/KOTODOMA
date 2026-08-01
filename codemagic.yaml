@@ -5,7 +5,7 @@ workflows:
     environment:
       node: 22
       vars:
-        BASE_PATH: "/"
+        CF_PAGES: "1"
         ANDROID_HOME: "/Users/builder/Library/Android/sdk"
     scripts:
       - name: Install Android SDK 34

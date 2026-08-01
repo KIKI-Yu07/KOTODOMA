@@ -4,7 +4,8 @@ import path from "path";
 import fs from "fs";
 
 // GitHub Pages uses /KOTODOMA/, APK uses /
-const BASE = process.env.BASE_PATH || "/KOTODOMA/";
+// Cloudflare: set CF_PAGES=1 to build with root path
+const BASE = process.env.CF_PAGES ? "/" : "/KOTODOMA/";
 
 // Inject __BUILD_TIME__ into sw.js so each deploy gets a fresh cache key
 function swVersion(): import("vite").Plugin {

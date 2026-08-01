@@ -47,6 +47,8 @@ export default function StudyPage({ onNavigate }: StudyPageProps) {
   const allCount = allIds.length;
 
   // ── State ──
+  const [started, setStarted] = useState(false);
+  const [preloading, setPreloading] = useState(false);
   const [phase, setPhase] = useState(()=>reviewWords.length>0?0:newWords.length>0?1:2);
   const [queue, setQueue] = useState<string[]>(()=>reviewWords.length?reviewWords.map(w=>w.id):newWords.length?newWords.map(w=>w.id):allIds);
   const [picked, setPicked] = useState<string|null>(null);
@@ -87,12 +89,15 @@ export default function StudyPage({ onNavigate }: StudyPageProps) {
     } catch {}
   };
 
-  // Preload audio in background, don't block
-  useEffect(() => {
-    audioReady(); // fire-and-forget, game works without it
+  // Start button handler — load audio then begin
+  const handleStart = async () => {
+    setPreloading(true);
+    await audioReady();
     // Pre-warm TTS
     try { const u = new SpeechSynthesisUtterance(""); u.volume = 0; u.lang = "ja-JP"; speechSynthesis.speak(u); } catch {}
-  }, []);
+    setPreloading(false);
+    setStarted(true);
+  };
 
   const ttsUnlocked = useRef(false);
   const speak = (text: string) => {
@@ -244,6 +249,30 @@ export default function StudyPage({ onNavigate }: StudyPageProps) {
   const cancelExit = ()=>{setShowExit(false);};
 
   if (allCount===0){onNavigate("rest");return null;}
+
+  // ── Start screen ──
+  if (!started) return (
+    <div className="flex min-h-0 flex-1 flex-col items-center justify-center gap-5 px-8 text-center bg-bg">
+      {preloading ? (
+        <>
+          <div className="word-loader" />
+          <p className="text-sub text-sm font-medium">準備中...</p>
+          <p className="text-hint text-xs">単語と音声を準備しています</p>
+        </>
+      ) : (
+        <>
+          <h1 className="font-serif text-2xl text-main">今日の学習</h1>
+          <p className="text-hint text-sm">复习巩固 {reviewWords.length} · 新词认知 {newWords.length} · 多维练习 {allIds.length}</p>
+          <button
+            onClick={handleStart}
+            className="mt-4 bg-primary text-white rounded-2xl px-10 py-3.5 font-bold text-base tracking-wide active:scale-[0.98] transition-all"
+          >
+            学習を始める
+          </button>
+        </>
+      )}
+    </div>
+  );
 
   const inErrorRound = errorRound.current;
   const phase2InCleanup = phase === 2 && phase2Attempted.current.size >= allIds.length && queue.length > 0;
