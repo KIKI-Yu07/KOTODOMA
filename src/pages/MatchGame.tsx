@@ -208,9 +208,9 @@ export default function MatchGame({ onNavigate, onBack, onReplay, onRetry, mode,
               </div>
 
               <div className="flex flex-col gap-2 mt-5">
-                {onRetry && <button onClick={onRetry} className="w-full py-2.5 rounded-xl text-sm font-bold text-white active:scale-95" style={{background:`linear-gradient(135deg,${grade.c1},${grade.c2})`}}>再来一次</button>}
-                {onReplay && <button onClick={onReplay} className="w-full py-2.5 rounded-xl text-sm font-bold text-primary active:scale-95 bg-primary/10 border border-primary/20">换一批单词</button>}
-                <button onClick={()=>onBack()} className="w-full py-2.5 rounded-xl text-sm font-bold text-hint active:scale-95">返回</button>
+                {onRetry && <button onClick={onRetry} className="w-full py-2.5 rounded-xl text-sm font-bold text-white " style={{background:`linear-gradient(135deg,${grade.c1},${grade.c2})`}}>再来一次</button>}
+                {onReplay && <button onClick={onReplay} className="w-full py-2.5 rounded-xl text-sm font-bold text-primary  bg-primary/10 border border-primary/20">换一批单词</button>}
+                <button onClick={()=>onBack()} className="w-full py-2.5 rounded-xl text-sm font-bold text-hint ">返回</button>
               </div>
             </div>
           </div>
@@ -242,7 +242,7 @@ export default function MatchGame({ onNavigate, onBack, onReplay, onRetry, mode,
       <div className="mt-3 flex gap-1">
         {Array.from({length:words.length}).map((_,i)=>(<span key={i} className={`h-[3px] flex-1 rounded-full transition-colors duration-500 ${i<=idx?"bg-primary/70":"bg-border/30"}`}/>))}
       </div>
-      <div className={`overflow-hidden transition-all duration-300 ${lastAnswer?"max-h-8 opacity-100 mt-2":"max-h-0 opacity-0"}`}>
+      <div className={`overflow-hidden transition-none ${lastAnswer?"max-h-8 opacity-100 mt-2":"max-h-0 opacity-0"}`}>
         {lastAnswer&&<p className="text-center leading-tight" style={{color:lastAnswer.correct?"var(--color-success-bright)":"var(--color-danger)"}}>{lastAnswer.correct?<span className="font-serif text-[11px] tracking-wider">正</span>:<span className="block text-[10px]">{lastAnswer.r}</span>}</p>}
       </div>
     </header>
@@ -273,7 +273,7 @@ export default function MatchGame({ onNavigate, onBack, onReplay, onRetry, mode,
           const ordinals=["壹","貳","參","肆"];
           return(<li key={i} className="ink-rise" style={{animationDelay:`${80+i*60}ms`}}>
             <button type="button" disabled={locked} onClick={()=>answer(opt)}
-              className={`ink-frame group flex w-full items-center gap-3 rounded-md px-4 py-3.5 text-left transition-all duration-300  ${
+              className={`ink-frame group flex w-full items-center gap-3 rounded-md px-4 py-3.5 text-left transition-none  ${
                 revealCorrect?"bg-primary/10 shadow-[inset_0_0_0_1px_var(--color-primary)]":
                 revealWrong?"bg-danger/10 shadow-[inset_0_0_0_1px_var(--color-danger)]":
                 locked?"bg-surface/50 opacity-45":"bg-surface border border-border/30 hover:bg-surface"}`}>
@@ -302,7 +302,7 @@ export default function MatchGame({ onNavigate, onBack, onReplay, onRetry, mode,
       <span className="text-sm font-bold text-hint">残り <span className="text-primary">{remaining}</span></span>
     </div>
     {/* Answer banner */}
-    <div className={`overflow-hidden transition-all duration-300 ${lastAnswer ? "max-h-9 opacity-100" : "max-h-0 opacity-0"}`}>
+    <div className={`overflow-hidden transition-none ${lastAnswer ? "max-h-9 opacity-100" : "max-h-0 opacity-0"}`}>
       {lastAnswer && (
         <div className={`flex items-center justify-center gap-2 px-4 py-1 border-b ${lastAnswer.correct ? "bg-success/5 border-success/10" : "bg-danger/5 border-danger/10"}`}>
           <div className="flex flex-col items-center leading-tight" style={{color: lastAnswer.correct ? "var(--color-success-bright)" : "var(--color-danger)"}}>

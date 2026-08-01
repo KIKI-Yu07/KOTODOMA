@@ -90,24 +90,19 @@ export default function App() {
     setPageInner(p);
   }, []);
 
-  // Listen for back button
+  // Replace initial history entry so back always has a target
   useEffect(() => {
-    const onPop = () => {
-      const p = pageRef.current;
-      // Map page → parent page for back navigation
-      const backMap: Record<string, Page> = {
-        word: "home", vocab: "home", search: "home",
-        wordlist: "home", practice: "home", cardmatch: "home",
-        settings: "vocab", profile: "vocab", wordbooks: "vocab",
-        favorites: "vocab", feedback: "vocab", calendar: "vocab",
-        wordrecord: "vocab", listreview: "vocab", learned: "vocab",
-        study: "home", rest: "home",
-      };
-      const parent = backMap[p] || "home";
-      if (parent !== p) {
-        pageRef.current = parent;
-        setPageInner(parent);
-      }
+    if (stage === "page" || stage === "landing") {
+      window.history.replaceState({ page: "home" }, "", "");
+    }
+  }, [stage]);
+
+  // Listen for system back button — use history stack
+  useEffect(() => {
+    const onPop = (e: PopStateEvent) => {
+      const target = (e.state && e.state.page) || "home";
+      pageRef.current = target;
+      setPageInner(target);
     };
     window.addEventListener("popstate", onPop);
     return () => window.removeEventListener("popstate", onPop);
