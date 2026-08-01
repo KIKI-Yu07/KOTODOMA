@@ -47,8 +47,6 @@ export default function StudyPage({ onNavigate }: StudyPageProps) {
   const allCount = allIds.length;
 
   // ── State ──
-  const [loading, setLoading] = useState(true);
-  const [loadingText, setLoadingText] = useState("準備中...");
   const [phase, setPhase] = useState(()=>reviewWords.length>0?0:newWords.length>0?1:2);
   const [queue, setQueue] = useState<string[]>(()=>reviewWords.length?reviewWords.map(w=>w.id):newWords.length?newWords.map(w=>w.id):allIds);
   const [picked, setPicked] = useState<string|null>(null);
@@ -89,17 +87,11 @@ export default function StudyPage({ onNavigate }: StudyPageProps) {
     } catch {}
   };
 
-  // Preload audio via shared instances
+  // Preload audio in background, don't block
   useEffect(() => {
-    setLoadingText("音声読み込み中...");
-    audioReady().then(() => {
-      setLoadingText("準備完了");
-      setTimeout(() => setLoading(false), 400);
-    });
-    const t = setTimeout(() => setLoading(false), 3000);
+    audioReady(); // fire-and-forget, game works without it
     // Pre-warm TTS
     try { const u = new SpeechSynthesisUtterance(""); u.volume = 0; u.lang = "ja-JP"; speechSynthesis.speak(u); } catch {}
-    return () => clearTimeout(t);
   }, []);
 
   const ttsUnlocked = useRef(false);
@@ -252,15 +244,6 @@ export default function StudyPage({ onNavigate }: StudyPageProps) {
   const cancelExit = ()=>{setShowExit(false);};
 
   if (allCount===0){onNavigate("rest");return null;}
-
-  // ── Loading screen ──
-  if (loading) return (
-    <div className="flex min-h-0 flex-1 flex-col items-center justify-center gap-6 px-8 text-center bg-bg">
-      <div className="word-loader" />
-      <p className="text-sub text-sm font-medium">{loadingText}</p>
-      <p className="text-hint text-xs">単語と音声を準備しています</p>
-    </div>
-  );
 
   const inErrorRound = errorRound.current;
   const phase2InCleanup = phase === 2 && phase2Attempted.current.size >= allIds.length && queue.length > 0;
