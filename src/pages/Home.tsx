@@ -66,7 +66,6 @@ const quotes = [
 const weekDays = ["月","火","水","木","金","土","日"];
 
 export default function Home({ onNavigate }: HomeProps) {
-  const [showReset, setShowReset] = useState(false);
   const dailyGoal = parseInt(localStorage.getItem("dailyGoal")||"15");
   const sourceIds = new Set(getWordSource().map(w => w.id));
   const totalLearned = Object.keys(loadProgress()).filter(id => sourceIds.has(id)).length;
@@ -129,8 +128,6 @@ export default function Home({ onNavigate }: HomeProps) {
 
       <div className="text-white/30 mt-5 flex items-center gap-4 text-[11px]">
         <button onClick={()=>onNavigate("settings")} className="hover:text-white/70 transition-colors">目标设定</button>
-        <span className="bg-white/20 h-3 w-px"/>
-        <button onClick={() => setShowReset(true)} className="hover:text-white/70 transition-colors">重置</button>
       </div>
     </header>
 
@@ -197,17 +194,5 @@ export default function Home({ onNavigate }: HomeProps) {
       <p className="text-main font-serif text-sm">継続は力なり</p>
     </footer>
 
-    {showReset && (
-      <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/40" onClick={() => setShowReset(false)}>
-        <div className="bg-white rounded-2xl w-[280px] p-5 shadow-xl text-center" onClick={e => e.stopPropagation()}>
-          <h3 className="font-bold text-main mb-1">确认重置</h3>
-          <p className="text-xs text-sub mb-4">将清除所有学习进度和数据，此操作不可撤销</p>
-          <div className="flex gap-2">
-            <button onClick={() => setShowReset(false)} className="flex-1 py-2.5 rounded-xl bg-gray-100 text-main text-sm font-bold">取消</button>
-            <button onClick={() => { localStorage.clear(); indexedDB.deleteDatabase("nihongo_app"); setTimeout(() => location.reload(), 200); }} className="flex-1 py-2.5 rounded-xl bg-red-500 text-white text-sm font-bold">确认</button>
-          </div>
-        </div>
-      </div>
-    )}
   </div>);
 }

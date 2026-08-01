@@ -159,6 +159,15 @@
 @keyframes slideInRight { from { opacity:0; transform:translateX(24px); } to { opacity:1; transform:translateX(0); } }
 @keyframes slideInRightFull { from { transform:translateX(100%); } to { transform:translateX(0); } }
 .animate-slide-in-right { animation: slideInRightFull 0.3s cubic-bezier(0.16, 1, 0.3, 1) both; }
+
+/* Ink-blot: circle expands from center to cover screen */
+@keyframes inkExpand {
+  from { clip-path: circle(0% at 50% 50%); }
+  to   { clip-path: circle(160% at 50% 50%); }
+}
+.animate-ink-expand {
+  animation: inkExpand 0.8s cubic-bezier(0.4, 0, 0.2, 1) both;
+}
 .animate-slide-out-right { animation: slideOutRightFull 0.25s cubic-bezier(0.16, 1, 0.3, 1) both; }
 @keyframes slideOutRightFull { from { transform:translateX(0); } to { transform:translateX(100%); } }
 

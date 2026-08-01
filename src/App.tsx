@@ -53,16 +53,16 @@ function SlideIn({ show, children }: { show: boolean; children: React.ReactNode 
   return <div className="animate-slide-in-right flex flex-col flex-1 overflow-hidden">{children}</div>;
 }
 
-/* ─── CSS-only fade transition ─── */
+/* ─── CSS-only ink-blot, no JS driving ─── */
 function InkTransition({ onDone }: { onDone: () => void }) {
   useEffect(() => {
-    const t = setTimeout(onDone, 600);
+    const t = setTimeout(onDone, 800);
     return () => clearTimeout(t);
   }, [onDone]);
 
   return (
     <div
-      className="animate-fade-in"
+      className="animate-ink-expand"
       style={{
         position: "fixed",
         inset: 0,
@@ -75,11 +75,43 @@ function InkTransition({ onDone }: { onDone: () => void }) {
 }
 
 export default function App() {
-  const [page, setPage] = useState<Page>("home");
+  const [page, setPageInner] = useState<Page>("home");
+  const pageRef = useRef<Page>("home");
   const [toast, setToast] = useState<string | null>(null);
   const [stage, setStage] = useState<"splash" | "transitioning" | "landing" | "page">("splash");
   const [entered, setEntered] = useState(false);
   setToastHandler(setToast);
+
+  // History-aware navigation: push state so back button works
+  const setPage = useCallback((p: Page) => {
+    if (p === pageRef.current) return;
+    window.history.pushState({ page: p }, "", "");
+    pageRef.current = p;
+    setPageInner(p);
+  }, []);
+
+  // Listen for back button
+  useEffect(() => {
+    const onPop = () => {
+      const p = pageRef.current;
+      // Map page → parent page for back navigation
+      const backMap: Record<string, Page> = {
+        word: "home", vocab: "home", search: "home",
+        wordlist: "home", practice: "home", cardmatch: "home",
+        settings: "vocab", profile: "vocab", wordbooks: "vocab",
+        favorites: "vocab", feedback: "vocab", calendar: "vocab",
+        wordrecord: "vocab", listreview: "vocab", learned: "vocab",
+        study: "home", rest: "home",
+      };
+      const parent = backMap[p] || "home";
+      if (parent !== p) {
+        pageRef.current = parent;
+        setPageInner(parent);
+      }
+    };
+    window.addEventListener("popstate", onPop);
+    return () => window.removeEventListener("popstate", onPop);
+  }, []);
 
   const onSplashDone = useCallback(() => setStage("transitioning"), []);
   const onTransitionDone = useCallback(() => {
