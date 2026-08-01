@@ -80,7 +80,6 @@ export default function PracticePage({ onNavigate }: Props) {
   const startWordBook = async (book:any) => {
     const pool: {w:string;r:string;m:string}[] = book.words.map((w:any)=>({ w:w.word||w.w, r:w.reading||w.r, m:w.meaning||w.m }));
     if (pool.length < 15) { setHint("单词本单词不足 15 个，请先添加更多单词"); return; }
-    setPreGameLoading(true);
     await audioReady();
     setPlaySource("wordbook"); setCurrentWB(book);
     const s = shuffle(pool); setGameKey(k=>k+1); setGameWords(s.length>CHAPTER_PICK?s.slice(0,CHAPTER_PICK):s); setStep("play");
@@ -107,11 +106,9 @@ export default function PracticePage({ onNavigate }: Props) {
   if (step==="play") return <MatchGame key={gameKey} onNavigate={onNavigate} onBack={()=>{setStep("menu");setSelChapters(new Set())}} onReplay={replay} onRetry={retry} mode={gameMode} words={gameWords} />;
 
   if (preGameLoading) return (
-    <div className="flex flex-col flex-1 min-h-0 items-center justify-center gap-6 px-8 text-center relative" style={{background:"#F5F0E8"}}>
-      <div className="absolute inset-0 pointer-events-none" style={{backgroundImage:`url(${import.meta.env.BASE_URL}icons/bg-arena.jpg)`, backgroundSize:"cover", backgroundPosition:"center", opacity:0.08}} />
-      <div className="relative z-10 word-loader" />
-      <p className="relative z-10 text-sub text-sm font-medium">音声読み込み中...</p>
-      <p className="relative z-10 text-hint text-xs">单词修罗の準備をしています</p>
+    <div className="flex flex-col flex-1 min-h-0 items-center justify-center gap-5 px-8 text-center relative" style={{background:"#F5F0E8"}}>
+      <div className="word-loader" />
+      <p className="text-sub text-sm font-medium">準備中...</p>
     </div>
   );
 

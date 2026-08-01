@@ -83,41 +83,41 @@ export default function App() {
   const [entered, setEntered] = useState(false);
   setToastHandler(setToast);
 
-  // History-aware navigation: push state so back button works
+  // Maintain a page stack for back navigation
+  const pageStack = useRef<Page[]>(["home"]);
+
+  // History-aware navigation
   const setPage = useCallback((p: Page) => {
     if (p === pageRef.current) return;
+    pageStack.current.push(p);
     window.history.pushState({ page: p }, "", "");
     pageRef.current = p;
     setPageInner(p);
   }, []);
 
-  // Replace initial history entry so back always has a target
+  // System back button
   useEffect(() => {
-    if (stage === "page" || stage === "landing") {
-      window.history.replaceState({ page: "home" }, "", "");
-    }
-  }, [stage]);
+    const goBack = () => {
+      const stack = pageStack.current;
+      if (stack.length > 1) {
+        stack.pop(); // remove current
+        const prev = stack[stack.length - 1]; // peek previous
+        pageRef.current = prev;
+        setPageInner(prev);
+      } else {
+        if (Capacitor.isNativePlatform()) CapApp.exitApp();
+      }
+    };
 
-  // System back button — Capacitor native for Android, popstate for web/iOS
-  useEffect(() => {
     // Capacitor native back button (Android)
     if (Capacitor.isNativePlatform()) {
       let handler: any;
-      CapApp.addListener("backButton", ({ canGoBack }) => {
-        if (pageRef.current !== "home") {
-          window.history.back();
-        } else {
-          CapApp.exitApp();
-        }
-      }).then(h => { handler = h; });
+      CapApp.addListener("backButton", () => goBack()).then(h => { handler = h; });
       return () => { if (handler) handler.remove(); };
     }
-    // Web/iOS: use browser popstate
-    const onPop = (e: PopStateEvent) => {
-      const target = (e.state && e.state.page) || "home";
-      pageRef.current = target;
-      setPageInner(target);
-    };
+
+    // Web/iOS: browser popstate
+    const onPop = () => goBack();
     window.addEventListener("popstate", onPop);
     return () => window.removeEventListener("popstate", onPop);
   }, []);
