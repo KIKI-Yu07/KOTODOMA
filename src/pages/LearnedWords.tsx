@@ -21,7 +21,7 @@ export default function LearnedWords({ onNavigate }: Props) {
   const totalWrong = words.reduce((s, w) => s + w.progress.totalWrong, 0);
 
   return (<>
-    <div className="flex items-center justify-between px-4 py-3">
+    <div className="sticky top-0 z-10 bg-bg flex items-center justify-between px-4 py-3">
       <button onClick={() => onNavigate("vocab")} className="flex items-center gap-1.5 text-hint text-xs font-bold active:opacity-60">
         <ArrowLeft size={18} stroke="var(--color-text-tertiary)" strokeWidth={2.5}/>
       </button>

@@ -51,7 +51,7 @@ export default function SettingsPage({ onNavigate }: SettingsPageProps) {
   };
 
   return (<>
-    <div className="flex items-center px-4 py-2 relative">
+    <div className="sticky top-0 z-10 bg-bg flex items-center px-4 py-2">
       <button onClick={handleBack}
         className="absolute left-4 z-10 flex items-center gap-1 text-hint text-sm font-bold active:opacity-60 transition-opacity">
         <ArrowLeft size={16} stroke="var(--color-text-secondary)" strokeWidth={2} />

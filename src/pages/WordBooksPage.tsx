@@ -105,7 +105,7 @@ export default function WordBooksPage({ onNavigate }: Props) {
   // ── Book Detail ──
   if (viewBook) return (
     <div className="flex-1 min-h-0 flex flex-col bg-bg">
-      <div className="flex items-center justify-between px-4 py-2">
+      <div className="sticky top-0 z-10 bg-bg flex items-center justify-between px-4 py-2">
         <button onClick={() => setViewBook(null)} className="flex items-center gap-1 text-hint text-sm font-bold active:opacity-60">
           <ArrowLeft size={16} strokeWidth={2} />
         </button>
@@ -167,7 +167,7 @@ export default function WordBooksPage({ onNavigate }: Props) {
   // ── Book List ──
   return (
     <div className="flex-1 min-h-0 flex flex-col bg-bg">
-      <div className="flex items-center justify-between px-4 py-2">
+      <div className="sticky top-0 z-10 bg-bg flex items-center justify-between px-4 py-2">
         <button onClick={() => onNavigate?.("vocab")} className="flex items-center gap-1 text-hint text-sm font-bold active:opacity-60">
           <ArrowLeft size={16} strokeWidth={2} />
         </button>
