@@ -4,7 +4,6 @@ import type { Page } from "../components/BottomNav";
 import MatchGame from "./MatchGame";
 import { loadProgress } from "../lib/spaced-repetition";
 import { getWordSource, getTextbookChapters, getAllTextbookWords } from "../lib/wordSource";
-import { audioReady } from "../lib/audio";
 function loadBooksSync() { try { return JSON.parse(localStorage.getItem("wordbooks") || "[]"); } catch { return []; } }
 
 interface Props { onNavigate: (p: Page) => void; }
@@ -52,7 +51,7 @@ export default function PracticePage({ onNavigate }: Props) {
 
   const startReview = async () => {
     setPreGameLoading(true);
-    await audioReady();
+
     const progress = loadProgress();
     const studied = shuffle(Object.entries(progress).filter(([,p])=>p.lastReview).map(([id])=>id)).slice(0,CHAPTER_PICK);
     const allSources = [...getAllTextbookWords()];
@@ -70,7 +69,7 @@ export default function PracticePage({ onNavigate }: Props) {
 
   const startChapters = async () => {
     setPreGameLoading(true);
-    await audioReady();
+
     const pool: {w:string;r:string;m:string}[] = [];
     for (const ch of chapters) if (selChapters.has(ch.id)) for (const w of ch.words) pool.push({ w: w.w, r: w.r, m: w.m });
     setPlaySource("textbook"); setGameKey(k=>k+1); setGameWords(shuffle(pool).slice(0, CHAPTER_PICK)); setStep("play");
@@ -80,7 +79,7 @@ export default function PracticePage({ onNavigate }: Props) {
   const startWordBook = async (book:any) => {
     const pool: {w:string;r:string;m:string}[] = book.words.map((w:any)=>({ w:w.word||w.w, r:w.reading||w.r, m:w.meaning||w.m }));
     if (pool.length < 15) { setHint("单词本单词不足 15 个，请先添加更多单词"); return; }
-    await audioReady();
+
     setPlaySource("wordbook"); setCurrentWB(book);
     const s = shuffle(pool); setGameKey(k=>k+1); setGameWords(s.length>CHAPTER_PICK?s.slice(0,CHAPTER_PICK):s); setStep("play");
     setPreGameLoading(false);

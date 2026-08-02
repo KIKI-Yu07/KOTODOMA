@@ -5,7 +5,6 @@ import { loadProgress, answerWord, getReviewCount } from "../lib/spaced-repetiti
 import { setLocal } from "../lib/store";
 import { getExample } from "../data/examples";
 import { getWordSource } from "../lib/wordSource";
-import { playSuccess, playError, audioReady } from "../lib/audio";
 import { useLongPress } from "../lib/longPress";
 import { toggleFavorite } from "../lib/favorites";
 
@@ -92,9 +91,7 @@ export default function StudyPage({ onNavigate }: StudyPageProps) {
   // Start button handler — load audio then begin
   const handleStart = async () => {
     setPreloading(true);
-    await audioReady();
-    // Pre-warm TTS
-    try { const u = new SpeechSynthesisUtterance(""); u.volume = 0; u.lang = "ja-JP"; speechSynthesis.speak(u); } catch {}
+    await new Promise(r => setTimeout(r, 600));
     setPreloading(false);
     setStarted(true);
   };
@@ -200,7 +197,6 @@ export default function StudyPage({ onNavigate }: StudyPageProps) {
     const rest = queue.slice(1);
 
     if (ok) {
-      playSuccess();
       setTotalRight(t=>t+1);
       phaseCorrect.current.add(cur.id);
       if (phase===2) phase2Attempted.current.add(cur.id);
@@ -209,7 +205,6 @@ export default function StudyPage({ onNavigate }: StudyPageProps) {
       busy.current=true;
       timer.current = setTimeout(()=>{ advance(rest, phase); }, 500);
     } else {
-      playError();
       errorCount.current[cur.id]=(errorCount.current[cur.id]||0)+1;
       if (phase===0||phase===1) {
         errorPool.current.push(cur.id);

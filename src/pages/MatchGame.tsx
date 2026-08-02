@@ -1,6 +1,5 @@
 import { useState, useMemo, useEffect, useRef } from "react";
 import { ArrowLeft, Zap } from "lucide-react";
-import { playSuccess, playError } from "../lib/audio";
 import { useLongPress } from "../lib/longPress";
 import { toggleFavorite } from "../lib/favorites";
 import { getWordSource } from "../lib/wordSource";
@@ -129,8 +128,8 @@ export default function MatchGame({ onNavigate, onBack, onReplay, onRetry, mode,
     if (picked) return;
     setPicked(opt);
     const isRight = opt === correctAnswer;
-    if (isRight) { setRight(r => r + 1); playSuccess(); }
-    else { setWrong(w => w + 1); playError(); }
+    if (isRight) { setRight(r => r + 1); }
+    else { setWrong(w => w + 1); }
     prevWord.current = { w: cur.w, r: cur.r, m: cur.m };
     prevCorrect.current = isRight;
     setTimeout(() => {

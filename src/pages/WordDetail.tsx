@@ -2,7 +2,6 @@ import { useState, useMemo, useEffect } from "react";
 import { createPortal } from "react-dom";
 import { ArrowLeft, Check, Lock, Play, X, Flame, ArrowRight, MessageSquareQuote } from "lucide-react";
 import { categories, getStage, getQuestions, type Question } from "../data/grammar";
-import { playSuccess, playError, audioReady } from "../lib/audio";
 import { cn } from "../lib/utils";
 
 interface WordDetailProps {}
@@ -65,8 +64,8 @@ function QuizSession({ stageTitle, stageSubtitle, categoryLabel, stageNumber, qu
     setSelected(index);
     const hit = index === question.answerIndex;
     setResults(prev=>[...prev, hit]);
-    if (hit) { setCorrectCount(c=>c+1); setStreak(s=>{const n=s+1;setBestStreak(b=>Math.max(b,n));return n}); playSuccess(); }
-    else { setStreak(0); playError(); }
+    if (hit) { setCorrectCount(c=>c+1); setStreak(s=>{const n=s+1;setBestStreak(b=>Math.max(b,n));return n}); }
+    else { setStreak(0); }
   }
 
   function handleNext() {
@@ -225,7 +224,7 @@ export default function WordDetail({}: WordDetailProps) {
       <main className="mx-auto max-w-md px-5 pb-16 pt-6">
         <p className="text-sm leading-relaxed text-sub">{active.caption}</p>
         <ol className="mt-6">
-          {active.stages.map((s,i)=>{const isLast=i===active.stages.length-1;const onPlay=async ()=>{setLoading(true);await audioReady();setLoading(false);setPlayingStage(s.id);};return(
+          {active.stages.map((s,i)=>{const isLast=i===active.stages.length-1;const onPlay=()=>{setPlayingStage(s.id);};return(
             <li key={s.id} className="relative flex gap-4">
               {!isLast&&<span className={cn("absolute left-4 top-8 bottom-0 w-px -translate-x-1/2",s.status==="cleared"?"bg-main":"bg-border")}/>}
               <div className={cn("relative z-10 flex size-8 shrink-0 items-center justify-center rounded-full border text-xs font-medium",s.status==="cleared"&&"border-main bg-main text-bg",s.status==="current"&&"border-primary bg-primary text-white",s.status==="locked"&&"border-dashed border-border bg-bg text-hint/60")}>{s.status==="cleared"?<Check size={16} strokeWidth={2.5}/>:<span className="font-mono tabular-nums">{String(i+1).padStart(2,"0")}</span>}</div>
