@@ -5,8 +5,9 @@ const config: CapacitorConfig = {
   appName: '言霊',
   webDir: 'dist',
   server: {
+    url: 'https://kotodama-ei9.pages.dev',
+    cleartext: true,
     androidScheme: 'https',
-    hostname: 'kotodama.app',
   },
   android: {
     allowMixedContent: true,
