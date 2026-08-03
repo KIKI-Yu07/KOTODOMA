@@ -46,9 +46,9 @@
   max-width: 430px;
   height: 100dvh;
   background: var(--color-bg);
-  overflow: hidden;
   margin: 0 auto;
 }
+body { overflow: hidden; }
 @media (min-width: 640px) {
   .phone {
     box-shadow: 0 0 0 100vmax rgba(0,0,0,0.3);

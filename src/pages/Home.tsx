@@ -153,8 +153,8 @@ export default function Home({ onNavigate }: HomeProps) {
           {icon:Layers,title:"记忆卡片",sub:"滑动记忆",meta:"翻卡",a:"cardmatch"as Page},
           {icon:Swords,title:"单词修罗",sub:"游戏挑战",meta:"修炼",a:"practice"as Page},
         ].map(({icon:Icon,title,sub,meta,a})=>(
-          <li key={title} className="border-border border-b last:border-b-0">
-            <button onClick={()=>onNavigate(a)} className="hover:bg-surface/60 -mx-2 flex w-[calc(100%+1rem)] items-center gap-4 rounded-lg px-2 py-4 text-left transition-colors">
+          <li key={title} className="border-b border-border/30 last:border-b-0">
+            <button onClick={()=>onNavigate(a)} className="flex w-full items-center gap-4 rounded-none px-0 py-4 text-left active:opacity-60 transition-opacity">
               <Icon size={20} strokeWidth={1.5} className="text-main shrink-0"/>
               <span className="min-w-0 flex-1">
                 <span className="text-main block font-serif text-base leading-snug">{title}</span>

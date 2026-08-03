@@ -323,7 +323,7 @@ export const book2Data = [
       { id:"2-4-4", word:"嫌がる", reading:"いやがる", meaning:"讨厌，不愿意", pos:"他五", example:"", exampleReading:"", exampleMeaning:"" },
       { id:"2-4-5", word:"育児", reading:"いくじ", meaning:"育儿，抚养孩子", pos:"名", example:"", exampleReading:"", exampleMeaning:"" },
       { id:"2-4-6", word:"～点", reading:"～てん", meaning:"分，分数", pos:"接尾", example:"", exampleReading:"", exampleMeaning:"" },
-      { id:"2-4-7", word:"予告", reading:"p13", meaning:"预先通知", pos:"名・他サ", example:"", exampleReading:"", exampleMeaning:"" },
+      { id:"2-4-7", word:"予告", reading:"よこく", meaning:"预先通知", pos:"名・他サ", example:"", exampleReading:"", exampleMeaning:"" },
       { id:"2-4-8", word:"行う", reading:"おこない", meaning:"举行，进行", pos:"他五", example:"", exampleReading:"", exampleMeaning:"" },
       { id:"2-4-9", word:"事前", reading:"じぜん", meaning:"事先，事前", pos:"名", example:"", exampleReading:"", exampleMeaning:"" },
       { id:"2-4-10", word:"一定，肯定", reading:"てっきり", meaning:"一定，肯定", pos:"副", example:"", exampleReading:"", exampleMeaning:"" },

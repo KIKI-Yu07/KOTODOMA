@@ -37,11 +37,10 @@ export default function SearchPage({ onNavigate }: SearchPageProps) {
   }, [query]);
 
   return (<>
-    <div className="sticky top-0 z-10 bg-bg pb-3">
+    <div className="shrink-0 sticky top-0 z-10 bg-bg pb-3">
       <div className="flex items-center justify-center px-4 py-2">
         <span className="text-2xl font-semibold tracking-tight text-main">単語検索</span>
       </div>
-
       <div className="px-4">
         <div className="search-group">
           <svg className="search-icon" aria-hidden="true" viewBox="0 0 24 24">
@@ -51,7 +50,6 @@ export default function SearchPage({ onNavigate }: SearchPageProps) {
         </div>
       </div>
     </div>
-
     <div className="flex-1 overflow-y-auto scroll-area px-4 pb-4">
       {query && results.length === 0 ? (
         <div className="text-center py-12 text-hint text-sm">該当する単語がありません</div>

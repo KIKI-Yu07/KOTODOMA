@@ -250,7 +250,6 @@ export default function MatchGame({ onNavigate, onBack, onReplay, onRetry, mode,
       <div className="flex flex-col items-center px-6 text-center">
         <span className="seal-stamp">{optType==="kanji"?"選漢字":"選中文"}</span>
         <div className="flex flex-col items-center gap-1 mt-6">
-          <p className="text-sm text-hint font-medium">{cur.w}</p>
           <LongPressWrapper word={cur.w} reading={cur.r}>
             <div className="flex items-center gap-4">
               <span className="h-8 w-px bg-gradient-to-b from-transparent via-primary/40 to-transparent"/>
@@ -311,18 +310,17 @@ export default function MatchGame({ onNavigate, onBack, onReplay, onRetry, mode,
         </div>
       )}
     </div>
-    <div className="flex-1 flex flex-col items-center justify-center px-4">
+    <div className="flex-1 flex flex-col items-center justify-center px-4 py-4 min-h-0">
       {mode === "fillKana" && (
         <>
           <span className="seal-stamp mb-4">補仮名</span>
-          <div className="flex items-center gap-1 mb-3 text-2xl font-extrabold">
+          <div className="flex items-center gap-1 mb-4 text-2xl font-extrabold flex-wrap justify-center">
             {kanaChars.map((ch, i) => (
               <span key={i} className={i === blankIdx
                 ? "w-10 h-10 rounded-xl bg-primary/10 border-2 border-dashed border-primary flex items-center justify-center text-primary"
                 : "text-main"}>{i === blankIdx ? (picked || "?") : ch}</span>
             ))}
           </div>
-          <p className="text-lg font-bold text-sub mb-4">{cur.w}</p>
           <p className="text-xs text-hint mb-6 tracking-[0.14em]">择其空所，补其正音</p>
           <ul className="grid grid-cols-3 gap-2.5 w-full max-w-[340px]">
             {options.map((opt, i) => {

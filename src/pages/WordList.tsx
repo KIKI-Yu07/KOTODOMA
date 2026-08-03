@@ -232,7 +232,7 @@ export default function WordList({ onNavigate }: WordListProps) {
       </div>
 
       {/* Bottom bar */}
-      <div className="flex items-center justify-between px-5 py-3 border-t border-border bg-white" style={{paddingBottom:"calc(0.75rem + env(safe-area-inset-bottom, 0px))"}}>
+      <div className="sticky bottom-0 z-10 flex items-center justify-between px-5 py-3 border-t border-border bg-white" style={{paddingBottom:"calc(0.75rem + env(safe-area-inset-bottom, 0px))"}}>
         <div className="flex items-center gap-2">
           <span className="text-sm text-sub">已选</span>
           <span className={`min-w-[22px] h-[22px] rounded-full flex items-center justify-center text-xs text-white font-bold ${
