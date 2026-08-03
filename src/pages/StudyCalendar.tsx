@@ -32,15 +32,15 @@ export default function StudyCalendar({ onNavigate }: Props) {
 
   const weekDays = ["日","月","火","水","木","金","土"];
 
-  return (
+  return (<>
+    <div className="sticky top-0 z-10 bg-bg flex items-center justify-between px-4 py-2">
+      <button onClick={() => onNavigate("vocab")}
+        className="flex items-center gap-1 text-hint text-sm font-bold active:opacity-60">
+        <ArrowLeft size={16} strokeWidth={2} />
+      </button>
+      <span className="text-2xl font-semibold tracking-tight text-main">打卡记录</span>
+    </div>
     <div className="flex-1 min-h-0 overflow-y-auto scroll-area bg-bg">
-      <div className="flex items-center justify-between px-4 py-2">
-        <button onClick={() => onNavigate("vocab")}
-          className="flex items-center gap-1 text-hint text-sm font-bold active:opacity-60">
-          <ArrowLeft size={16} strokeWidth={2} />
-        </button>
-        <span className="text-2xl font-semibold tracking-tight text-main">打卡记录</span>
-      </div>
 
       {/* Stats */}
       <div className="px-5 pt-4 pb-6">
@@ -121,5 +121,5 @@ export default function StudyCalendar({ onNavigate }: Props) {
         <span className="flex items-center gap-1.5"><span className="size-2 rounded-full bg-primary/20" />未打卡</span>
       </div>
     </div>
-  );
+  </>);
 }

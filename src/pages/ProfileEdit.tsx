@@ -64,7 +64,7 @@ export default function ProfileEdit({ onNavigate }: ProfileEditProps) {
   };
 
   return (<>
-    <div className="flex items-center gap-3 px-4 py-2">
+    <div className="sticky top-0 z-10 bg-bg flex items-center gap-3 px-4 py-2">
       <button onClick={handleBack} className="flex items-center gap-1 text-hint text-sm font-bold active:opacity-60">
         <ArrowLeft size={16} stroke="var(--color-text-tertiary)" strokeWidth={2} />
         

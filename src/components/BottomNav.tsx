@@ -12,7 +12,7 @@ export default function BottomNav({ active, onNavigate }: BottomNavProps) {
   if (!navPages.includes(active)) return null;
   const activeIdx = tabs.findIndex(t => t.id === active);
   return (
-    <div className="relative bg-white rounded-t-2xl rounded-b-[2px] border-t border-border" style={{paddingBottom:"calc(14px + env(safe-area-inset-bottom, 0px))"}}>
+    <div className="sticky bottom-0 z-20 bg-white rounded-t-2xl rounded-b-[2px] border-t border-border" style={{paddingBottom:"calc(14px + env(safe-area-inset-bottom, 0px))"}}>
       <div className="relative mx-3 h-[3px]">
         <span className="absolute top-0 h-[3px] w-[36px] bg-primary rounded-b-[3px] transition-all duration-300 ease-out"
           style={{ left: `calc(${activeIdx * 25 + 12.5}% - 18px)` }} />

@@ -13,11 +13,25 @@ export default function CardMatch({ onNavigate }: Props) {
   const [remembered, setRemembered] = useState(0);
   const [forgot, setForgot] = useState(0);
   const [tilt, setTilt] = useState(0);
+  const [tiltAllowed, setTiltAllowed] = useState(false);
   const tiltTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const tiltRef = useRef(0);
 
+  // Request iOS device orientation permission
+  const requestTilt = async () => {
+    if (typeof (DeviceOrientationEvent as any).requestPermission === "function") {
+      try {
+        const perm = await (DeviceOrientationEvent as any).requestPermission();
+        if (perm === "granted") setTiltAllowed(true);
+      } catch { setTiltAllowed(true); }
+    } else {
+      setTiltAllowed(true);
+    }
+  };
+
   // Device tilt detection
   useEffect(() => {
+    if (!tiltAllowed) return;
     const handler = (e: DeviceOrientationEvent) => {
       const gamma = e.gamma || 0;
       tiltRef.current = gamma;
@@ -33,7 +47,7 @@ export default function CardMatch({ onNavigate }: Props) {
     };
     window.addEventListener("deviceorientation", handler);
     return () => window.removeEventListener("deviceorientation", handler);
-  }, [swiping]);
+  }, [swiping, tiltAllowed]);
 
   const words = useMemo(() => {
     const progress = loadProgress();
@@ -123,8 +137,18 @@ export default function CardMatch({ onNavigate }: Props) {
 
     <div className="flex-1 flex flex-col items-center justify-center px-6 relative overflow-hidden" style={{paddingBottom:"calc(1.5rem + env(safe-area-inset-bottom, 0px))"}}>
 
-      {/* Tilt permission prompt (iOS) — disabled for now */}
-      {/* {!tiltAllowed && ( ... )} */}
+      {/* Tilt permission prompt (iOS) */}
+      {!tiltAllowed && (
+        <div className="absolute inset-0 z-30 flex items-center justify-center bg-black/40">
+          <div className="bg-white rounded-2xl mx-6 p-6 text-center shadow-xl">
+            <p className="font-serif text-lg font-bold text-main">傾き検出</p>
+            <p className="mt-2 text-sm text-sub">左右に傾けて操作します</p>
+            <button onClick={requestTilt} className="mt-5 w-full bg-primary text-white rounded-xl py-3 font-bold text-sm active:scale-[0.98] transition-all">
+              許可する
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Folder icon — left side */}
       <div className={`absolute left-6 top-1/2 -translate-y-1/2 transition-all duration-500 z-20 pointer-events-none
@@ -169,9 +193,10 @@ export default function CardMatch({ onNavigate }: Props) {
 
         {/* Card 1 — front */}
         <div className={`absolute inset-0 transition-all duration-[400ms] ease-out
-          ${swiping==="left" ? "-translate-x-[140%] -rotate-[20deg] opacity-0 scale-90" :
-            swiping==="right" ? "translate-x-[140%] rotate-[20deg] opacity-0 scale-90" :
+          ${swiping==="left" ? "-translate-x-[140%] -rotate-[25deg] opacity-0" :
+            swiping==="right" ? "translate-x-[140%] rotate-[25deg] opacity-0" :
             ""}`}
+          style={{zIndex:10}}
 >
           <div className="bg-white rounded-3xl shadow-2xl overflow-hidden" style={{height:"min(340px, 50dvh)"}}>
             <div className="absolute top-4 left-4 bg-primary/10 text-primary text-[10px] font-bold px-2 py-0.5 rounded-full">漢字</div>

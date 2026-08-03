@@ -113,7 +113,7 @@ export default function PracticePage({ onNavigate }: Props) {
 
   return (<div className="flex flex-col flex-1 min-h-0 relative" style={{background:"#F5F0E8"}}>
     <div className="absolute inset-0 pointer-events-none" style={{backgroundImage:`url(${import.meta.env.BASE_URL}icons/bg-arena.jpg)`, backgroundSize:"cover", backgroundPosition:"center", opacity:0.12}} />
-    <div className="relative z-10 flex items-center justify-between px-5 py-3">
+    <div className="sticky top-0 z-20 flex items-center justify-between px-5 py-3" style={{background:"#F5F0E8"}}>
       <button onClick={goBack} className="flex items-center gap-1.5 text-hint text-xs font-bold active:opacity-60">
         <ArrowLeft size={18} stroke="var(--color-text-tertiary)" strokeWidth={2.5}/>
       </button>
